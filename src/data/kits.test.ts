@@ -11,6 +11,7 @@ import {
   saveKitCollection,
   selectKit,
   updateKitInCollection,
+  updateItemGoal,
   type KitStorage,
 } from "./kits"
 
@@ -57,6 +58,25 @@ describe("kit collection", () => {
 
     expect(addItemGoal(withAcorn, "Acorn").itemGoals).toHaveLength(1)
     expect(removeItemGoal(withAcorn, "Acorn").itemGoals).toEqual([])
+  })
+
+  it("updates and clears optional quantity and quality goals", () => {
+    const kit = addItemGoal(createKit("kit-1", "Bronze", "Black Forest"), "BowFineWood")
+    const updated = updateItemGoal(kit, "BowFineWood", {
+      quantity: 2,
+      targetQuality: 3,
+    })
+    const reset = updateItemGoal(updated, "BowFineWood", {
+      quantity: null,
+      targetQuality: null,
+    })
+
+    expect(updated.itemGoals[0]).toMatchObject({
+      prefab: "BowFineWood",
+      quantity: 2,
+      targetQuality: 3,
+    })
+    expect(reset.itemGoals[0]).toEqual({ prefab: "BowFineWood" })
   })
 
   it("updates a kit without changing its active selection", () => {

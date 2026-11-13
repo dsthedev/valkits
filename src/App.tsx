@@ -26,7 +26,9 @@ import {
   removeKitFromCollection,
   saveKitCollection,
   selectKit,
+  updateItemGoal,
   updateKitInCollection,
+  type ItemGoalUpdates,
   type KitCollection,
 } from "@/data/kits"
 import { type Kit } from "@/domain/schema"
@@ -210,6 +212,16 @@ export function App() {
     )
   }
 
+  function updateGoalInActiveKit(prefab: string, updates: ItemGoalUpdates) {
+    if (!activeKit) return
+    persistKits(
+      updateKitInCollection(
+        kitState.collection,
+        updateItemGoal(activeKit, prefab, updates),
+      ),
+    )
+  }
+
   function togglePrefabExclusion(prefab: string) {
     const settings = setPrefabExcluded(
       exclusionState.settings,
@@ -362,6 +374,7 @@ export function App() {
           onDeleteKit={deleteKit}
           onRemoveGoal={removeGoalFromActiveKit}
           onSelectKit={selectActiveKit}
+          onUpdateGoal={updateGoalInActiveKit}
           onUpdateKit={updateExistingKit}
           warning={kitState.warning}
         />

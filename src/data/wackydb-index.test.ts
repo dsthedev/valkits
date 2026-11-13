@@ -7,6 +7,7 @@ import {
 } from "./build-wackydb-catalog"
 import { createWackyDbDataAccess } from "./wackydb-catalog"
 import { indexWackyDbFiles } from "./wackydb-index"
+import { getItemGoalCapabilities } from "../domain/item-goal-capabilities"
 
 describe("WackyDatabase index", () => {
   it("indexes the full current export with stable diagnostics and lookup", async () => {
@@ -35,6 +36,12 @@ describe("WackyDatabase index", () => {
     expect(dataAccess.getItem("ArmorBronzeChest")?.nameToken).toBe(
       "$item_chest_bronze",
     )
+    expect(
+      getItemGoalCapabilities(dataAccess.getItem("ArmorBronzeChest")!),
+    ).toEqual({ quantity: false, maxQuality: 4 })
+    expect(
+      getItemGoalCapabilities(dataAccess.getItem("ArrowIron")!),
+    ).toEqual({ quantity: true, maxQuality: null })
     expect(
       dataAccess.searchItems("bronze chest").map((item) => item.prefab),
     ).toContain("ArmorBronzeChest")

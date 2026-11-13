@@ -4,6 +4,7 @@ import {
   kitSchema,
   type Biome,
   type Kit,
+  type KitItemGoal,
 } from "../domain/schema"
 
 export const KIT_STORAGE_KEY = "valkits.kits.v1"
@@ -53,6 +54,11 @@ export interface KitLoadResult {
 export type KitSaveResult =
   | { success: true }
   | { success: false; message: string }
+
+export interface ItemGoalUpdates {
+  quantity?: number | null
+  targetQuality?: number | null
+}
 
 export function createKitCollection(
   kits: readonly Kit[] = [],
@@ -120,6 +126,29 @@ export function removeItemGoal(kit: Kit, prefab: string): Kit {
     ...kit,
     itemGoals: kit.itemGoals.filter((goal) => goal.prefab !== prefab),
   })
+}
+
+export function updateItemGoal(
+  kit: Kit,
+  prefab: string,
+  updates: ItemGoalUpdates,
+): Kit {
+  const goalIndex = kit.itemGoals.findIndex((goal) => goal.prefab === prefab)
+  if (goalIndex < 0) return kit
+
+  const nextGoal: KitItemGoal = { ...kit.itemGoals[goalIndex] }
+  if ("quantity" in updates) {
+    if (updates.quantity === null) delete nextGoal.quantity
+    else nextGoal.quantity = updates.quantity
+  }
+  if ("targetQuality" in updates) {
+    if (updates.targetQuality === null) delete nextGoal.targetQuality
+    else nextGoal.targetQuality = updates.targetQuality
+  }
+
+  const itemGoals = [...kit.itemGoals]
+  itemGoals[goalIndex] = nextGoal
+  return kitSchema.parse({ ...kit, itemGoals })
 }
 
 export function removeKitFromCollection(

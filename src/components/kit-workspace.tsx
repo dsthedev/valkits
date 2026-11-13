@@ -9,10 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { biomes, type Biome, type GameItem, type Kit } from "@/domain/schema"
+import {
+  biomes,
+  type Biome,
+  type GameItem,
+  type Kit,
+} from "@/domain/schema"
+import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
 import {
   createKit,
   updateKitDetails,
+  type ItemGoalUpdates,
   type KitCollection,
 } from "@/data/kits"
 
@@ -26,6 +33,7 @@ interface KitWorkspaceProps {
   onUpdateKit(kit: Kit): void
   onDeleteKit(kitId: string): void
   onRemoveGoal(prefab: string): void
+  onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
 }
 
 function humanizePrefab(prefab: string): string {
@@ -44,6 +52,7 @@ export function KitWorkspace({
   onUpdateKit,
   onDeleteKit,
   onRemoveGoal,
+  onUpdateGoal,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId,
@@ -245,10 +254,13 @@ export function KitWorkspace({
               {activeKit.itemGoals.map((goal) => {
                 const item = getItem(goal.prefab)
                 const excluded = excludedPrefabs.has(goal.prefab)
+                const capabilities = item
+                  ? getItemGoalCapabilities(item)
+                  : { quantity: false, maxQuality: null }
 
                 return (
                   <li
-                    className="flex items-center justify-between gap-4 border-t border-border/60 py-3"
+                    className="flex flex-col gap-3 border-t border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between"
                     key={goal.prefab}
                   >
                     <div className="min-w-0">
@@ -271,15 +283,59 @@ export function KitWorkspace({
                         {goal.prefab}
                       </p>
                     </div>
-                    <Button
-                      aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
-                      onClick={() => onRemoveGoal(goal.prefab)}
-                      size="sm"
-                      variant="ghost"
-                    >
-                      <RiCloseLine aria-hidden="true" />
-                      Remove
-                    </Button>
+                    <div className="flex flex-wrap items-end gap-3">
+                      {capabilities.quantity && (
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          Quantity
+                          <Input
+                            aria-label={`Quantity of ${goal.prefab}`}
+                            className="h-8 w-24 rounded-md px-2 text-sm"
+                            min={1}
+                            onChange={(event) => {
+                              const value = parseGoalInput(event.target.value)
+                              if (value !== undefined) {
+                                onUpdateGoal(goal.prefab, { quantity: value })
+                              }
+                            }}
+                            type="number"
+                            value={goal.quantity ?? 1}
+                          />
+                        </label>
+                      )}
+                      {capabilities.maxQuality !== null && (
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          Quality
+                          <Input
+                            aria-label={`Quality of ${goal.prefab}`}
+                            className="h-8 w-20 rounded-md px-2 text-sm"
+                            max={capabilities.maxQuality}
+                            min={1}
+                            onChange={(event) => {
+                              const value = parseGoalInput(
+                                event.target.value,
+                                capabilities.maxQuality!,
+                              )
+                              if (value !== undefined) {
+                                onUpdateGoal(goal.prefab, {
+                                  targetQuality: value,
+                                })
+                              }
+                            }}
+                            type="number"
+                            value={goal.targetQuality ?? 1}
+                          />
+                        </label>
+                      )}
+                      <Button
+                        aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
+                        onClick={() => onRemoveGoal(goal.prefab)}
+                        size="sm"
+                        variant="ghost"
+                      >
+                        <RiCloseLine aria-hidden="true" />
+                        Remove
+                      </Button>
+                    </div>
                   </li>
                 )
               })}
@@ -293,4 +349,15 @@ export function KitWorkspace({
       )}
     </section>
   )
+}
+
+function parseGoalInput(
+  value: string,
+  maximum?: number,
+): number | null | undefined {
+  if (value === "") return null
+  const parsed = Number(value)
+  if (!Number.isSafeInteger(parsed) || parsed < 1) return undefined
+  if (maximum !== undefined && parsed > maximum) return undefined
+  return parsed
 }
