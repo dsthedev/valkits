@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 import { RiCloseLine } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ItemIcon } from "@/components/item-icon"
 import {
   Select,
   SelectContent,
@@ -93,6 +94,9 @@ export function KitWorkspace({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [immediateSnapshot, setImmediateSnapshot] =
     useState<ImmediateCalculationSnapshot | null>(null)
+  const [costView, setCostView] = useState<"total" | "craft" | "quality">(
+    "total",
+  )
   const inputFingerprint = activeKit
     ? JSON.stringify(activeKit.itemGoals)
     : null
@@ -162,13 +166,48 @@ export function KitWorkspace({
       className="my-7 border-y border-border/80 py-5"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">{activeKit?.name ?? "Your kits"}</h2>
-          <p className="text-sm text-muted-foreground">
-            {activeKit
-              ? `${activeKit.biome} · ${activeKit.itemGoals.length} item goals`
-              : `${collection.kits.length} kits`}
-          </p>
+        <div className="min-w-0 flex-1">
+          {collection.kits.length > 0 ? (
+            <>
+              <label
+                className="mb-1.5 block text-xs font-semibold text-muted-foreground"
+                htmlFor="active-kit"
+              >
+                ACTIVE KIT
+              </label>
+              <Select
+                onValueChange={(value) => {
+                  if (typeof value === "string") onSelectKit(value)
+                }}
+                value={collection.activeKitId ?? ""}
+              >
+                <SelectTrigger
+                  aria-label="Select active kit"
+                  className="w-full max-w-md"
+                  id="active-kit"
+                >
+                  <SelectValue placeholder="Select kit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {collection.kits.map((kit) => (
+                    <SelectItem key={kit.id} value={kit.id}>
+                      {kit.name} ({kit.biome})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {activeKit && (
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {activeKit.biome} · {activeKit.itemGoals.length} item goals
+                </p>
+              )}
+            </>
+          ) : (
+            <div>
+              <h2 className="text-lg font-semibold">Your kits</h2>
+              <p className="text-sm text-muted-foreground">No kits yet</p>
+            </div>
+          )}
           {warning && (
             <p className="mt-1 text-sm text-destructive" role="status">
               {warning}
@@ -177,25 +216,6 @@ export function KitWorkspace({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {collection.kits.length > 0 && (
-            <Select
-              onValueChange={(value) => {
-                if (typeof value === "string") onSelectKit(value)
-              }}
-              value={collection.activeKitId ?? ""}
-            >
-              <SelectTrigger aria-label="Select active kit" className="w-56 max-w-full">
-                <SelectValue placeholder="Select kit" />
-              </SelectTrigger>
-              <SelectContent>
-                {collection.kits.map((kit) => (
-                  <SelectItem key={kit.id} value={kit.id}>
-                    {kit.name} ({kit.biome})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           {activeKit && (
             <>
               <Button onClick={() => openForm("edit")} variant="outline">
@@ -315,7 +335,9 @@ export function KitWorkspace({
                     className="flex flex-col gap-3 border-t border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between"
                     key={goal.prefab}
                   >
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ItemIcon prefab={goal.prefab} size="sm" />
+                      <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="break-words text-sm font-medium">
                           {humanizePrefab(item?.prefab ?? goal.prefab)}
@@ -331,9 +353,7 @@ export function KitWorkspace({
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-                        {goal.prefab}
-                      </p>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-end gap-3">
                       {capabilities.quantity && (
@@ -425,36 +445,45 @@ export function KitWorkspace({
                 </p>
               )}
 
+              <div className="mb-3 inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Cost view">
+                {(["total", "craft", "quality"] as const).map((view) => (
+                  <Button
+                    aria-pressed={costView === view}
+                    key={view}
+                    onClick={() => setCostView(view)}
+                    size="sm"
+                    variant={costView === view ? "secondary" : "ghost"}
+                  >
+                    {view === "total" ? "Total" : view === "craft" ? "Craft" : "Quality"}
+                  </Button>
+                ))}
+              </div>
+
               {visibleSnapshot.calculation.requirements.length > 0 ? (
                 <div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-border py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[minmax(0,1fr)_6rem_6rem_6rem]">
-                    <span>Ingredient</span>
-                    <span className="text-right">Craft</span>
-                    <span className="text-right">Quality</span>
-                    <span className="text-right">Total</span>
+                  <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3 border-b border-border py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[minmax(0,1fr)_7rem]">
+                    <span>Resource</span>
+                    <span className="text-right">{costView === "total" ? "Total" : costView === "craft" ? "Craft" : "Quality"}</span>
                   </div>
                   <ul>
                     {visibleSnapshot.calculation.requirements.map((requirement) => (
                       <li
-                        className="grid grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-border/60 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_6rem_6rem_6rem]"
+                        className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3 border-b border-border/60 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_7rem]"
                         key={requirement.prefab}
                       >
-                        <span className="min-w-0">
-                          <span className="block break-words">
+                        <span className="flex min-w-0 items-center gap-3">
+                          <ItemIcon prefab={requirement.prefab} size="sm" />
+                          <span className="min-w-0 break-words">
                             {humanizePrefab(requirement.prefab)}
                           </span>
-                          <span className="block truncate font-mono text-xs text-muted-foreground">
-                            {requirement.prefab}
-                          </span>
-                        </span>
-                        <span className="text-right tabular-nums">
-                          {requirement.craftAmount.toLocaleString()}
-                        </span>
-                        <span className="text-right tabular-nums">
-                          {requirement.qualityAmount.toLocaleString()}
                         </span>
                         <span className="text-right font-medium tabular-nums">
-                          {requirement.totalAmount.toLocaleString()}
+                          {(costView === "total"
+                            ? requirement.totalAmount
+                            : costView === "craft"
+                              ? requirement.craftAmount
+                              : requirement.qualityAmount
+                          ).toLocaleString()}
                         </span>
                       </li>
                     ))}

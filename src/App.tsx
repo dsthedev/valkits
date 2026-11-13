@@ -17,6 +17,7 @@ import {
 } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ItemIcon } from "@/components/item-icon"
 import { KitWorkspace } from "@/components/kit-workspace"
 import {
   addItemGoal,
@@ -329,45 +330,12 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
-        <div className="flex flex-col gap-5 border-b border-border/80 pb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div className="border-b border-border/80 pb-5">
           <div>
             <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
               GAME DATA
             </p>
             <h1 className="mt-1 text-2xl font-semibold">Item index</h1>
-          </div>
-
-          <div className="w-full sm:max-w-xl sm:flex-1">
-            <label className="sr-only" htmlFor="item-search">
-              Search items
-            </label>
-            <div className="flex h-12 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15">
-              <RiSearchLine
-                aria-hidden="true"
-                className="size-5 shrink-0 text-muted-foreground"
-              />
-              <Input
-                autoComplete="off"
-                className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
-                id="item-search"
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by item, type, or prefab"
-                spellCheck={false}
-                value={query}
-              />
-              {query && (
-                <Button
-                  aria-label="Clear search"
-                  onClick={() => setQuery("")}
-                  size="icon-sm"
-                  title="Clear search"
-                  type="button"
-                  variant="ghost"
-                >
-                  <RiCloseLine aria-hidden="true" />
-                </Button>
-              )}
-            </div>
           </div>
         </div>
 
@@ -512,6 +480,39 @@ export function App() {
               </div>
             )}
 
+            <div className="my-4 w-full max-w-xl">
+              <label className="sr-only" htmlFor="item-search">
+                Search items
+              </label>
+              <div className="flex h-11 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15">
+                <RiSearchLine
+                  aria-hidden="true"
+                  className="size-5 shrink-0 text-muted-foreground"
+                />
+                <Input
+                  autoComplete="off"
+                  className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
+                  id="item-search"
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search items"
+                  spellCheck={false}
+                  value={query}
+                />
+                {query && (
+                  <Button
+                    aria-label="Clear search"
+                    onClick={() => setQuery("")}
+                    size="icon-sm"
+                    title="Clear search"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <RiCloseLine aria-hidden="true" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div
               aria-live="polite"
               className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 py-3 text-sm"
@@ -540,10 +541,12 @@ export function App() {
 
                   return (
                     <li
-                      className="grid gap-3 border-b border-border/70 py-4 sm:grid-cols-[minmax(0,1fr)_repeat(4,5rem)_auto] sm:items-center"
+                      className="grid gap-3 border-b border-border/70 py-4 sm:grid-cols-[minmax(0,1fr)_repeat(4,4.5rem)_auto] sm:items-center"
                       key={item.prefab}
                     >
-                      <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <ItemIcon prefab={item.prefab} />
+                        <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="break-words font-medium">
                             {humanizePrefab(item.prefab)}
@@ -554,9 +557,7 @@ export function App() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-                          {item.prefab}
-                        </p>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3 sm:contents">
                         <ItemFact label="Type" value={item.itemType ?? "Not set"} />
