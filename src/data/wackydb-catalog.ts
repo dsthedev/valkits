@@ -72,6 +72,7 @@ export async function loadWackyDbCatalog(
 export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   getItem(prefab: string): GameItem | undefined
   getRecipes(resultPrefab: string): readonly GameRecipe[]
+  searchItems(query: string): GameItem[]
   diagnostics: readonly ImportDiagnostic[]
 } {
   const itemsByPrefab = new Map(
@@ -88,9 +89,33 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
     }
   }
 
+  function searchItems(query: string): GameItem[] {
+    const terms = normalizeSearchText(query).split(" ").filter(Boolean)
+    if (terms.length === 0) return catalog.items
+
+    return catalog.items.filter((item) => {
+      const searchableText = normalizeSearchText(
+        [item.prefab, item.nameToken, item.descriptionToken, item.itemType]
+          .filter(Boolean)
+          .join(" "),
+      )
+
+      return terms.every((term) => searchableText.includes(term))
+    })
+  }
+
   return {
     getItem: (prefab) => itemsByPrefab.get(prefab),
     getRecipes: (resultPrefab) => recipesByResultPrefab.get(resultPrefab) ?? [],
+    searchItems,
     diagnostics: catalog.diagnostics,
   }
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .toLowerCase()
+    .trim()
 }

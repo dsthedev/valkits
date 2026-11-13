@@ -36,6 +36,10 @@ describe("WackyDatabase index", () => {
       "$item_chest_bronze",
     )
     expect(
+      dataAccess.searchItems("bronze chest").map((item) => item.prefab),
+    ).toContain("ArmorBronzeChest")
+    expect(dataAccess.searchItems("no-such-prefab")).toHaveLength(0)
+    expect(
       dataAccess
         .getRecipes("ArmorBronzeChest")[0]
         ?.requirements.some((requirement) => requirement.prefab === "Upgrader1Armor"),
