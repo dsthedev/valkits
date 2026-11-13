@@ -369,6 +369,7 @@ export function KitWorkspace({
                   <Card className="rounded-lg shadow-sm" key={goal.prefab}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
+                        <ItemIcon prefab={goal.prefab} size="xl" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
                             <CardTitle className="break-words text-base">
@@ -385,8 +386,13 @@ export function KitWorkspace({
                             </Button>
                           </div>
                           <div className="mt-1 flex flex-wrap gap-2">
+                            {item?.itemType && (
+                              <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+                                {item.itemType}
+                              </span>
+                            )}
                             {excluded && (
-                              <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
                                 Excluded
                               </span>
                             )}
@@ -396,86 +402,77 @@ export function KitWorkspace({
                               </span>
                             )}
                           </div>
-                          <Table className="mt-2">
+                          <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-3">
+                            {capabilities.quantity && (
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                                Quantity
+                                <div className="flex h-11 items-center gap-1 rounded-md border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring/30">
+                                  <Input
+                                    aria-label={`Quantity of ${goal.prefab}`}
+                                    className="h-full w-16 border-0 bg-transparent px-0 text-center text-xl font-semibold tabular-nums shadow-none focus-visible:ring-0"
+                                    min={1}
+                                    onChange={(event) => {
+                                      const value = parseGoalInput(event.target.value)
+                                      if (value !== undefined) {
+                                        onUpdateGoal(goal.prefab, { quantity: value })
+                                      }
+                                    }}
+                                    type="number"
+                                    value={goal.quantity ?? 1}
+                                  />
+                                  {item?.maxStackSize && item.maxStackSize > 1 && (
+                                    <span className="shrink-0 text-base tabular-nums text-muted-foreground">
+                                      /{item.maxStackSize}
+                                    </span>
+                                  )}
+                                </div>
+                              </label>
+                            )}
+                            {capabilities.maxQuality !== null && (
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                                Target quality
+                                <div className="flex h-11 items-center gap-1 rounded-md border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring/30">
+                                  <Input
+                                    aria-label={`Quality of ${goal.prefab}`}
+                                    className="h-full w-16 border-0 bg-transparent px-0 text-center text-xl font-semibold tabular-nums shadow-none focus-visible:ring-0"
+                                    max={capabilities.maxQuality}
+                                    min={1}
+                                    onChange={(event) => {
+                                      const value = parseGoalInput(
+                                        event.target.value,
+                                        capabilities.maxQuality!,
+                                      )
+                                      if (value !== undefined) {
+                                        onUpdateGoal(goal.prefab, {
+                                          targetQuality: value,
+                                        })
+                                      }
+                                    }}
+                                    type="number"
+                                    value={goal.targetQuality ?? 1}
+                                  />
+                                  <span className="shrink-0 text-base tabular-nums text-muted-foreground">
+                                    /{capabilities.maxQuality}
+                                  </span>
+                                </div>
+                              </label>
+                            )}
+                          </div>
+                          <Table className="mt-2 text-xs text-muted-foreground">
                             <TableBody>
-                              <TableRow>
-                                <TableHead className="w-32 px-1 py-1 text-xs text-muted-foreground" scope="row">
-                                  Type
-                                </TableHead>
-                                <TableCell className="px-1 py-1 text-right text-xs">
-                                  {item?.itemType ?? "Not set"}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
-                                  Max stack
-                                </TableHead>
-                                <TableCell className="px-1 py-1 text-right text-xs tabular-nums">
-                                  {item?.maxStackSize?.toLocaleString() ?? "Not set"}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
-                                  Max quality
-                                </TableHead>
-                                <TableCell className="px-1 py-1 text-right text-xs tabular-nums">
-                                  {item?.maxQuality?.toLocaleString() ?? "Not set"}
-                                </TableCell>
-                              </TableRow>
-                              {capabilities.quantity && (
+                              {item?.maxQuality !== undefined && item.maxQuality > 1 && (
                                 <TableRow>
                                   <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
-                                    Goal quantity
+                                    Max quality
                                   </TableHead>
-                                  <TableCell className="px-1 py-1 text-right">
-                                    <Input
-                                      aria-label={`Quantity of ${goal.prefab}`}
-                                      className="ml-auto h-8 w-24 rounded-md px-2 text-right text-sm"
-                                      min={1}
-                                      onChange={(event) => {
-                                        const value = parseGoalInput(event.target.value)
-                                        if (value !== undefined) {
-                                          onUpdateGoal(goal.prefab, { quantity: value })
-                                        }
-                                      }}
-                                      type="number"
-                                      value={goal.quantity ?? 1}
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              {capabilities.maxQuality !== null && (
-                                <TableRow>
-                                  <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
-                                    Target quality
-                                  </TableHead>
-                                  <TableCell className="px-1 py-1 text-right">
-                                    <Input
-                                      aria-label={`Quality of ${goal.prefab}`}
-                                      className="ml-auto h-8 w-24 rounded-md px-2 text-right text-sm"
-                                      max={capabilities.maxQuality}
-                                      min={1}
-                                      onChange={(event) => {
-                                        const value = parseGoalInput(
-                                          event.target.value,
-                                          capabilities.maxQuality!,
-                                        )
-                                        if (value !== undefined) {
-                                          onUpdateGoal(goal.prefab, {
-                                            targetQuality: value,
-                                          })
-                                        }
-                                      }}
-                                      type="number"
-                                      value={goal.targetQuality ?? 1}
-                                    />
+                                  <TableCell className="px-1 py-1 text-right text-xs tabular-nums">
+                                    {item.maxQuality}
                                   </TableCell>
                                 </TableRow>
                               )}
                             </TableBody>
                           </Table>
                         </div>
-                        <ItemIcon prefab={goal.prefab} size="2xl" />
                       </div>
                     </CardContent>
                   </Card>

@@ -6,6 +6,7 @@ import {
   type ChangeEvent,
 } from "react"
 import {
+  RiAddLine,
   RiCheckLine,
   RiCloseLine,
   RiErrorWarningLine,
@@ -553,9 +554,6 @@ export function App() {
             {visibleResults.length > 0 ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleResults.map((item) => {
-                  const recipeCount = catalogState.dataAccess.getRecipes(
-                    item.prefab,
-                  ).length
                   const isExcluded = excludedPrefabs.has(item.prefab)
                   const isInActiveKit = activeKit?.itemGoals.some(
                     (goal) => goal.prefab === item.prefab,
@@ -563,67 +561,65 @@ export function App() {
 
                   return (
                     <Card className="h-full rounded-lg shadow-sm" key={item.prefab}>
-                      <CardHeader className="p-4 pb-0">
-                        <CardTitle className="line-clamp-2 break-words text-base">
-                          {humanizePrefab(item.prefab)}
-                        </CardTitle>
-                        {manageExclusions && isExcluded && (
-                          <span className="mt-1 inline-flex w-fit rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                            Excluded
-                          </span>
-                        )}
-                      </CardHeader>
-                      <CardContent className="flex items-center gap-3 px-4 py-2">
-                        <Table className="flex-1">
-                          <TableBody>
-                            <TableRow>
-                              <TableHead className="w-28 px-1 py-1 text-xs text-muted-foreground" scope="row">Type</TableHead>
-                              <TableCell className="px-1 py-1 text-right text-xs">{item.itemType ?? "Not set"}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Max stack</TableHead>
-                              <TableCell className="px-1 py-1 text-right text-xs">{item.maxStackSize?.toLocaleString() ?? "Not set"}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Max quality</TableHead>
-                              <TableCell className="px-1 py-1 text-right text-xs">{item.maxQuality?.toLocaleString() ?? "Not set"}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Recipes</TableHead>
-                              <TableCell className="px-1 py-1 text-right text-xs">{recipeCount}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                        <ItemIcon prefab={item.prefab} size="xl" />
-                      </CardContent>
-                      {(activeKit || manageExclusions) && (
-                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pb-4 pt-0">
+                      <CardHeader className="p-3">
+                        <div className="flex items-center gap-3">
+                          <ItemIcon prefab={item.prefab} size="xl" />
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="line-clamp-2 break-words text-base">
+                              {humanizePrefab(item.prefab)}
+                            </CardTitle>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                              <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+                                {item.itemType ?? "Unknown type"}
+                              </span>
+                              {manageExclusions && isExcluded && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                  Excluded
+                                </span>
+                              )}
+                            </div>
+                          </div>
                           {activeKit && (
                             <Button
                               aria-pressed={isInActiveKit}
+                              className="h-10 shrink-0 px-4"
                               disabled={isInActiveKit}
                               onClick={() => addGoalToActiveKit(item.prefab)}
-                              size="sm"
-                              variant={isInActiveKit ? "secondary" : "outline"}
+                              variant={isInActiveKit ? "secondary" : "default"}
                             >
+                              {!isInActiveKit && <RiAddLine aria-hidden="true" />}
                               {isInActiveKit ? "In kit" : "Add to kit"}
                             </Button>
                           )}
-                          {manageExclusions && (
-                            <Button
-                              aria-pressed={isExcluded}
-                              onClick={() => togglePrefabExclusion(item.prefab)}
-                              size="sm"
-                              variant={isExcluded ? "secondary" : "outline"}
-                            >
-                              {isExcluded ? (
-                                <RiCheckLine aria-hidden="true" />
-                              ) : (
-                                <RiCloseLine aria-hidden="true" />
-                              )}
-                              {isExcluded ? "Restore" : "Exclude"}
-                            </Button>
-                          )}
+                        </div>
+                      </CardHeader>
+                      {item.maxQuality !== undefined && item.maxQuality > 1 && (
+                        <CardContent className="px-4 pb-3 pt-0">
+                          <Table className="text-xs text-muted-foreground">
+                            <TableBody>
+                              <TableRow>
+                                <TableHead className="w-28 px-1 py-1 text-xs text-muted-foreground" scope="row">Max quality</TableHead>
+                                <TableCell className="px-1 py-1 text-right text-xs">{item.maxQuality}</TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      )}
+                      {manageExclusions && (
+                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pb-4 pt-0">
+                          <Button
+                            aria-pressed={isExcluded}
+                            onClick={() => togglePrefabExclusion(item.prefab)}
+                            size="sm"
+                            variant={isExcluded ? "secondary" : "outline"}
+                          >
+                            {isExcluded ? (
+                              <RiCheckLine aria-hidden="true" />
+                            ) : (
+                              <RiCloseLine aria-hidden="true" />
+                            )}
+                            {isExcluded ? "Restore" : "Exclude"}
+                          </Button>
                         </CardFooter>
                       )}
                     </Card>
