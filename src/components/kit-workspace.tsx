@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 import {
   RiAddLine,
   RiArrowRightSLine,
+  RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
   RiEditLine,
@@ -10,17 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ItemIcon } from "@/components/item-icon"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import {
   Sheet,
   SheetContent,
@@ -219,54 +210,61 @@ export function KitWorkspace({
 
         <div className="flex flex-wrap items-center gap-2">
           {activeKit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    aria-label="Kit options"
-                    size="icon"
-                    title="Kit options"
-                    variant="outline"
-                  />
-                }
+            <details className="relative">
+              <summary
+                aria-label="Kit options"
+                className="grid size-9 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
+                title="Kit options"
               >
                 <RiMore2Line aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              </summary>
+              <div className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
                 {collection.kits.length > 1 && (
                   <>
-                    <DropdownMenuLabel>Switch kit</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                      onValueChange={onSelectKit}
-                      value={collection.activeKitId ?? ""}
-                    >
-                      {collection.kits.map((kit) => (
-                        <DropdownMenuRadioItem key={kit.id} value={kit.id}>
-                          {kit.name} · {kit.biome}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
+                    <p className="px-2 py-1 text-xs text-muted-foreground">Switch kit</p>
+                    {collection.kits.map((kit) => (
+                      <button
+                        aria-current={kit.id === activeKit.id ? "true" : undefined}
+                        className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                        key={kit.id}
+                        onClick={(event) => {
+                          onSelectKit(kit.id)
+                          event.currentTarget.closest("details")?.removeAttribute("open")
+                        }}
+                        type="button"
+                      >
+                        <span className="min-w-0 truncate">{kit.name} · {kit.biome}</span>
+                        {kit.id === activeKit.id && <RiCheckLine aria-hidden="true" />}
+                      </button>
+                    ))}
+                    <div className="my-1 border-t border-border" />
                   </>
                 )}
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => openForm("edit")}>
-                    <RiEditLine aria-hidden="true" />
-                    Edit kit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setConfirmDelete(true)
-                      setFormMode(null)
-                    }}
-                    variant="destructive"
-                  >
-                    <RiDeleteBinLine aria-hidden="true" />
-                    Delete kit
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                  onClick={(event) => {
+                    openForm("edit")
+                    event.currentTarget.closest("details")?.removeAttribute("open")
+                  }}
+                  type="button"
+                >
+                  <RiEditLine aria-hidden="true" />
+                  Edit kit
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                  onClick={(event) => {
+                    setConfirmDelete(true)
+                    setFormMode(null)
+                    event.currentTarget.closest("details")?.removeAttribute("open")
+                  }}
+                  type="button"
+                >
+                  <RiDeleteBinLine aria-hidden="true" />
+                  Delete kit
+                </button>
+              </div>
+            </details>
           )}
           <Button onClick={() => openForm("create")} variant="outline">
             <RiAddLine aria-hidden="true" />
@@ -359,7 +357,7 @@ export function KitWorkspace({
             </span>
           </div>
           {activeKit.itemGoals.length > 0 ? (
-            <ul>
+            <div className="grid gap-3 sm:grid-cols-2">
               {activeKit.itemGoals.map((goal) => {
                 const item = getItem(goal.prefab)
                 const excluded = excludedPrefabs.has(goal.prefab)
@@ -368,87 +366,122 @@ export function KitWorkspace({
                   : { quantity: false, maxQuality: null }
 
                 return (
-                  <li
-                    className="flex flex-col gap-3 border-t border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    key={goal.prefab}
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <ItemIcon prefab={goal.prefab} size="sm" />
-                      <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="break-words text-sm font-medium">
-                          {humanizePrefab(item?.prefab ?? goal.prefab)}
-                        </p>
-                        {excluded && (
-                          <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                            Excluded
-                          </span>
-                        )}
-                        {!item && (
-                          <span className="text-xs text-muted-foreground">
-                            Not in current item data
-                          </span>
-                        )}
+                  <Card className="rounded-lg shadow-sm" key={goal.prefab}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <CardTitle className="break-words text-base">
+                              {humanizePrefab(item?.prefab ?? goal.prefab)}
+                            </CardTitle>
+                            <Button
+                              aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
+                              onClick={() => onRemoveGoal(goal.prefab)}
+                              size="icon-sm"
+                              title="Remove from kit"
+                              variant="ghost"
+                            >
+                              <RiCloseLine aria-hidden="true" />
+                            </Button>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {excluded && (
+                              <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                Excluded
+                              </span>
+                            )}
+                            {!item && (
+                              <span className="text-xs text-muted-foreground">
+                                Not in current item data
+                              </span>
+                            )}
+                          </div>
+                          <Table className="mt-2">
+                            <TableBody>
+                              <TableRow>
+                                <TableHead className="w-32 px-1 py-1 text-xs text-muted-foreground" scope="row">
+                                  Type
+                                </TableHead>
+                                <TableCell className="px-1 py-1 text-right text-xs">
+                                  {item?.itemType ?? "Not set"}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
+                                  Max stack
+                                </TableHead>
+                                <TableCell className="px-1 py-1 text-right text-xs tabular-nums">
+                                  {item?.maxStackSize?.toLocaleString() ?? "Not set"}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
+                                  Max quality
+                                </TableHead>
+                                <TableCell className="px-1 py-1 text-right text-xs tabular-nums">
+                                  {item?.maxQuality?.toLocaleString() ?? "Not set"}
+                                </TableCell>
+                              </TableRow>
+                              {capabilities.quantity && (
+                                <TableRow>
+                                  <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
+                                    Goal quantity
+                                  </TableHead>
+                                  <TableCell className="px-1 py-1 text-right">
+                                    <Input
+                                      aria-label={`Quantity of ${goal.prefab}`}
+                                      className="ml-auto h-8 w-24 rounded-md px-2 text-right text-sm"
+                                      min={1}
+                                      onChange={(event) => {
+                                        const value = parseGoalInput(event.target.value)
+                                        if (value !== undefined) {
+                                          onUpdateGoal(goal.prefab, { quantity: value })
+                                        }
+                                      }}
+                                      type="number"
+                                      value={goal.quantity ?? 1}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              {capabilities.maxQuality !== null && (
+                                <TableRow>
+                                  <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">
+                                    Target quality
+                                  </TableHead>
+                                  <TableCell className="px-1 py-1 text-right">
+                                    <Input
+                                      aria-label={`Quality of ${goal.prefab}`}
+                                      className="ml-auto h-8 w-24 rounded-md px-2 text-right text-sm"
+                                      max={capabilities.maxQuality}
+                                      min={1}
+                                      onChange={(event) => {
+                                        const value = parseGoalInput(
+                                          event.target.value,
+                                          capabilities.maxQuality!,
+                                        )
+                                        if (value !== undefined) {
+                                          onUpdateGoal(goal.prefab, {
+                                            targetQuality: value,
+                                          })
+                                        }
+                                      }}
+                                      type="number"
+                                      value={goal.targetQuality ?? 1}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        <ItemIcon prefab={goal.prefab} size="2xl" />
                       </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-end gap-3">
-                      {capabilities.quantity && (
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                          Quantity
-                          <Input
-                            aria-label={`Quantity of ${goal.prefab}`}
-                            className="h-8 w-24 rounded-md px-2 text-sm"
-                            min={1}
-                            onChange={(event) => {
-                              const value = parseGoalInput(event.target.value)
-                              if (value !== undefined) {
-                                onUpdateGoal(goal.prefab, { quantity: value })
-                              }
-                            }}
-                            type="number"
-                            value={goal.quantity ?? 1}
-                          />
-                        </label>
-                      )}
-                      {capabilities.maxQuality !== null && (
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                          Quality
-                          <Input
-                            aria-label={`Quality of ${goal.prefab}`}
-                            className="h-8 w-20 rounded-md px-2 text-sm"
-                            max={capabilities.maxQuality}
-                            min={1}
-                            onChange={(event) => {
-                              const value = parseGoalInput(
-                                event.target.value,
-                                capabilities.maxQuality!,
-                              )
-                              if (value !== undefined) {
-                                onUpdateGoal(goal.prefab, {
-                                  targetQuality: value,
-                                })
-                              }
-                            }}
-                            type="number"
-                            value={goal.targetQuality ?? 1}
-                          />
-                        </label>
-                      )}
-                      <Button
-                        aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
-                        onClick={() => onRemoveGoal(goal.prefab)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <RiCloseLine aria-hidden="true" />
-                        Remove
-                      </Button>
-                    </div>
-                  </li>
+                    </CardContent>
+                  </Card>
                 )
               })}
-            </ul>
+            </div>
           ) : (
             <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
               No item goals
