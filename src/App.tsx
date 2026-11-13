@@ -17,6 +17,19 @@ import {
 } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { KitWorkspace } from "@/components/kit-workspace"
+import {
+  addItemGoal,
+  addKitToCollection,
+  loadKitCollection,
+  removeItemGoal,
+  removeKitFromCollection,
+  saveKitCollection,
+  selectKit,
+  updateKitInCollection,
+  type KitCollection,
+} from "@/data/kits"
+import { type Kit } from "@/domain/schema"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -62,6 +75,10 @@ function getBrowserStorage() {
   }
 }
 
+function readBrowserKits() {
+  return loadKitCollection(getBrowserStorage())
+}
+
 function humanizePrefab(prefab: string): string {
   return prefab
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
@@ -75,6 +92,7 @@ export function App() {
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [query, setQuery] = useState("")
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
+  const [kitState, setKitState] = useState(readBrowserKits)
   const [manageExclusions, setManageExclusions] = useState(false)
   const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(null)
   const [importMessage, setImportMessage] = useState<string | null>(null)
@@ -123,6 +141,9 @@ export function App() {
   )
   const visibleResults = results.slice(0, MAX_VISIBLE_ITEMS)
   const excludedPrefabs = new Set(exclusionState.settings.excludedPrefabs)
+  const activeKit = kitState.collection.kits.find(
+    (kit) => kit.id === kitState.collection.activeKitId,
+  )
   const unknownImportedCount =
     catalogState.status === "ready" && pendingImport
       ? pendingImport.excludedPrefabs.filter(
@@ -142,6 +163,51 @@ export function App() {
       warning: saved.success ? null : saved.message,
     })
     return saved.success
+  }
+
+  function persistKits(collection: KitCollection) {
+    const saved = saveKitCollection(getBrowserStorage(), collection)
+    setKitState({
+      collection,
+      warning: saved.success ? null : saved.message,
+    })
+  }
+
+  function addNewKit(kit: Kit) {
+    const withKit = addKitToCollection(kitState.collection, kit)
+    persistKits(selectKit(withKit, kit.id))
+  }
+
+  function selectActiveKit(kitId: string) {
+    persistKits(selectKit(kitState.collection, kitId))
+  }
+
+  function updateExistingKit(kit: Kit) {
+    persistKits(updateKitInCollection(kitState.collection, kit))
+  }
+
+  function deleteKit(kitId: string) {
+    persistKits(removeKitFromCollection(kitState.collection, kitId))
+  }
+
+  function addGoalToActiveKit(prefab: string) {
+    if (!activeKit) return
+    persistKits(
+      updateKitInCollection(
+        kitState.collection,
+        addItemGoal(activeKit, prefab),
+      ),
+    )
+  }
+
+  function removeGoalFromActiveKit(prefab: string) {
+    if (!activeKit) return
+    persistKits(
+      updateKitInCollection(
+        kitState.collection,
+        removeItemGoal(activeKit, prefab),
+      ),
+    )
   }
 
   function togglePrefabExclusion(prefab: string) {
@@ -284,6 +350,22 @@ export function App() {
           </div>
         </div>
 
+        <KitWorkspace
+          collection={kitState.collection}
+          excludedPrefabs={excludedPrefabs}
+          getItem={(prefab) =>
+            catalogState.status === "ready"
+              ? catalogState.dataAccess.getItem(prefab)
+              : undefined
+          }
+          onCreateKit={addNewKit}
+          onDeleteKit={deleteKit}
+          onRemoveGoal={removeGoalFromActiveKit}
+          onSelectKit={selectActiveKit}
+          onUpdateKit={updateExistingKit}
+          warning={kitState.warning}
+        />
+
         {catalogState.status === "loading" && (
           <div
             aria-live="polite"
@@ -424,6 +506,9 @@ export function App() {
                     item.prefab,
                   ).length
                   const isExcluded = excludedPrefabs.has(item.prefab)
+                  const isInActiveKit = activeKit?.itemGoals.some(
+                    (goal) => goal.prefab === item.prefab,
+                  )
 
                   return (
                     <li
@@ -456,8 +541,21 @@ export function App() {
                           value={item.maxQuality?.toLocaleString() ?? "Not set"}
                         />
                         <ItemFact label="Recipes" value={recipeCount.toString()} />
-                        {manageExclusions && (
-                          <div className="col-span-2 sm:col-span-1 sm:flex sm:justify-end">
+                      </div>
+                      {(activeKit || manageExclusions) && (
+                        <div className="col-span-2 flex flex-wrap justify-end gap-2 sm:col-span-1">
+                          {activeKit && (
+                            <Button
+                              aria-pressed={isInActiveKit}
+                              disabled={isInActiveKit}
+                              onClick={() => addGoalToActiveKit(item.prefab)}
+                              size="sm"
+                              variant={isInActiveKit ? "secondary" : "outline"}
+                            >
+                              {isInActiveKit ? "In kit" : "Add to kit"}
+                            </Button>
+                          )}
+                          {manageExclusions && (
                             <Button
                               aria-pressed={isExcluded}
                               onClick={() => togglePrefabExclusion(item.prefab)}
@@ -471,9 +569,9 @@ export function App() {
                               )}
                               {isExcluded ? "Restore" : "Exclude"}
                             </Button>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </li>
                   )
                 })}
