@@ -1,8 +1,41 @@
 import { useState, type FormEvent } from "react"
-import { RiCloseLine } from "@remixicon/react"
+import {
+  RiAddLine,
+  RiArrowRightSLine,
+  RiCloseLine,
+  RiDeleteBinLine,
+  RiEditLine,
+  RiMore2Line,
+} from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ItemIcon } from "@/components/item-icon"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Select,
   SelectContent,
@@ -94,6 +127,7 @@ export function KitWorkspace({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [immediateSnapshot, setImmediateSnapshot] =
     useState<ImmediateCalculationSnapshot | null>(null)
+  const [costSheetOpen, setCostSheetOpen] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total",
   )
@@ -117,6 +151,7 @@ export function KitWorkspace({
       sourceFingerprint,
       calculation: onCalculateImmediate(activeKit),
     })
+    setCostSheetOpen(true)
   }
 
   function openForm(mode: "create" | "edit") {
@@ -161,53 +196,20 @@ export function KitWorkspace({
   }
 
   return (
-    <section
-      aria-label="Kit workspace"
-      className="my-7 border-y border-border/80 py-5"
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <section aria-label="Kit workspace" className="mb-8 border-b border-border/80 py-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
-          {collection.kits.length > 0 ? (
-            <>
-              <label
-                className="mb-1.5 block text-xs font-semibold text-muted-foreground"
-                htmlFor="active-kit"
-              >
-                ACTIVE KIT
-              </label>
-              <Select
-                onValueChange={(value) => {
-                  if (typeof value === "string") onSelectKit(value)
-                }}
-                value={collection.activeKitId ?? ""}
-              >
-                <SelectTrigger
-                  aria-label="Select active kit"
-                  className="w-full max-w-md"
-                  id="active-kit"
-                >
-                  <SelectValue placeholder="Select kit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {collection.kits.map((kit) => (
-                    <SelectItem key={kit.id} value={kit.id}>
-                      {kit.name} ({kit.biome})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {activeKit && (
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  {activeKit.biome} · {activeKit.itemGoals.length} item goals
-                </p>
-              )}
-            </>
-          ) : (
-            <div>
-              <h2 className="text-lg font-semibold">Your kits</h2>
-              <p className="text-sm text-muted-foreground">No kits yet</p>
-            </div>
-          )}
+          <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            {activeKit?.biome ?? "KIT PLANNER"}
+          </p>
+          <h1 className="mt-1 break-words text-3xl font-semibold sm:text-4xl">
+            {activeKit?.name ?? "Build your kit"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {activeKit
+              ? `${activeKit.itemGoals.length} item goals`
+              : "Create a kit to start collecting items."}
+          </p>
           {warning && (
             <p className="mt-1 text-sm text-destructive" role="status">
               {warning}
@@ -217,22 +219,57 @@ export function KitWorkspace({
 
         <div className="flex flex-wrap items-center gap-2">
           {activeKit && (
-            <>
-              <Button onClick={() => openForm("edit")} variant="outline">
-                Edit
-              </Button>
-              <Button
-                onClick={() => {
-                  setConfirmDelete(true)
-                  setFormMode(null)
-                }}
-                variant="destructive"
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    aria-label="Kit options"
+                    size="icon"
+                    title="Kit options"
+                    variant="outline"
+                  />
+                }
               >
-                Delete
-              </Button>
-            </>
+                <RiMore2Line aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                {collection.kits.length > 1 && (
+                  <>
+                    <DropdownMenuLabel>Switch kit</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      onValueChange={onSelectKit}
+                      value={collection.activeKitId ?? ""}
+                    >
+                      {collection.kits.map((kit) => (
+                        <DropdownMenuRadioItem key={kit.id} value={kit.id}>
+                          {kit.name} · {kit.biome}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => openForm("edit")}>
+                    <RiEditLine aria-hidden="true" />
+                    Edit kit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setConfirmDelete(true)
+                      setFormMode(null)
+                    }}
+                    variant="destructive"
+                  >
+                    <RiDeleteBinLine aria-hidden="true" />
+                    Delete kit
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <Button onClick={() => openForm("create")} variant="outline">
+            <RiAddLine aria-hidden="true" />
             New kit
           </Button>
         </div>
@@ -421,98 +458,113 @@ export function KitWorkspace({
       )}
 
       {activeKit && (
-        <div className="mt-5 border-t border-border/70 pt-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="font-medium">Immediate recipe costs</h3>
-              <p className="text-sm text-muted-foreground">
-                Direct ingredients only; recipe chains and station costs are not included.
-              </p>
-            </div>
-            <Button
-              disabled={activeKit.itemGoals.length === 0 || sourceFingerprint === null}
-              onClick={calculateImmediate}
-            >
-              Calculate direct costs
-            </Button>
-          </div>
-
-          {visibleSnapshot && (
-            <div className="mt-4">
-              {calculationIsStale && (
-                <p className="mb-3 text-sm text-amber-800 dark:text-amber-200" role="status">
-                  Kit contents or game data changed. Recalculate to refresh these costs.
-                </p>
-              )}
-
-              <div className="mb-3 inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Cost view">
-                {(["total", "craft", "quality"] as const).map((view) => (
-                  <Button
-                    aria-pressed={costView === view}
-                    key={view}
-                    onClick={() => setCostView(view)}
-                    size="sm"
-                    variant={costView === view ? "secondary" : "ghost"}
-                  >
-                    {view === "total" ? "Total" : view === "craft" ? "Craft" : "Quality"}
-                  </Button>
-                ))}
-              </div>
-
-              {visibleSnapshot.calculation.requirements.length > 0 ? (
-                <div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3 border-b border-border py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[minmax(0,1fr)_7rem]">
-                    <span>Resource</span>
-                    <span className="text-right">{costView === "total" ? "Total" : costView === "craft" ? "Craft" : "Quality"}</span>
-                  </div>
-                  <ul>
-                    {visibleSnapshot.calculation.requirements.map((requirement) => (
-                      <li
-                        className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3 border-b border-border/60 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_7rem]"
-                        key={requirement.prefab}
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <ItemIcon prefab={requirement.prefab} size="sm" />
-                          <span className="min-w-0 break-words">
-                            {humanizePrefab(requirement.prefab)}
-                          </span>
-                        </span>
-                        <span className="text-right font-medium tabular-nums">
-                          {(costView === "total"
-                            ? requirement.totalAmount
-                            : costView === "craft"
-                              ? requirement.craftAmount
-                              : requirement.qualityAmount
-                          ).toLocaleString()}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
-                  No direct ingredient totals are available.
-                </p>
-              )}
-
-              {visibleSnapshot.calculation.unresolved.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium">Unresolved items</h4>
-                  <ul className="mt-1 list-inside list-disc text-sm text-muted-foreground">
-                    {visibleSnapshot.calculation.unresolved.map((issue) => (
-                      <li key={`${issue.prefab}:${issue.reason}`}>
-                        {humanizePrefab(issue.prefab)}: {immediateReasonLabels[issue.reason]}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <p className="mt-3 text-xs text-muted-foreground">
-                Quality totals add per-level ingredients for each requested item. Recovery flags are not subtracted.
-              </p>
-            </div>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <Button
+            disabled={activeKit.itemGoals.length === 0 || sourceFingerprint === null}
+            onClick={calculateImmediate}
+          >
+            {visibleSnapshot ? "Recalculate direct costs" : "Calculate direct costs"}
+            <RiArrowRightSLine aria-hidden="true" />
+          </Button>
+          {calculationIsStale && (
+            <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
+              Costs are stale
+            </p>
           )}
+
+          <Sheet open={costSheetOpen} onOpenChange={setCostSheetOpen}>
+            <SheetContent
+              className="w-full overflow-y-auto sm:max-w-xl"
+              side="right"
+            >
+              <SheetHeader className="border-b border-border">
+                <SheetTitle>Direct recipe costs</SheetTitle>
+                <SheetDescription>
+                  {activeKit.name} · Direct ingredients only; recipe chains and station costs are not included.
+                </SheetDescription>
+              </SheetHeader>
+
+              {visibleSnapshot && (
+                <div className="p-4 sm:p-6">
+                  {calculationIsStale && (
+                    <p className="mb-3 text-sm text-amber-800 dark:text-amber-200" role="status">
+                      Kit contents or game data changed. Recalculate to refresh these costs.
+                    </p>
+                  )}
+
+                  <div className="mb-3 inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Cost view">
+                    {(["total", "craft", "quality"] as const).map((view) => (
+                      <Button
+                        aria-pressed={costView === view}
+                        key={view}
+                        onClick={() => setCostView(view)}
+                        size="sm"
+                        variant={costView === view ? "secondary" : "ghost"}
+                      >
+                        {view === "total" ? "Total" : view === "craft" ? "Craft" : "Quality"}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {visibleSnapshot.calculation.requirements.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="pl-0">Resource</TableHead>
+                          <TableHead className="w-20 pr-0 text-right">
+                            {costView === "total" ? "Total" : costView === "craft" ? "Craft" : "Quality"}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {visibleSnapshot.calculation.requirements.map((requirement) => (
+                          <TableRow key={requirement.prefab}>
+                            <TableCell className="min-w-0 pl-0">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <ItemIcon prefab={requirement.prefab} size="sm" />
+                                <span className="break-words">
+                                  {humanizePrefab(requirement.prefab)}
+                                </span>
+                              </span>
+                            </TableCell>
+                            <TableCell className="pr-0 text-right font-medium tabular-nums">
+                              {(costView === "total"
+                                ? requirement.totalAmount
+                                : costView === "craft"
+                                  ? requirement.craftAmount
+                                  : requirement.qualityAmount
+                              ).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
+                      No direct ingredient totals are available.
+                    </p>
+                  )}
+
+                  {visibleSnapshot.calculation.unresolved.length > 0 && (
+                    <div className="mt-5">
+                      <h3 className="text-sm font-medium">Unresolved items</h3>
+                      <ul className="mt-1 list-inside list-disc text-sm text-muted-foreground">
+                        {visibleSnapshot.calculation.unresolved.map((issue) => (
+                          <li key={`${issue.prefab}:${issue.reason}`}>
+                            {humanizePrefab(issue.prefab)}: {immediateReasonLabels[issue.reason]}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Quality totals add per-level ingredients for each requested item. Recovery flags are not subtracted.
+                  </p>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
         </div>
       )}
     </section>

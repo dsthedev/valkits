@@ -2,13 +2,14 @@ import { useState } from "react"
 
 interface ItemIconProps {
   prefab: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
 }
 
 const sizeClasses = {
   sm: "size-8",
   md: "size-10",
   lg: "size-12",
+  xl: "size-16",
 }
 
 export function ItemIcon({ prefab, size = "md" }: ItemIconProps) {
@@ -19,7 +20,7 @@ export function ItemIcon({ prefab, size = "md" }: ItemIconProps) {
     return (
       <span
         aria-hidden="true"
-        className={`grid ${dimensions} shrink-0 place-items-center rounded-md bg-muted text-xs font-semibold text-muted-foreground`}
+        className={`grid ${dimensions} shrink-0 place-items-center rounded-md bg-muted text-lg font-semibold text-muted-foreground`}
       >
         {prefab.slice(0, 1).toUpperCase()}
       </span>

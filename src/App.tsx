@@ -8,16 +8,37 @@ import {
 import {
   RiCheckLine,
   RiCloseLine,
-  RiDownloadLine,
   RiErrorWarningLine,
-  RiFilterLine,
   RiLoader4Line,
+  RiMore2Line,
   RiSearchLine,
-  RiUploadLine,
 } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { ItemIcon } from "@/components/item-icon"
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table"
 import { KitWorkspace } from "@/components/kit-workspace"
 import {
   addItemGoal,
@@ -241,9 +262,8 @@ export function App() {
     persistExclusions(settings)
   }
 
-  function toggleExclusionManager() {
-    const nextMode = !manageExclusions
-    setManageExclusions(nextMode)
+  function setExclusionManager(enabled: boolean) {
+    setManageExclusions(enabled)
     setPendingImport(null)
     setImportMessage(null)
     setImportError(null)
@@ -330,15 +350,6 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
-        <div className="border-b border-border/80 pb-5">
-          <div>
-            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-              GAME DATA
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold">Item index</h1>
-          </div>
-        </div>
-
         <KitWorkspace
           collection={kitState.collection}
           excludedPrefabs={excludedPrefabs}
@@ -398,51 +409,65 @@ export function App() {
 
         {catalogState.status === "ready" && (
           <section aria-label="Item search results" className="mt-5">
-            <div className="flex flex-col gap-3 border-b border-border/80 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-medium">Item exclusions</p>
-                <p className="text-sm text-muted-foreground">
-                  {exclusionState.settings.excludedPrefabs.length.toLocaleString()} excluded
-                </p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p aria-live="polite" className="text-sm text-muted-foreground">
+                {results.length.toLocaleString()} {manageExclusions ? "items" : "available items"}
+              </p>
+              <div className="flex items-center gap-2">
                 {exclusionState.warning && (
-                  <p className="mt-1 text-sm text-destructive" role="status">
+                  <span className="hidden text-xs text-destructive sm:inline" role="status">
                     {exclusionState.warning}
-                  </p>
+                  </span>
                 )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {manageExclusions && (
-                  <>
-                    <Button onClick={exportExclusions} variant="outline">
-                      <RiDownloadLine aria-hidden="true" />
-                      Export
-                    </Button>
-                    <Button
-                      onClick={() => importInputRef.current?.click()}
-                      variant="outline"
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        aria-label="Item filters and exclusions"
+                        size="icon"
+                        title="Item filters and exclusions"
+                        variant="outline"
+                      />
+                    }
+                  >
+                    <RiMore2Line aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>
+                      Excluded items · {exclusionState.settings.excludedPrefabs.length}
+                    </DropdownMenuLabel>
+                    <DropdownMenuCheckboxItem
+                      checked={manageExclusions}
+                      onCheckedChange={(checked) =>
+                        setExclusionManager(checked === true)
+                      }
                     >
-                      <RiUploadLine aria-hidden="true" />
-                      Import
-                    </Button>
-                    <input
-                      accept="application/json,.json"
-                      aria-label="Choose exclusions file"
-                      className="sr-only"
-                      onChange={handleExclusionFile}
-                      ref={importInputRef}
-                      tabIndex={-1}
-                      type="file"
-                    />
-                  </>
-                )}
-                <Button
-                  aria-pressed={manageExclusions}
-                  onClick={toggleExclusionManager}
-                  variant={manageExclusions ? "secondary" : "outline"}
-                >
-                  <RiFilterLine aria-hidden="true" />
-                  {manageExclusions ? "Done" : "Manage exclusions"}
-                </Button>
+                      Manage exclusions
+                    </DropdownMenuCheckboxItem>
+                    {manageExclusions && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={exportExclusions}>
+                          Export exclusions
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => importInputRef.current?.click()}
+                        >
+                          Import exclusions
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <input
+                  accept="application/json,.json"
+                  aria-label="Choose exclusions file"
+                  className="sr-only"
+                  onChange={handleExclusionFile}
+                  ref={importInputRef}
+                  tabIndex={-1}
+                  type="file"
+                />
               </div>
             </div>
 
@@ -514,13 +539,41 @@ export function App() {
             </div>
 
             <div
-              aria-live="polite"
-              className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 py-3 text-sm"
+              className="mb-4 flex items-center justify-between gap-2"
             >
-              <p className="font-medium">
-                {results.length.toLocaleString()} {manageExclusions ? "items" : "available items"}
-              </p>
-              <p className="text-muted-foreground">
+              <div className="w-full max-w-xl">
+                <label className="sr-only" htmlFor="item-search">
+                  Search items
+                </label>
+                <div className="flex h-11 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15">
+                  <RiSearchLine
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-muted-foreground"
+                  />
+                  <Input
+                    autoComplete="off"
+                    className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
+                    id="item-search"
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search items"
+                    spellCheck={false}
+                    value={query}
+                  />
+                  {query && (
+                    <Button
+                      aria-label="Clear search"
+                      onClick={() => setQuery("")}
+                      size="icon-sm"
+                      title="Clear search"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <RiCloseLine aria-hidden="true" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="shrink-0 text-sm text-muted-foreground">
                 Showing {visibleResults.length.toLocaleString()}
                 {results.length > MAX_VISIBLE_ITEMS
                   ? ` of ${results.length.toLocaleString()}`
@@ -529,7 +582,7 @@ export function App() {
             </div>
 
             {visibleResults.length > 0 ? (
-              <ul>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleResults.map((item) => {
                   const recipeCount = catalogState.dataAccess.getRecipes(
                     item.prefab,
@@ -540,39 +593,46 @@ export function App() {
                   )
 
                   return (
-                    <li
-                      className="grid gap-3 border-b border-border/70 py-4 sm:grid-cols-[minmax(0,1fr)_repeat(4,4.5rem)_auto] sm:items-center"
-                      key={item.prefab}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <ItemIcon prefab={item.prefab} />
-                        <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="break-words font-medium">
-                            {humanizePrefab(item.prefab)}
-                          </h2>
-                          {manageExclusions && isExcluded && (
-                            <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                              Excluded
-                            </span>
-                          )}
+                    <Card className="h-full rounded-lg shadow-sm" key={item.prefab}>
+                      <CardHeader className="p-4 pb-0">
+                        <div className="flex items-center gap-3">
+                          <ItemIcon prefab={item.prefab} size="xl" />
+                          <div className="min-w-0">
+                            <CardTitle className="line-clamp-2 break-words text-base">
+                              {humanizePrefab(item.prefab)}
+                            </CardTitle>
+                            {manageExclusions && isExcluded && (
+                              <span className="mt-1 inline-flex rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                Excluded
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 sm:contents">
-                        <ItemFact label="Type" value={item.itemType ?? "Not set"} />
-                        <ItemFact
-                          label="Stack"
-                          value={item.maxStackSize?.toLocaleString() ?? "Not set"}
-                        />
-                        <ItemFact
-                          label="Quality"
-                          value={item.maxQuality?.toLocaleString() ?? "Not set"}
-                        />
-                        <ItemFact label="Recipes" value={recipeCount.toString()} />
-                      </div>
+                      </CardHeader>
+                      <CardContent className="px-4 py-2">
+                        <Table>
+                          <TableBody>
+                            <TableRow>
+                              <TableHead className="w-28 px-1 py-1 text-xs text-muted-foreground" scope="row">Type</TableHead>
+                              <TableCell className="px-1 py-1 text-right text-xs">{item.itemType ?? "Not set"}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Max stack</TableHead>
+                              <TableCell className="px-1 py-1 text-right text-xs">{item.maxStackSize?.toLocaleString() ?? "Not set"}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Max quality</TableHead>
+                              <TableCell className="px-1 py-1 text-right text-xs">{item.maxQuality?.toLocaleString() ?? "Not set"}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableHead className="px-1 py-1 text-xs text-muted-foreground" scope="row">Recipes</TableHead>
+                              <TableCell className="px-1 py-1 text-right text-xs">{recipeCount}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </CardContent>
                       {(activeKit || manageExclusions) && (
-                        <div className="col-span-2 flex flex-wrap justify-end gap-2 sm:col-span-1">
+                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pb-4 pt-0">
                           {activeKit && (
                             <Button
                               aria-pressed={isInActiveKit}
@@ -599,12 +659,12 @@ export function App() {
                               {isExcluded ? "Restore" : "Exclude"}
                             </Button>
                           )}
-                        </div>
+                        </CardFooter>
                       )}
-                    </li>
+                    </Card>
                   )
                 })}
-              </ul>
+              </div>
             ) : (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 No items match this search.
@@ -613,15 +673,6 @@ export function App() {
           </section>
         )}
       </main>
-    </div>
-  )
-}
-
-function ItemFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-sm">{value}</p>
     </div>
   )
 }
