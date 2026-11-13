@@ -1,0 +1,17 @@
+name: MeadBaseStaminaLingering
+clonePrefabName: 
+craftingStation: $piece_meadcauldron
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Sap:10:1:True
+- Cloudberry:10:1:True
+- MushroomJotunPuffs:10:1:True

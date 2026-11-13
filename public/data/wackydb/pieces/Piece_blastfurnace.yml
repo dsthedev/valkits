@@ -1,0 +1,101 @@
+name: blastfurnace
+piecehammer: Hammer
+m_name: $piece_blastfurnace
+sizeMultiplier: 1
+m_description: $piece_blastfurnace_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_artisanstation
+piecehammerCategory: Crafting
+usage: Crafting
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort: 
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: true
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: false
+canBeRemoved: true
+notOnWood: true
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 2000
+  damageModifiers:
+    m_blunt: Resistant
+    m_slash: Resistant
+    m_pierce: Resistant
+    m_chop: Resistant
+    m_pickaxe: Normal
+    m_fire: Immune
+    m_frost: Immune
+    m_lightning: Normal
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: true
+  triggerPrivateArea: true
+  materialType: Stone
+  burnable: true
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData:
+  addOreTooltip: $piece_smelter_additem
+  emptyOreTooltip: $piece_smelter_empty
+  fuelItem:
+    name: Coal
+  maxOre: 10
+  maxFuel: 20
+  fuelPerProduct: 2
+  secPerProduct: 30
+  spawnStack: false
+  requiresRoof: false
+  addOreAnimationLength: 0
+  smelterConversion:
+  - FromName: FlametalOreNew
+    ToName: FlametalNew
+    Remove: false
+  - FromName: BlackMetalScrap
+    ToName: BlackMetal
+    Remove: false
+  - FromName: FlametalOreNew
+    ToName: FlametalNew
+    Remove: false
+  - FromName: GoldOre
+    ToName: Gold
+    Remove: false
+cookingStationData: 
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData: 
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- Stone:20:1:True
+- SurtlingCore:5:1:True
+- Iron:10:1:True
+- FineWood:20:1:True

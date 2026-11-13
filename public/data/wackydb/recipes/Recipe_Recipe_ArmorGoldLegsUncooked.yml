@@ -1,0 +1,18 @@
+name: Recipe_ArmorGoldLegsUncooked
+clonePrefabName: NO
+craftingStation: $piece_blackforge
+minStationLevel: 4
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Gold:20:15:True
+- MoldArmorGoldLegs:1:0:True
+- MooseHide:8:3:True
+- Leatherstraps:4:3:True

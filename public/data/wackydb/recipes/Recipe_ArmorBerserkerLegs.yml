@@ -1,0 +1,17 @@
+name: ArmorBerserkerLegs
+clonePrefabName: 
+craftingStation: $piece_workbench
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- BjornHide:5:2:True
+- Blueberries:4:1:True
+- Upgrader1Armor:1:0:False

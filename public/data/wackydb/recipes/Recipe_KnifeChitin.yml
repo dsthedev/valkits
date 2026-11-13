@@ -1,0 +1,18 @@
+name: KnifeChitin
+clonePrefabName: 
+craftingStation: $piece_workbench
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- FineWood:4:0:True
+- Chitin:20:10:True
+- LeatherScraps:2:0:True
+- Upgrader3Weapon:1:0:False

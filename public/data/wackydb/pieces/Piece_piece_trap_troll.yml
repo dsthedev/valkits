@@ -1,0 +1,76 @@
+name: piece_trap_troll
+piecehammer: Hammer
+m_name: $piece_trap
+sizeMultiplier: 1
+m_description: $piece_trap_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_workbench
+piecehammerCategory: Misc
+usage: Defense
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort: 
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: false
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: true
+canBeRemoved: true
+notOnWood: false
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 300
+  damageModifiers:
+    m_blunt: Normal
+    m_slash: Normal
+    m_pierce: Resistant
+    m_chop: Normal
+    m_pickaxe: Resistant
+    m_fire: Resistant
+    m_frost: Resistant
+    m_lightning: Immune
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: false
+  triggerPrivateArea: true
+  materialType: Iron
+  burnable: false
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData: 
+cookingStationData: 
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData: 
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- BlackMetal:5:1:True
+- BronzeNails:10:1:True
+- MechanicalSpring:1:1:True

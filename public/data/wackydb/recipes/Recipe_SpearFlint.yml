@@ -1,0 +1,18 @@
+name: SpearFlint
+clonePrefabName: 
+craftingStation: $piece_workbench
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Wood:5:3:True
+- Flint:10:5:True
+- LeatherScraps:2:1:True
+- Upgrader0Weapon:1:0:False

@@ -1,0 +1,16 @@
+name: WolfJerky
+clonePrefabName: 
+craftingStation: $piece_cauldron
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 2
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- WolfMeat:1:1:True
+- Honey:1:1:True

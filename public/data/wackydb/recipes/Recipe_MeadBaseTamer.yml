@@ -1,0 +1,17 @@
+name: MeadBaseTamer
+clonePrefabName: 
+craftingStation: $piece_meadcauldron
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Onion:5:1:True
+- Carrot:10:1:True
+- PungentPebbles:1:1:True

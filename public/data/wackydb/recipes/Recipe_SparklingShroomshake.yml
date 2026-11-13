@@ -1,0 +1,18 @@
+name: SparklingShroomshake
+clonePrefabName: 
+craftingStation: $piece_cauldron
+minStationLevel: 6
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Sap:4:1:True
+- Vineberry:2:1:True
+- MushroomSmokePuff:2:1:True
+- MushroomMagecap:2:1:True

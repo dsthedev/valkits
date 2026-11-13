@@ -1,0 +1,18 @@
+name: Recipe_HelmetGoldMediumUncooked
+clonePrefabName: NO
+craftingStation: $piece_blackforge
+minStationLevel: 4
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- SealHide:5:15:True
+- MoldArmorMediumHelmet:1:0:True
+- MooseHide:5:3:True
+- MooseSinew:1:1:True

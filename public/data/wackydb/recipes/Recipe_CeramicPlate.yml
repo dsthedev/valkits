@@ -1,0 +1,15 @@
+name: CeramicPlate
+clonePrefabName: 
+craftingStation: $piece_artisanstation
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 5
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- BlackMarble:5:3:True

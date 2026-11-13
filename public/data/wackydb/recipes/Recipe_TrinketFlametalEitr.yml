@@ -1,0 +1,18 @@
+name: TrinketFlametalEitr
+clonePrefabName: 
+craftingStation: $piece_blackforge
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- FlametalNew:5:0:False
+- Eitr:5:0:False
+- GemstoneRed:1:0:False
+- TrophyFallenValkyrie:1:0:False

@@ -1,0 +1,18 @@
+name: SpearCarapace
+clonePrefabName: 
+craftingStation: $piece_blackforge
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- YggdrasilWood:10:5:True
+- Carapace:4:4:True
+- Mandible:2:1:True
+- Upgrader5Weapon:1:0:False

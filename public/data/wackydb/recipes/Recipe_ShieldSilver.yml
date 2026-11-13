@@ -1,0 +1,17 @@
+name: ShieldSilver
+clonePrefabName: 
+craftingStation: $piece_forge
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- FineWood:10:10:True
+- Silver:8:4:True
+- Upgrader3Armor:1:0:False

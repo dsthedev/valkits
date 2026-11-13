@@ -1,0 +1,17 @@
+name: Sausages
+clonePrefabName: 
+craftingStation: $piece_cauldron
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 4
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Entrails:4:1:True
+- RawMeat:1:1:True
+- Thistle:1:1:True

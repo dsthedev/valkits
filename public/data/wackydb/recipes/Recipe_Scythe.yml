@@ -1,0 +1,17 @@
+name: Scythe
+clonePrefabName: 
+craftingStation: $piece_forge
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- ScytheHandle:1:0:True
+- Silver:6:5:True
+- Upgrader0Weapon:1:0:False

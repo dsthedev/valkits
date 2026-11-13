@@ -1,0 +1,18 @@
+name: Recipe_Battleaxe_Crystal
+clonePrefabName: NO
+craftingStation: $piece_forge
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- ElderBark:40:5:True
+- Silver:30:15:True
+- Crystal:10:0:True
+- Upgrader3Weapon:1:0:False

@@ -1,0 +1,139 @@
+name: piece_oven
+piecehammer: Hammer
+m_name: $piece_oven
+sizeMultiplier: 1
+m_description: $piece_oven_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_artisanstation
+piecehammerCategory: Crafting
+usage: Crafting
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort: 
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: true
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: false
+canBeRemoved: true
+notOnWood: false
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 500
+  damageModifiers:
+    m_blunt: Normal
+    m_slash: Normal
+    m_pierce: Resistant
+    m_chop: Weak
+    m_pickaxe: Normal
+    m_fire: Normal
+    m_frost: Resistant
+    m_lightning: Normal
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: true
+  triggerPrivateArea: true
+  materialType: Stone
+  burnable: false
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData: 
+cookingStationData:
+  addItemTooltip: $piece_oven_additem
+  overcookedItem: Coal
+  fuelItem: Wood
+  requireFire: false
+  maxFuel: 10
+  secPerFuel: 2000
+  cookConversion:
+  - FromName: LoxPieUncooked
+    ToName: LoxPie
+    CookTime: 50
+    Remove: false
+  - FromName: BreadDough
+    ToName: Bread
+    CookTime: 50
+    Remove: false
+  - FromName: FishAndBreadUncooked
+    ToName: FishAndBread
+    CookTime: 50
+    Remove: false
+  - FromName: MeatPlatterUncooked
+    ToName: MeatPlatter
+    CookTime: 50
+    Remove: false
+  - FromName: HoneyGlazedChickenUncooked
+    ToName: HoneyGlazedChicken
+    CookTime: 50
+    Remove: false
+  - FromName: MisthareSupremeUncooked
+    ToName: MisthareSupreme
+    CookTime: 50
+    Remove: false
+  - FromName: MagicallyStuffedShroomUncooked
+    ToName: MagicallyStuffedShroom
+    CookTime: 50
+    Remove: false
+  - FromName: RoastedCrustPieUncooked
+    ToName: RoastedCrustPie
+    CookTime: 50
+    Remove: false
+  - FromName: PiquantPieUncooked
+    ToName: PiquantPie
+    CookTime: 50
+    Remove: false
+  - FromName: VikingCupcakeUncooked
+    ToName: VikingCupcake
+    CookTime: 50
+    Remove: false
+  - FromName: SealBlubber
+    ToName: CookedSealBlubber
+    CookTime: 50
+    Remove: false
+  - FromName: OvenPancakeUncooked
+    ToName: OvenPancake
+    CookTime: 50
+    Remove: false
+  - FromName: KaleChipsUncooked
+    ToName: KaleChips
+    CookTime: 50
+    Remove: false
+  - FromName: BakedPoteitrUncooked
+    ToName: BakedPoteitr
+    CookTime: 50
+    Remove: false
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData: 
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- Iron:15:1:True
+- Stone:20:1:True
+- SurtlingCore:4:1:True

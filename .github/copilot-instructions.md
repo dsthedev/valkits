@@ -1,0 +1,408 @@
+# Copilot Instructions
+
+## Project purpose
+
+Build a local-first Valheim kit planner. The primary job is to help a
+player define a target kit for a biome or progression milestone, then
+calculate the resources needed to acquire every item in that kit.
+
+A kit represents a desired set of end-state items, not a crafting queue
+or a general-purpose game database browser.
+
+Examples: - Meadows --- Starter Kit - Black Forest --- Troll Armor -
+Black Forest --- Bronze Progression - Swamp --- Poison Preparation
+
+The application should eventually calculate and present: 1. **Kit
+resources** --- resources needed to craft/acquire the requested items,
+including recursive ingredients and quality upgrades. 2. **Station
+resources** --- resources needed to build and upgrade the crafting
+stations to the levels required by those kit items. 3. **Combined
+resources** --- an aggregated view of the two lists.
+
+Keep the two calculations independent so users can view either list
+separately or combine them.
+
+## Development approach
+
+Work incrementally and in dependency order. Do not implement several
+unrelated features in one change.
+
+Before changing code: 1. Inspect the existing project structure and
+relevant files. 2. Identify the smallest dependency-complete feature
+that can be implemented next. 3. Explain the intended files and changes
+briefly. 4. Implement only that scope. 5. Run the relevant tests and
+type checks. 6. Summarize changed files, behavior, verification results,
+and any remaining limitations.
+
+Do not assume a library is installed. Inspect `package.json` before
+using a dependency. Prefer existing project conventions and installed
+shadcn components.
+
+The developer/user controls commits. Do not create commits.
+
+## Core technical principles
+
+-   Use TypeScript.
+-   Use React function components and hooks.
+-   Use the existing Vite, shadcn/ui, and Tailwind setup.
+-   Use Zod for validation at external-data and persistence boundaries
+    if installed; otherwise propose adding it before relying on it.
+-   Use Vitest and React Testing Library if installed or approved for
+    installation.
+-   Use React Router only when navigation actually requires it.
+-   Use dnd-kit only when a real drag-and-drop feature is being
+    implemented.
+-   Avoid adding dependencies for functionality that can be implemented
+    simply with the current stack.
+-   Keep the app client-side and local-first. Do not introduce a
+    backend, accounts, cloud sync, analytics, or remote APIs unless
+    explicitly requested.
+-   Persist user-created kits and settings in localStorage. Keep
+    imported game data separate from user data.
+-   Handle malformed, missing, or outdated localStorage data safely.
+    Validate before using it and provide a recoverable failure path
+    rather than crashing.
+-   Keep components small and focused. Separate data access, domain
+    logic, persistence, and presentation.
+-   Prefer explicit types and pure functions for calculations. Avoid
+    hiding business rules inside React components.
+-   Use prefab identifiers as stable keys and relationships. Never join
+    game data by localized display names.
+-   Do not invent game data or silently assume missing data means an
+    item is gatherable.
+
+## Scope boundaries
+
+This is a **resource acquisition planner**, not an in-game stat
+calculator.
+
+Do not implement or prioritize: - Weapon damage, armor ratings, combat
+formulas, durability, attack behavior, or character builds. - A
+general-purpose Valheim wiki. - Multiplayer, user accounts, cloud
+synchronization, or server integration. - Automatic recalculation on
+every edit. - A crafting queue or time optimizer unless explicitly
+requested.
+
+Only retain item fields that support identification, kit editing,
+recipes, resource calculation, station requirements, or useful item
+display.
+
+## Domain concepts
+
+Keep these concepts distinct.
+
+### Game item
+
+Imported reference data describing an item. Use the prefab as its
+canonical identifier.
+
+Likely useful fields: - `prefab` - `nameToken` - `descriptionToken`
+(optional) - `itemType` (optional) - `maxStackSize` - `maxQuality` -
+`icon` (optional, only if a usable asset reference is available)
+
+Do not copy every field from WackyDatabase into the application model.
+Preserve original source files separately and normalize only the fields
+the application needs.
+
+### Game recipe
+
+Imported recipe data describing how an item is produced.
+
+Likely useful fields: - `resultPrefab` - `outputAmount` -
+`craftingStation` (optional) - `minStationLevel` - `disabled` -
+`disabledUpgrade` - `requireOnlyOneIngredient` - `requirements` -
+`upgradeRequirements`
+
+A recipe requirement should preserve: - `prefab` - `amount` -
+`amountPerLevel` - `recover`
+
+Do not infer the meaning of a source field from its name alone. Verify
+semantics against representative exported records before using it in
+calculations.
+
+WackyDatabase examples currently observed: - Recipe YAML has `name`,
+`craftingStation`, `minStationLevel`, `amount`, `disabled`,
+`disabledUpgrade`, `m_noCraftOnlyUpgrade`, `requireOnlyOneIngredient`,
+`upgrade_reqs`, and `reqs`. - A `reqs` entry appears in the form
+`Prefab:Amount:AmountPerLevel:Recover`. - `upgrade_reqs` has been empty
+in the examples inspected so far. Do not assume it is populated or
+required for all upgrades. - Item YAML includes `name`, `m_name`,
+`m_description`, `m_itemType`, `m_maxStackSize`, and `m_maxQuality`,
+among many irrelevant gameplay fields.
+
+Treat these observations as provisional source-format knowledge. Keep
+parsing isolated so it can be adjusted when more examples are inspected.
+
+### Kit
+
+A user-created milestone containing desired item acquisition goals.
+
+A kit should have: - A stable app-generated ID. - A name. - A biome. -
+An optional description. - An ordered list of item goals. - An optional
+last-calculated snapshot.
+
+Do not add tags or elaborate guide hierarchies to the initial kit
+feature.
+
+A kit item goal references a game item by prefab. Goal-specific fields
+depend on the item: - Equipment may specify a target quality. -
+Stackable consumables/materials may specify a desired quantity. - Do not
+force a generic quantity field onto every item. Use item metadata and
+explicit rules to determine which controls make sense. - Keep special
+cases explicit rather than guessing from one property alone.
+
+Do not duplicate imported item metadata inside each kit goal. Store the
+prefab reference and only the user-selected goal values.
+
+### Kit calculation snapshot
+
+Calculations are user-triggered, not automatic. A kit should retain its
+previous result when edited, but the result must be visibly marked stale
+when its calculation inputs have changed.
+
+A calculation snapshot should eventually include: - Calculation
+timestamp. - Fingerprint of calculation-relevant kit inputs. - Game-data
+version or fingerprint. - Kit resource totals. - Station resource
+totals. - Any unresolved requirements or warnings.
+
+Use a deterministic fingerprint based only on calculation-relevant
+inputs. A stale result must never be presented as current.
+
+## Resource calculation rules
+
+Keep calculation logic in pure domain modules, independent of React.
+
+### Kit resource calculation
+
+The intended recursive process: 1. Read each kit goal. 2. Resolve its
+item prefab. 3. Determine the quantity or target quality requested. 4.
+Find the applicable recipe or acquisition source. 5. Calculate the
+number of crafts needed, accounting for recipe output quantity. 6. Apply
+verified quality-upgrade ingredient rules. 7. Recursively resolve
+craftable ingredients. 8. Stop at known gatherable/acquired resources.
+9. Aggregate totals by prefab.
+
+Do not assume every item has exactly one recipe. Account for disabled
+recipes, multiple recipes, alternative-ingredient recipes, missing
+recipes, and processing recipes as the dataset investigation establishes
+their behavior.
+
+Do not silently classify an item with no recipe as a gatherable
+resource. Distinguish: - Known gatherable/resource item. - Known item
+with a recipe. - Known item with no known recipe/source. - Unknown
+prefab. - Unsupported or ambiguous recipe.
+
+For `requireOnlyOneIngredient`, do not simply sum every ingredient.
+Implement its behavior only after confirming how WackyDatabase
+represents alternatives and how the game interprets them.
+
+Preserve `recover` and `amountPerLevel` in imported data. Apply them
+only according to verified game behavior. The user has confirmed that
+`amountPerLevel` on item upgrades is per quality level; still verify how
+the exported recipe's base amount and level increments combine for each
+recipe type.
+
+### Station requirements and station resources
+
+Keep station requirements separate from ordinary item-resource
+requirements.
+
+For each kit item: - Determine its required crafting station. -
+Determine the required station level from verified recipe data and
+quality rules. - Combine requirements for the same station by taking the
+highest required level, not by adding levels. - Calculate the materials
+and upgrade pieces needed to construct/upgrade the required station. -
+Recursively resolve the recipes for those station upgrade pieces where
+supported.
+
+Do not treat special prefab requirements such as `Upgrader1Weapon` or
+`Upgrader1Armor` as station levels unless verified. They may be actual
+recipe ingredients or special game resources. Preserve them as
+requirements until their role is understood.
+
+Station construction and upgrade data may be incomplete initially.
+Report unresolved station requirements instead of fabricating a resource
+cost.
+
+### Combined resources
+
+Keep `kitResources` and `stationResources` separate in the calculation
+result. Derive combined totals by aggregating both lists by prefab. Do
+not mutate either source list when creating the combined view.
+
+Avoid double-counting shared station infrastructure. Multiple kit items
+using the same station should share one station requirement at the
+highest required level.
+
+## Data import and source files
+
+WackyDatabase BulkYML exports are the current candidate source.
+
+Keep raw exported YAML separate from application source code and
+user-created data. Do not place large raw datasets directly inside React
+components or hand-maintain normalized copies.
+
+Create an isolated import/normalization layer that: 1. Loads the raw
+source files. 2. Parses YAML. 3. Converts source records into typed
+application models. 4. Validates normalized records. 5. Reports
+malformed records, missing references, duplicate prefabs, and
+unsupported fields. 6. Exposes a predictable data-access API to the rest
+of the app.
+
+Do not make UI components parse YAML directly.
+
+When parsing recipe requirement strings, handle malformed values and
+delimiters safely. Do not rely on naïve string splitting if values can
+contain delimiters. Add tests using real exported samples.
+
+Keep source provenance/version information so a future WackyDatabase
+export can replace the dataset and trigger recalculation when
+appropriate.
+
+## UI and interaction principles
+
+-   Keep navigation kit-centered and simple.
+-   Build the smallest useful interface before adding secondary views.
+-   Search should operate against the imported item index, not a
+    hardcoded list.
+-   Search results should use prefab identity and available display
+    metadata.
+-   Adding an item to a kit should prevent accidental duplicate goals or
+    define a clear duplicate behavior.
+-   Editing a kit should mark its previous calculation stale, not erase
+    it.
+-   A Calculate action should explicitly run the calculation and update
+    the snapshot.
+-   Show unresolved requirements and calculation limitations clearly.
+-   Keep kit resources, station resources, and combined totals
+    distinguishable.
+-   Do not add decorative dashboards or statistics that do not help
+    users build or calculate kits.
+-   Use accessible labels, keyboard-operable controls, and clear
+    empty/loading/error states.
+
+## Suggested dependency-oriented implementation order
+
+Do not skip foundational dependencies just to build visible UI sooner.
+Adjust the sequence when repository inspection reveals a prerequisite is
+missing.
+
+### Phase 1 --- Domain types and validation
+
+-   Define biome values and core domain types.
+-   Define `GameItem`, `GameRecipe`, recipe requirements, kit, kit item
+    goal, resource total, station requirement, and calculation snapshot.
+-   Add Zod schemas at import and persistence boundaries if Zod is
+    installed.
+-   Add focused tests for schema validation.
+-   Keep types independent of React.
+
+### Phase 2 --- Game-data source and importer
+
+-   Add a small representative fixture set from real WackyDatabase
+    exports.
+-   Implement YAML loading and parsing.
+-   Normalize item and recipe records.
+-   Validate prefab references and duplicate records.
+-   Build an item lookup/search index.
+-   Test valid, malformed, incomplete, and duplicate records.
+-   Do not import the entire export until the importer works on
+    representative fixtures.
+
+### Phase 3 --- Data access and item search
+
+-   Create a small typed API for looking up items and searching by
+    name/token/prefab.
+-   Implement search against imported data.
+-   Add a minimal item search UI.
+-   Test search behavior independently of the UI where possible.
+
+### Phase 4 --- Kit CRUD and persistence
+
+-   Create, view, edit, and delete kits.
+-   Add item goals to a kit and remove them.
+-   Implement the item-specific goal controls (quality or quantity where
+    appropriate).
+-   Persist kits in localStorage with validation and a versioned storage
+    envelope.
+-   Test persistence, migration/failure behavior, and CRUD operations.
+
+### Phase 5 --- Recipe graph and resource calculation
+
+-   Build pure functions for recipe lookup, craft-count calculation,
+    recursive dependency resolution, and aggregation.
+-   Detect circular recipe dependencies.
+-   Handle missing/disabled/ambiguous recipes explicitly.
+-   Implement and test output quantities and verified quality-upgrade
+    costs.
+-   Start with known simple recipes and expand as source cases are
+    verified.
+
+### Phase 6 --- Manual calculation snapshots
+
+-   Add an explicit Calculate action.
+-   Store results with timestamp, kit fingerprint, and game-data
+    fingerprint/version.
+-   Detect stale calculations when relevant kit inputs or source data
+    change.
+-   Preserve old results while marking them stale.
+-   Test current/stale/never-calculated states.
+
+### Phase 7 --- Station requirements and station-resource calculation
+
+-   Derive required station and level from verified recipe rules.
+-   Aggregate the highest required level per station.
+-   Model station upgrades and their resource costs.
+-   Reuse the recursive resource resolver where appropriate.
+-   Surface unresolved station dependencies.
+
+### Phase 8 --- Combined totals and usability
+
+-   Derive combined resource totals from kit and station lists.
+-   Add filtering/sorting and useful display grouping only when needed.
+-   Improve empty states, error messages, accessibility, and import
+    diagnostics.
+-   Consider export/import of user kits after the core workflow is
+    reliable.
+
+This order is a guide, not a rigid contract. Keep changes small and
+preserve working behavior.
+
+## Testing expectations
+
+Every meaningful domain rule should have tests.
+
+Prioritize tests for: - Parsing actual item and recipe YAML samples. -
+Recipe requirement string parsing. - Prefab lookup and item search. -
+Recipe output quantities. - Per-quality ingredient increments. -
+Recursive ingredient resolution. - Aggregation of shared resources. -
+Circular dependencies. - Missing and disabled recipes. - Alternative
+ingredient behavior once confirmed. - Station-level calculation. -
+Shared station requirement deduplication. - Kit fingerprint and stale
+snapshot detection. - localStorage validation and recovery.
+
+Use small fixtures that represent real exported records. Avoid tests
+that merely restate implementation details.
+
+Run the project's available typecheck, lint, and test scripts after each
+relevant change. Do not claim a check passed unless it was actually run.
+
+## Instruction maintenance feedback loop
+
+This file is part of the project and must evolve with it.
+
+When a requirement, data-source discovery, architecture decision, or
+dependency changes: 1. Check whether this file still accurately
+describes the project. 2. Update the relevant section in the same change
+when implementation decisions make the instructions outdated. 3. Remove
+obsolete assumptions rather than accumulating contradictory rules. 4.
+Record uncertain game-data behavior as unverified; do not turn a
+hypothesis into a rule. 5. Keep the implementation order synchronized
+with actual dependencies and completed phases.
+
+If a requested feature conflicts with these instructions, do not blindly
+follow either. Identify the conflict, explain the tradeoff, and ask for
+direction when the product decision is ambiguous.
+
+Do not rewrite this entire file for minor changes. Make the smallest
+accurate update and mention it in the change summary.

@@ -1,0 +1,18 @@
+name: MooseKebab
+clonePrefabName: 
+craftingStation: $piece_cauldron
+minStationLevel: 7
+maxStationLevelCap: 
+repairStation: 
+amount: 2
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- MooseMeat:1:1:True
+- Kale:2:1:True
+- OatFlour:1:1:True
+- Lingonberry:2:1:True

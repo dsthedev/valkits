@@ -1,0 +1,17 @@
+name: TrinketSilverDamage
+clonePrefabName: 
+craftingStation: $piece_forge
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Silver:5:0:False
+- WolfFang:5:0:False
+- TrophyFenring:1:0:False

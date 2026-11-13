@@ -1,0 +1,18 @@
+name: Recipe_ShieldTowerGold
+clonePrefabName: NO
+craftingStation: $piece_blackforge
+minStationLevel: 4
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: true
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Gold:20:10:True
+- MoldShieldTower:1:0:True
+- Frostwood:20:10:True
+- Upgrader7Armor:1:0:False

@@ -1,0 +1,18 @@
+name: Recipe_SwordSlayer
+clonePrefabName: NO
+craftingStation: $piece_blackforge
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- FlametalNew:30:15:True
+- AskHide:5:5:True
+- MorgenSinew:3:3:True
+- Upgrader6Weapon:1:0:False

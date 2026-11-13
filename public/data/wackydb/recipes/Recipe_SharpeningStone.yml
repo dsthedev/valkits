@@ -1,0 +1,15 @@
+name: SharpeningStone
+clonePrefabName: 
+craftingStation: $piece_stonecutter
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Stone:5:1:True

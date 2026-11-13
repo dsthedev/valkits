@@ -1,0 +1,16 @@
+name: Recipe_Bronze5
+clonePrefabName: NO
+craftingStation: $piece_forge
+minStationLevel: 1
+maxStationLevelCap: 
+repairStation: 
+amount: 5
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Copper:10:1:True
+- Tin:5:1:True

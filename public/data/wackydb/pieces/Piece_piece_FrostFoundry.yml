@@ -1,0 +1,203 @@
+name: piece_FrostFoundry
+piecehammer: Hammer
+m_name: $piece_frostfoundry
+sizeMultiplier: 1
+m_description: $piece_frostfoundry_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_workbench
+piecehammerCategory: Crafting
+usage: Crafting
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort: 
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: true
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: false
+canBeRemoved: true
+notOnWood: false
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 500
+  damageModifiers:
+    m_blunt: Normal
+    m_slash: Normal
+    m_pierce: Resistant
+    m_chop: Weak
+    m_pickaxe: Normal
+    m_fire: Normal
+    m_frost: Resistant
+    m_lightning: Normal
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: true
+  triggerPrivateArea: true
+  materialType: Stone
+  burnable: false
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData: 
+cookingStationData:
+  addItemTooltip: $piece_frostfoundry_additem
+  overcookedItem: Coal
+  fuelItem: 
+  requireFire: false
+  maxFuel: 
+  secPerFuel: 
+  cookConversion:
+  - FromName: SwordGoldUncooked
+    ToName: SwordGold
+    CookTime: 50
+    Remove: false
+  - FromName: AtgeirGoldUncooked
+    ToName: AtgeirGold
+    CookTime: 50
+    Remove: false
+  - FromName: BattleaxeGoldUncooked
+    ToName: BattleaxeGold
+    CookTime: 50
+    Remove: false
+  - FromName: AxeGoldUncooked
+    ToName: AxeGold
+    CookTime: 50
+    Remove: false
+  - FromName: BowGoldUncooked
+    ToName: BowGold
+    CookTime: 50
+    Remove: false
+  - FromName: CrossbowGoldUncooked
+    ToName: CrossbowGold
+    CookTime: 50
+    Remove: false
+  - FromName: FistGoldUncooked
+    ToName: FistGold
+    CookTime: 50
+    Remove: false
+  - FromName: KnifeGoldUncooked
+    ToName: KnifeGold
+    CookTime: 50
+    Remove: false
+  - FromName: SledgeGoldUncooked
+    ToName: SledgeGold
+    CookTime: 50
+    Remove: false
+  - FromName: MaceGoldUncooked
+    ToName: MaceGold
+    CookTime: 50
+    Remove: false
+  - FromName: SpearGoldUncooked
+    ToName: SpearGold
+    CookTime: 50
+    Remove: false
+  - FromName: THSwordGoldUncooked
+    ToName: THSwordGold
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldHeavyChestUncooked
+    ToName: ArmorDeepNorthHeavyChest
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldHeavyLegsUncooked
+    ToName: ArmorDeepNorthHeavylegs
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldHeavyHelmetUncooked
+    ToName: HelmetDNHeavy
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMediumHelmetUncooked
+    ToName: HelmetDNMediumHood
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMediumChestUncooked
+    ToName: ArmorDeepNorthMediumChest
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMediumLegsUncooked
+    ToName: ArmorDeepNorthMediumlegs
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMageLegsUncooked
+    ToName: ArmorDeepNorthMagelegs
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMageChestUncooked
+    ToName: ArmorDeepNorthMageChest
+    CookTime: 50
+    Remove: false
+  - FromName: ArmorGoldMageHelmetUncooked
+    ToName: HelmetDNMage
+    CookTime: 50
+    Remove: false
+  - FromName: ShieldBucklerGoldUncooked
+    ToName: ShieldGoldBuckler
+    CookTime: 50
+    Remove: false
+  - FromName: ShieldRoundGoldUncooked
+    ToName: ShieldGold
+    CookTime: 50
+    Remove: false
+  - FromName: ShieldTowerGoldUncooked
+    ToName: ShieldGoldTower
+    CookTime: 50
+    Remove: false
+  - FromName: KeysGoldUncooked
+    ToName: BloodGoldKey
+    CookTime: 50
+    Remove: false
+  - FromName: StaffSpiritCallerUncooked
+    ToName: StaffSpiritCaller
+    CookTime: 50
+    Remove: false
+  - FromName: StaffSpiritCallerUncooked
+    ToName: StaffSpiritCaller
+    CookTime: 50
+    Remove: false
+  - FromName: StaffOrbofAhriUncooked
+    ToName: StaffOrbofAhri
+    CookTime: 50
+    Remove: false
+  - FromName: StaffFrostOrbsUncooked
+    ToName: StaffFrostOrbs
+    CookTime: 50
+    Remove: false
+  - FromName: StaffThunderbloodUncooked
+    ToName: StaffThunderBlood
+    CookTime: 50
+    Remove: false
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData: 
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- Iron:15:1:True
+- Stone:20:1:True
+- FrostCore:10:1:True

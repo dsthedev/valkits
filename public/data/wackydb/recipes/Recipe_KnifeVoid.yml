@@ -1,0 +1,18 @@
+name: KnifeVoid
+clonePrefabName: 
+craftingStation: $piece_magetable
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: true
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Voidplasm:1:0:True
+- Ectoplasm:8:10:True
+- Gold:2:10:True
+- Upgrader1Weapon:1:0:False

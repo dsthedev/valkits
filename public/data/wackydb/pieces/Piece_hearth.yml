@@ -1,0 +1,85 @@
+name: hearth
+piecehammer: Hammer
+m_name: $piece_hearth
+sizeMultiplier: 1
+m_description: $piece_hearth_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_stonecutter
+piecehammerCategory: Misc
+usage: Furniture, Lighting
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort:
+  comfort: 2
+  comfortGroup: Fire
+  comfortObjectName: _enabled
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: true
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: false
+canBeRemoved: true
+notOnWood: false
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 1500
+  damageModifiers:
+    m_blunt: Resistant
+    m_slash: Resistant
+    m_pierce: Resistant
+    m_chop: Resistant
+    m_pickaxe: Normal
+    m_fire: Immune
+    m_frost: Immune
+    m_lightning: Normal
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: true
+  triggerPrivateArea: true
+  materialType: Stone
+  burnable: false
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData: 
+cookingStationData: 
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData:
+  StartFuel: 0
+  MaxFuel: 20
+  SecPerFuel: 5000
+  InfiniteFuel: false
+  FuelType: Wood
+  IgniteInterval: 5
+  IgniteChance: 0.5
+  IgniteSpread: 4
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- Stone:15:1:True

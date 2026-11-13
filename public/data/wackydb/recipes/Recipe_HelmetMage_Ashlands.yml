@@ -1,0 +1,18 @@
+name: HelmetMage_Ashlands
+clonePrefabName: 
+craftingStation: $piece_magetable
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- LinenThread:16:8:True
+- Eitr:15:5:True
+- AskHide:2:0:True
+- Upgrader6Armor:1:0:False

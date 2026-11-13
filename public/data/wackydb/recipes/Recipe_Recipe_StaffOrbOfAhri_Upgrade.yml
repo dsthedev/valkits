@@ -1,0 +1,18 @@
+name: Recipe_StaffOrbOfAhri_Upgrade
+clonePrefabName: NO
+craftingStation: $piece_magetable
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: true
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- Gold:10:5:True
+- NornThread:4:2:True
+- OrbFrostFire:1:1:True
+- Upgrader7Weapon:1:0:False

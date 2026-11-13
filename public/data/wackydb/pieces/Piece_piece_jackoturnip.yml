@@ -1,0 +1,86 @@
+name: piece_jackoturnip
+piecehammer: Hammer
+m_name: $piece_jackoturnip
+sizeMultiplier: 1
+m_description: $piece_jackoturnip_description
+customIcon: 
+clonePrefabName: 
+material: 
+damagedMaterial: 
+craftingStation: $piece_workbench
+piecehammerCategory: Furniture
+usage: Lighting, Decor, Seasonal
+categoryOrderBeforePrefab: 
+minStationLevel: 1
+disabled: false
+adminonly: false
+comfort:
+  comfort: 2
+  comfortGroup: Lantern
+  comfortObjectName: 
+groundPiece: false
+ground: false
+waterPiece: false
+noInWater: false
+notOnFloor: false
+onlyinTeleportArea: false
+allowedInDungeons: false
+canBeRemoved: true
+notOnWood: false
+allowedInDeepSnow: false
+requireDeepSnow: false
+spaceRequirement: 0
+repairPiece: false
+isUpgrade: false
+blockingPieces: []
+canRockJade: false
+wearNTearData:
+  health: 200
+  damageModifiers:
+    m_blunt: Normal
+    m_slash: Normal
+    m_pierce: Resistant
+    m_chop: Normal
+    m_pickaxe: Normal
+    m_fire: Immune
+    m_frost: Immune
+    m_lightning: Normal
+    m_poison: Immune
+    m_spirit: Immune
+    m_nonPlayer: Normal
+  noRoofWear: false
+  noSupportWear: true
+  supports: false
+  triggerPrivateArea: true
+  materialType: Wood
+  burnable: true
+  snowDamageImmune: false
+  outsideRequiredBiomeDamage: 25
+  minToolTier: 0
+craftingStationData: 
+cSExtensionData: 
+cSExtensionDataList: 
+contData: 
+smelterData: 
+cookingStationData: 
+beehiveData: 
+fermStationData: 
+sapData: 
+incineratorData: 
+fireplaceData:
+  StartFuel: 2
+  MaxFuel: 6
+  SecPerFuel: 20000
+  InfiniteFuel: false
+  FuelType: Resin
+  IgniteInterval: 0
+  IgniteChance: 0
+  IgniteSpread: 4
+teleportWorldData: 
+plantData: 
+shipData: 
+shieldGenData: 
+batteringRamData: 
+build:
+- Turnip:4:1:True
+- Resin:2:1:False

@@ -1,0 +1,17 @@
+name: ShieldCore
+clonePrefabName: 
+craftingStation: $piece_artisanstation
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- BlackCore:1:1:True
+- SurtlingCore:1:1:True
+- CeramicPlate:5:1:True

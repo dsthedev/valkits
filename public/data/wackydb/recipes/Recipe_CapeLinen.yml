@@ -1,0 +1,17 @@
+name: CapeLinen
+clonePrefabName: 
+craftingStation: $piece_workbench
+minStationLevel: 2
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: false
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- LinenThread:20:4:True
+- Silver:1:0:True
+- Upgrader4Armor:1:0:False

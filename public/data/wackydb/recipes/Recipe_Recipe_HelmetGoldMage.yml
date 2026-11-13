@@ -1,0 +1,19 @@
+name: Recipe_HelmetGoldMage
+clonePrefabName: NO
+craftingStation: $piece_magetable
+minStationLevel: 3
+maxStationLevelCap: 
+repairStation: 
+amount: 1
+disabled: false
+disabledUpgrade: false
+m_listSortWeight: 100
+m_noCraftOnlyUpgrade: true
+requireOnlyOneIngredient: false
+upgrade_reqs: []
+reqs:
+- MooseSinew:2:1:True
+- MoldArmorMageHelmet:1:0:True
+- TrophyMoose:1:0:True
+- NornThread:3:2:True
+- Upgrader7Armor:1:0:False
