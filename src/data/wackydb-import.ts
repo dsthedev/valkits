@@ -19,6 +19,7 @@ const recipeCandidateSchema = z.object({
   minStationLevel: z.number().int().positive().optional(),
   disabled: z.boolean().optional(),
   disabledUpgrade: z.boolean().optional(),
+  noCraftOnlyUpgrade: z.boolean().optional(),
   requireOnlyOneIngredient: z.boolean().optional(),
   requirements: z.array(recipeRequirementSchema),
   upgradeRequirements: z.array(recipeRequirementSchema).optional(),
@@ -149,6 +150,7 @@ export function parseRecipeYaml(yamlText: string): ImportResult<RecipeCandidate>
     minStationLevel: optionalSourceValue(source.data.minStationLevel),
     disabled: optionalSourceValue(source.data.disabled),
     disabledUpgrade: optionalSourceValue(source.data.disabledUpgrade),
+    noCraftOnlyUpgrade: optionalSourceValue(source.data.m_noCraftOnlyUpgrade),
     requireOnlyOneIngredient: optionalSourceValue(
       source.data.requireOnlyOneIngredient,
     ),
@@ -181,6 +183,7 @@ export function linkRecipeResult(
     minStationLevel: candidate.minStationLevel,
     disabled: candidate.disabled,
     disabledUpgrade: candidate.disabledUpgrade,
+    noCraftOnlyUpgrade: candidate.noCraftOnlyUpgrade,
     requireOnlyOneIngredient: candidate.requireOnlyOneIngredient,
     requirements: candidate.requirements,
     upgradeRequirements: candidate.upgradeRequirements,

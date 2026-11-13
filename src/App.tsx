@@ -32,6 +32,7 @@ import {
   type KitCollection,
 } from "@/data/kits"
 import { type Kit } from "@/domain/schema"
+import { calculateImmediateKitRequirements } from "@/domain/immediate-calculation"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -222,6 +223,14 @@ export function App() {
     )
   }
 
+  function calculateImmediateForKit(kit: Kit) {
+    if (catalogState.status !== "ready") {
+      throw new Error("The item catalog is not ready.")
+    }
+
+    return calculateImmediateKitRequirements(kit, catalogState.dataAccess)
+  }
+
   function togglePrefabExclusion(prefab: string) {
     const settings = setPrefabExcluded(
       exclusionState.settings,
@@ -365,12 +374,18 @@ export function App() {
         <KitWorkspace
           collection={kitState.collection}
           excludedPrefabs={excludedPrefabs}
+          sourceFingerprint={
+            catalogState.status === "ready"
+              ? catalogState.catalog.sourceFingerprint
+              : null
+          }
           getItem={(prefab) =>
             catalogState.status === "ready"
               ? catalogState.dataAccess.getItem(prefab)
               : undefined
           }
           onCreateKit={addNewKit}
+          onCalculateImmediate={calculateImmediateForKit}
           onDeleteKit={deleteKit}
           onRemoveGoal={removeGoalFromActiveKit}
           onSelectKit={selectActiveKit}

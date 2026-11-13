@@ -54,6 +54,7 @@ describe("WackyDatabase YAML import", () => {
       resultPrefab: "ArmorBronzeChest",
       outputAmount: 1,
       craftingStation: "$piece_forge",
+      noCraftOnlyUpgrade: false,
       requirements: [
         { prefab: "Bronze", amount: 5, amountPerLevel: 3, recover: true },
         {
@@ -107,5 +108,17 @@ reqs:
 
     expect(candidate.requirements[0]?.prefab).toBe("Wood:variant")
     expect(malformed.success).toBe(false)
+  })
+
+  it("preserves recipes marked as upgrade-only", () => {
+    const candidate = getData(
+      parseRecipeYaml(`name: Recipe_SwordGold
+amount: 1
+m_noCraftOnlyUpgrade: true
+reqs: []
+`),
+    )
+
+    expect(candidate.noCraftOnlyUpgrade).toBe(true)
   })
 })

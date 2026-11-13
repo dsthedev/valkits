@@ -16,6 +16,10 @@ import {
   type Kit,
 } from "@/domain/schema"
 import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
+import type {
+  ImmediateCalculationReason,
+  ImmediateKitCalculation,
+} from "@/domain/immediate-calculation"
 import {
   createKit,
   updateKitDetails,
@@ -27,6 +31,7 @@ interface KitWorkspaceProps {
   collection: KitCollection
   warning: string | null
   excludedPrefabs: ReadonlySet<string>
+  sourceFingerprint: string | null
   getItem(prefab: string): GameItem | undefined
   onCreateKit(kit: Kit): void
   onSelectKit(kitId: string): void
@@ -34,6 +39,28 @@ interface KitWorkspaceProps {
   onDeleteKit(kitId: string): void
   onRemoveGoal(prefab: string): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
+  onCalculateImmediate(kit: Kit): ImmediateKitCalculation
+}
+
+interface ImmediateCalculationSnapshot {
+  kitId: string
+  inputFingerprint: string
+  sourceFingerprint: string
+  calculation: ImmediateKitCalculation
+}
+
+const immediateReasonLabels: Record<ImmediateCalculationReason, string> = {
+  "unknown-item": "Item not found in game data",
+  "no-recipe": "No recipe available in the imported data",
+  "disabled-recipe": "Recipe is disabled",
+  "upgrade-only-recipe": "Only upgrade recipes are available",
+  "ambiguous-recipe": "Multiple enabled recipes; cost is ambiguous",
+  "alternative-requirements": "Alternative ingredients are not selected",
+  "invalid-quantity": "Quantity is not supported for this item",
+  "invalid-target-quality": "Target quality is outside the item's supported range",
+  "quality-upgrades-disabled": "Recipe does not allow quality upgrades",
+  "unsupported-upgrade-requirements": "Separate quality requirements are not supported yet",
+  "unsupported-quality-batch": "Quality upgrades for batch outputs are not supported yet",
 }
 
 function humanizePrefab(prefab: string): string {
@@ -46,6 +73,7 @@ export function KitWorkspace({
   collection,
   warning,
   excludedPrefabs,
+  sourceFingerprint,
   getItem,
   onCreateKit,
   onSelectKit,
@@ -53,6 +81,7 @@ export function KitWorkspace({
   onDeleteKit,
   onRemoveGoal,
   onUpdateGoal,
+  onCalculateImmediate,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId,
@@ -62,6 +91,29 @@ export function KitWorkspace({
   const [biomeDraft, setBiomeDraft] = useState<Biome>("Meadows")
   const [formError, setFormError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [immediateSnapshot, setImmediateSnapshot] =
+    useState<ImmediateCalculationSnapshot | null>(null)
+  const inputFingerprint = activeKit
+    ? JSON.stringify(activeKit.itemGoals)
+    : null
+  const visibleSnapshot =
+    activeKit && immediateSnapshot?.kitId === activeKit.id
+      ? immediateSnapshot
+      : null
+  const calculationIsStale =
+    visibleSnapshot !== null &&
+    (visibleSnapshot.inputFingerprint !== inputFingerprint ||
+      visibleSnapshot.sourceFingerprint !== sourceFingerprint)
+
+  function calculateImmediate() {
+    if (!activeKit || !inputFingerprint || sourceFingerprint === null) return
+    setImmediateSnapshot({
+      kitId: activeKit.id,
+      inputFingerprint,
+      sourceFingerprint,
+      calculation: onCalculateImmediate(activeKit),
+    })
+  }
 
   function openForm(mode: "create" | "edit") {
     setFormMode(mode)
@@ -344,6 +396,93 @@ export function KitWorkspace({
             <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
               No item goals
             </p>
+          )}
+        </div>
+      )}
+
+      {activeKit && (
+        <div className="mt-5 border-t border-border/70 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-medium">Immediate recipe costs</h3>
+              <p className="text-sm text-muted-foreground">
+                Direct ingredients only; recipe chains and station costs are not included.
+              </p>
+            </div>
+            <Button
+              disabled={activeKit.itemGoals.length === 0 || sourceFingerprint === null}
+              onClick={calculateImmediate}
+            >
+              Calculate direct costs
+            </Button>
+          </div>
+
+          {visibleSnapshot && (
+            <div className="mt-4">
+              {calculationIsStale && (
+                <p className="mb-3 text-sm text-amber-800 dark:text-amber-200" role="status">
+                  Kit contents or game data changed. Recalculate to refresh these costs.
+                </p>
+              )}
+
+              {visibleSnapshot.calculation.requirements.length > 0 ? (
+                <div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-border py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[minmax(0,1fr)_6rem_6rem_6rem]">
+                    <span>Ingredient</span>
+                    <span className="text-right">Craft</span>
+                    <span className="text-right">Quality</span>
+                    <span className="text-right">Total</span>
+                  </div>
+                  <ul>
+                    {visibleSnapshot.calculation.requirements.map((requirement) => (
+                      <li
+                        className="grid grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-border/60 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_6rem_6rem_6rem]"
+                        key={requirement.prefab}
+                      >
+                        <span className="min-w-0">
+                          <span className="block break-words">
+                            {humanizePrefab(requirement.prefab)}
+                          </span>
+                          <span className="block truncate font-mono text-xs text-muted-foreground">
+                            {requirement.prefab}
+                          </span>
+                        </span>
+                        <span className="text-right tabular-nums">
+                          {requirement.craftAmount.toLocaleString()}
+                        </span>
+                        <span className="text-right tabular-nums">
+                          {requirement.qualityAmount.toLocaleString()}
+                        </span>
+                        <span className="text-right font-medium tabular-nums">
+                          {requirement.totalAmount.toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
+                  No direct ingredient totals are available.
+                </p>
+              )}
+
+              {visibleSnapshot.calculation.unresolved.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium">Unresolved items</h4>
+                  <ul className="mt-1 list-inside list-disc text-sm text-muted-foreground">
+                    {visibleSnapshot.calculation.unresolved.map((issue) => (
+                      <li key={`${issue.prefab}:${issue.reason}`}>
+                        {humanizePrefab(issue.prefab)}: {immediateReasonLabels[issue.reason]}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <p className="mt-3 text-xs text-muted-foreground">
+                Quality totals add per-level ingredients for each requested item. Recovery flags are not subtracted.
+              </p>
+            </div>
           )}
         </div>
       )}

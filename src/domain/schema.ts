@@ -41,6 +41,7 @@ export const gameRecipeSchema = z.object({
   minStationLevel: positiveIntegerSchema.optional(),
   disabled: z.boolean().optional(),
   disabledUpgrade: z.boolean().optional(),
+  noCraftOnlyUpgrade: z.boolean().optional(),
   requireOnlyOneIngredient: z.boolean().optional(),
   requirements: z.array(recipeRequirementSchema),
   upgradeRequirements: z.array(recipeRequirementSchema).optional(),

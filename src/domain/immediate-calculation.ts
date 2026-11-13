@@ -1,0 +1,161 @@
+import { getItemGoalCapabilities } from "./item-goal-capabilities"
+import type { RecipeDataAccess } from "./resource-calculation"
+import type { Kit } from "./schema"
+
+export type ImmediateCalculationReason =
+  | "unknown-item"
+  | "no-recipe"
+  | "disabled-recipe"
+  | "upgrade-only-recipe"
+  | "ambiguous-recipe"
+  | "alternative-requirements"
+  | "invalid-quantity"
+  | "invalid-target-quality"
+  | "quality-upgrades-disabled"
+  | "unsupported-upgrade-requirements"
+  | "unsupported-quality-batch"
+
+export interface ImmediateRequirementTotal {
+  prefab: string
+  craftAmount: number
+  qualityAmount: number
+  totalAmount: number
+}
+
+export interface ImmediateCalculationIssue {
+  prefab: string
+  reason: ImmediateCalculationReason
+}
+
+export interface ImmediateKitCalculation {
+  kitId: string
+  requirements: ImmediateRequirementTotal[]
+  unresolved: ImmediateCalculationIssue[]
+  limitations: string[]
+  isComplete: boolean
+}
+
+const immediateCalculationLimitations = [
+  "Only direct recipe ingredients are included; ingredient recipes and stations are not expanded.",
+  "Quality totals add the exported per-level increment to the base recipe amount.",
+  "Recovery flags are not subtracted from recipe requirements.",
+]
+
+export function calculateImmediateKitRequirements(
+  kit: Kit,
+  data: RecipeDataAccess,
+): ImmediateKitCalculation {
+  const totalsByPrefab = new Map<string, ImmediateRequirementTotal>()
+  const unresolvedByKey = new Map<string, ImmediateCalculationIssue>()
+
+  function addIssue(prefab: string, reason: ImmediateCalculationReason): void {
+    unresolvedByKey.set(`${reason}:${prefab}`, { prefab, reason })
+  }
+
+  for (const goal of kit.itemGoals) {
+    const item = data.getItem(goal.prefab)
+    if (!item) {
+      addIssue(goal.prefab, "unknown-item")
+      continue
+    }
+
+    const quantity = goal.quantity ?? 1
+    const targetQuality = goal.targetQuality ?? 1
+    const capabilities = getItemGoalCapabilities(item)
+    if (quantity > 1 && !capabilities.quantity) {
+      addIssue(goal.prefab, "invalid-quantity")
+      continue
+    }
+
+    const recipes = data.getRecipes(goal.prefab)
+    if (recipes.length === 0) {
+      addIssue(goal.prefab, "no-recipe")
+      continue
+    }
+
+    const enabledRecipes = recipes.filter((recipe) => recipe.disabled !== true)
+    if (enabledRecipes.length === 0) {
+      addIssue(goal.prefab, "disabled-recipe")
+      continue
+    }
+
+    const craftRecipes = enabledRecipes.filter(
+      (recipe) => recipe.noCraftOnlyUpgrade !== true,
+    )
+    if (craftRecipes.length === 0) {
+      addIssue(goal.prefab, "upgrade-only-recipe")
+      continue
+    }
+    if (craftRecipes.length > 1) {
+      addIssue(goal.prefab, "ambiguous-recipe")
+      continue
+    }
+
+    const recipe = craftRecipes[0]
+    if (!recipe) continue
+    if (recipe.requireOnlyOneIngredient) {
+      addIssue(goal.prefab, "alternative-requirements")
+      continue
+    }
+
+    let includeQualityAmounts = targetQuality > 1
+    if (targetQuality > 1) {
+      if (
+        capabilities.maxQuality === null ||
+        targetQuality > capabilities.maxQuality
+      ) {
+        addIssue(goal.prefab, "invalid-target-quality")
+        includeQualityAmounts = false
+      } else if (recipe.disabledUpgrade) {
+        addIssue(goal.prefab, "quality-upgrades-disabled")
+        includeQualityAmounts = false
+      } else if (recipe.upgradeRequirements?.length) {
+        addIssue(goal.prefab, "unsupported-upgrade-requirements")
+        includeQualityAmounts = false
+      } else if (recipe.outputAmount !== 1) {
+        addIssue(goal.prefab, "unsupported-quality-batch")
+        includeQualityAmounts = false
+      }
+    }
+
+    const crafts = Math.ceil(quantity / recipe.outputAmount)
+    const qualitySteps = includeQualityAmounts ? targetQuality - 1 : 0
+
+    for (const requirement of recipe.requirements) {
+      const craftAmount = requirement.amount * crafts
+      const qualityAmount =
+        requirement.amountPerLevel * qualitySteps * quantity
+      const existing = totalsByPrefab.get(requirement.prefab)
+
+      if (existing) {
+        existing.craftAmount += craftAmount
+        existing.qualityAmount += qualityAmount
+        existing.totalAmount += craftAmount + qualityAmount
+      } else if (craftAmount > 0 || qualityAmount > 0) {
+        totalsByPrefab.set(requirement.prefab, {
+          prefab: requirement.prefab,
+          craftAmount,
+          qualityAmount,
+          totalAmount: craftAmount + qualityAmount,
+        })
+      }
+    }
+  }
+
+  const requirements = [...totalsByPrefab.values()].sort((left, right) =>
+    left.prefab.localeCompare(right.prefab),
+  )
+  const unresolved = [...unresolvedByKey.values()].sort((left, right) =>
+    left.prefab === right.prefab
+      ? left.reason.localeCompare(right.reason)
+      : left.prefab.localeCompare(right.prefab),
+  )
+
+  return {
+    kitId: kit.id,
+    requirements,
+    unresolved,
+    limitations: [...immediateCalculationLimitations],
+    isComplete: unresolved.length === 0,
+  }
+}
