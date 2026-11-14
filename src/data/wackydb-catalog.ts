@@ -1,8 +1,10 @@
 import { z } from "zod"
 import {
   gameItemSchema,
+  gamePieceSchema,
   gameRecipeSchema,
   type GameItem,
+  type GamePiece,
   type GameRecipe,
 } from "../domain/schema"
 import {
@@ -15,9 +17,12 @@ const importDiagnosticSchema = z.object({
   code: z.enum([
     "invalid-item",
     "duplicate-item-prefab",
+    "invalid-piece",
+    "duplicate-piece-prefab",
     "invalid-recipe",
     "unresolved-recipe-result",
     "unresolved-requirement-prefab",
+    "unresolved-upgrade-station",
   ]),
   message: z.string().min(1),
 })
@@ -28,6 +33,7 @@ export const wackyDbCatalogSchema = z.object({
   sourceFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   items: z.array(gameItemSchema),
   recipes: z.array(gameRecipeSchema),
+  pieces: z.array(gamePieceSchema),
   diagnostics: z.array(importDiagnosticSchema),
 })
 
@@ -43,6 +49,7 @@ export function createWackyDbCatalog(
     sourceFingerprint,
     items: index.items,
     recipes: index.recipes,
+    pieces: index.pieces,
     diagnostics: index.diagnostics,
   })
 }
@@ -72,6 +79,9 @@ export async function loadWackyDbCatalog(
 export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   getItem(prefab: string): GameItem | undefined
   getRecipes(resultPrefab: string): readonly GameRecipe[]
+  getPiece(prefab: string): GamePiece | undefined
+  getStationPiece(stationReference: string): GamePiece | undefined
+  getStationUpgrades(stationPrefab: string): readonly GamePiece[]
   searchItems(query: string): GameItem[]
   diagnostics: readonly ImportDiagnostic[]
 } {
@@ -79,6 +89,20 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
     catalog.items.map((item) => [item.prefab, item] as const),
   )
   const recipesByResultPrefab = new Map<string, GameRecipe[]>()
+  const piecesByPrefab = new Map(
+    catalog.pieces.map((piece) => [piece.prefab, piece] as const),
+  )
+  const piecesByNameToken = new Map(
+    catalog.pieces.map((piece) => [piece.nameToken, piece] as const),
+  )
+  const upgradesByStation = new Map<string, GamePiece[]>()
+
+  for (const piece of catalog.pieces) {
+    if (!piece.upgradeStationPrefab || !piece.upgradeLevel) continue
+    const upgrades = upgradesByStation.get(piece.upgradeStationPrefab) ?? []
+    upgrades.push(piece)
+    upgradesByStation.set(piece.upgradeStationPrefab, upgrades)
+  }
 
   for (const recipe of catalog.recipes) {
     const recipes = recipesByResultPrefab.get(recipe.resultPrefab)
@@ -107,6 +131,14 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   return {
     getItem: (prefab) => itemsByPrefab.get(prefab),
     getRecipes: (resultPrefab) => recipesByResultPrefab.get(resultPrefab) ?? [],
+    getPiece: (prefab) => piecesByPrefab.get(prefab),
+    getStationPiece: (stationReference) =>
+      piecesByPrefab.get(stationReference) ??
+      piecesByNameToken.get(stationReference),
+    getStationUpgrades: (stationPrefab) =>
+      (upgradesByStation.get(stationPrefab) ?? []).slice().sort(
+        (left, right) => (left.upgradeLevel ?? 0) - (right.upgradeLevel ?? 0),
+      ),
     searchItems,
     diagnostics: catalog.diagnostics,
   }

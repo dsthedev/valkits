@@ -2,9 +2,11 @@ import { z } from "zod"
 import { parse as parseYaml } from "yaml"
 import {
   gameItemSchema,
+  gamePieceSchema,
   gameRecipeSchema,
   recipeRequirementSchema,
   type GameItem,
+  type GamePiece,
   type GameRecipe,
   type RecipeRequirement,
 } from "../domain/schema"
@@ -163,6 +165,48 @@ export function parseRecipeYaml(yamlText: string): ImportResult<RecipeCandidate>
   }
 
   return { success: true, data: candidate.data }
+}
+
+export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
+  const source = parseSourceRecord(yamlText)
+  if (!source.success) return source
+
+  const requirements = parseRequirements(source.data.build ?? [], "build")
+  if (!requirements.success) return requirements
+
+  const upgradeStation = Array.isArray(source.data.cSExtensionDataList)
+    ? source.data.cSExtensionDataList.find(
+        (entry): entry is Record<string, unknown> =>
+          typeof entry === "object" && entry !== null && !Array.isArray(entry),
+      )?.MainCraftingStationName
+    : undefined
+  const prefab = source.data.name
+  const isUpgrade = source.data.isUpgrade === true
+  const extensionOrder =
+    typeof prefab === "string" ? /_ext(\d+)$/i.exec(prefab)?.[1] : undefined
+
+  const piece = gamePieceSchema.safeParse({
+    prefab,
+    nameToken: source.data.m_name,
+    craftingStation: optionalSourceValue(source.data.craftingStation),
+    minStationLevel: optionalSourceValue(source.data.minStationLevel),
+    disabled: optionalSourceValue(source.data.disabled),
+    isUpgrade,
+    upgradeStationPrefab: isUpgrade
+      ? optionalSourceValue(upgradeStation)
+      : undefined,
+    upgradeLevel:
+      isUpgrade && extensionOrder !== undefined
+        ? Number(extensionOrder) + 1
+        : undefined,
+    buildRequirements: requirements.data,
+  })
+
+  if (!piece.success) {
+    return { success: false, errors: formatIssues(piece.error) }
+  }
+
+  return { success: true, data: piece.data }
 }
 
 export function linkRecipeResult(

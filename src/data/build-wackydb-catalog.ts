@@ -7,11 +7,12 @@ import { indexWackyDbFiles, type YamlSourceFile } from "./wackydb-index"
 export interface WackyDbSourceFiles {
   items: YamlSourceFile[]
   recipes: YamlSourceFile[]
+  pieces: YamlSourceFile[]
 }
 
 async function readYamlDirectory(
   rootPath: string,
-  category: "items" | "recipes",
+  category: "items" | "recipes" | "pieces",
 ): Promise<YamlSourceFile[]> {
   const directoryPath = join(rootPath, category)
   const fileNames = (await readdir(directoryPath))
@@ -32,12 +33,13 @@ async function readYamlDirectory(
 export async function readWackyDbSourceFiles(
   rootPath: string,
 ): Promise<WackyDbSourceFiles> {
-  const [items, recipes] = await Promise.all([
+  const [items, recipes, pieces] = await Promise.all([
     readYamlDirectory(rootPath, "items"),
     readYamlDirectory(rootPath, "recipes"),
+    readYamlDirectory(rootPath, "pieces"),
   ])
 
-  return { items, recipes }
+  return { items, recipes, pieces }
 }
 
 export function fingerprintWackyDbSourceFiles(
@@ -59,17 +61,24 @@ export async function buildWackyDbCatalog(rootPath: string): Promise<{
   catalog: WackyDbCatalog
   itemCount: number
   recipeCount: number
+  pieceCount: number
 }> {
   const sourceFiles = await readWackyDbSourceFiles(rootPath)
-  const index = indexWackyDbFiles(sourceFiles.items, sourceFiles.recipes)
+  const index = indexWackyDbFiles(
+    sourceFiles.items,
+    sourceFiles.recipes,
+    sourceFiles.pieces,
+  )
   const sourceFingerprint = fingerprintWackyDbSourceFiles([
     ...sourceFiles.items,
     ...sourceFiles.recipes,
+    ...sourceFiles.pieces,
   ])
 
   return {
     catalog: createWackyDbCatalog(index, sourceFingerprint),
     itemCount: index.items.length,
     recipeCount: index.recipes.length,
+    pieceCount: index.pieces.length,
   }
 }

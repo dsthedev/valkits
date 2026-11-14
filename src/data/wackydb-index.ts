@@ -1,7 +1,8 @@
-import type { GameItem, GameRecipe } from "../domain/schema"
+import type { GameItem, GamePiece, GameRecipe } from "../domain/schema"
 import {
   linkRecipeResult,
   parseItemYaml,
+  parsePieceYaml,
   parseRecipeYaml,
   type RecipeCandidate,
 } from "./wackydb-import"
@@ -9,9 +10,12 @@ import {
 export type ImportDiagnosticCode =
   | "invalid-item"
   | "duplicate-item-prefab"
+  | "invalid-piece"
+  | "duplicate-piece-prefab"
   | "invalid-recipe"
   | "unresolved-recipe-result"
   | "unresolved-requirement-prefab"
+  | "unresolved-upgrade-station"
 
 export interface ImportDiagnostic {
   sourcePath: string
@@ -27,9 +31,11 @@ export interface YamlSourceFile {
 export interface WackyDbIndex {
   items: GameItem[]
   recipes: GameRecipe[]
+  pieces: GamePiece[]
   diagnostics: ImportDiagnostic[]
   itemsByPrefab: Map<string, GameItem>
   recipesByResultPrefab: Map<string, GameRecipe[]>
+  piecesByPrefab: Map<string, GamePiece>
 }
 
 interface RecipeCandidateFile {
@@ -55,6 +61,7 @@ function addDiagnostic(
 export function indexWackyDbFiles(
   itemFiles: readonly YamlSourceFile[],
   recipeFiles: readonly YamlSourceFile[],
+  pieceFiles: readonly YamlSourceFile[] = [],
 ): WackyDbIndex {
   const diagnostics: ImportDiagnostic[] = []
   const itemsByPrefab = new Map<string, GameItem>()
@@ -100,6 +107,32 @@ export function indexWackyDbFiles(
     recipeCandidates.push({ path: file.path, candidate: result.data })
   }
 
+  const piecesByPrefab = new Map<string, GamePiece>()
+  for (const file of sortByPath(pieceFiles)) {
+    const result = parsePieceYaml(file.contents)
+    if (!result.success) {
+      addDiagnostic(
+        diagnostics,
+        file.path,
+        "invalid-piece",
+        result.errors.join("; "),
+      )
+      continue
+    }
+
+    if (piecesByPrefab.has(result.data.prefab)) {
+      addDiagnostic(
+        diagnostics,
+        file.path,
+        "duplicate-piece-prefab",
+        `Duplicate piece prefab "${result.data.prefab}"; kept the first record.`,
+      )
+      continue
+    }
+
+    piecesByPrefab.set(result.data.prefab, result.data)
+  }
+
   const recipes: GameRecipe[] = []
   const recipesByResultPrefab = new Map<string, GameRecipe[]>()
 
@@ -138,11 +171,38 @@ export function indexWackyDbFiles(
     }
   }
 
+  for (const piece of piecesByPrefab.values()) {
+    if (
+      piece.upgradeStationPrefab &&
+      !piecesByPrefab.has(piece.upgradeStationPrefab)
+    ) {
+      addDiagnostic(
+        diagnostics,
+        `pieces/${piece.prefab}.yml`,
+        "unresolved-upgrade-station",
+        `Upgrade station prefab "${piece.upgradeStationPrefab}" is not in the piece index.`,
+      )
+    }
+
+    for (const requirement of piece.buildRequirements) {
+      if (!itemsByPrefab.has(requirement.prefab)) {
+        addDiagnostic(
+          diagnostics,
+          `pieces/${piece.prefab}.yml`,
+          "unresolved-requirement-prefab",
+          `Build requirement prefab "${requirement.prefab}" is not in the item index.`,
+        )
+      }
+    }
+  }
+
   return {
     items: [...itemsByPrefab.values()],
     recipes,
+    pieces: [...piecesByPrefab.values()],
     diagnostics,
     itemsByPrefab,
     recipesByResultPrefab,
+    piecesByPrefab,
   }
 }

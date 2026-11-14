@@ -7,9 +7,10 @@ const catalogPath = fileURLToPath(
   new URL("../public/data/wackydb/catalog.json", import.meta.url),
 )
 
-const { catalog, itemCount, recipeCount } = await buildWackyDbCatalog(sourcePath)
+const { catalog, itemCount, recipeCount, pieceCount } =
+  await buildWackyDbCatalog(sourcePath)
 await writeFile(catalogPath, `${JSON.stringify(catalog)}\n`, "utf8")
 
 console.info(
-  `Generated catalog: ${itemCount} items, ${recipeCount} recipes, ${catalog.diagnostics.length} diagnostics.`,
+  `Generated catalog: ${itemCount} items, ${recipeCount} recipes, ${pieceCount} pieces, ${catalog.diagnostics.length} diagnostics.`,
 )

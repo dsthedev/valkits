@@ -18,24 +18,36 @@ describe("WackyDatabase index", () => {
     const firstFingerprint = fingerprintWackyDbSourceFiles([
       ...sourceFiles.items,
       ...sourceFiles.recipes,
+      ...sourceFiles.pieces,
     ])
     const secondFingerprint = fingerprintWackyDbSourceFiles([
       ...sourceFiles.recipes,
+      ...sourceFiles.pieces,
       ...sourceFiles.items,
     ])
-    const { catalog, itemCount, recipeCount } =
+    const { catalog, itemCount, recipeCount, pieceCount } =
       await buildWackyDbCatalog(sourcePath)
     const dataAccess = createWackyDbDataAccess(catalog)
 
     expect(sourceFiles.items.length).toBeGreaterThan(1000)
     expect(sourceFiles.recipes.length).toBeGreaterThan(400)
+    expect(sourceFiles.pieces.length).toBeGreaterThan(300)
     expect(itemCount).toBeGreaterThan(1000)
     expect(recipeCount).toBeGreaterThan(300)
+    expect(pieceCount).toBeGreaterThan(300)
     expect(firstFingerprint).toBe(secondFingerprint)
     expect(catalog.sourceFingerprint).toMatch(/^[a-f0-9]{64}$/)
     expect(dataAccess.getItem("ArmorBronzeChest")?.nameToken).toBe(
       "$item_chest_bronze",
     )
+    expect(dataAccess.getStationPiece("$piece_workbench")?.prefab).toBe(
+      "piece_workbench",
+    )
+    expect(
+      dataAccess
+        .getStationUpgrades("piece_workbench")
+        .map((piece) => piece.upgradeLevel),
+    ).toEqual([2, 3, 4, 5])
     expect(
       getItemGoalCapabilities(dataAccess.getItem("ArmorBronzeChest")!),
     ).toEqual({ quantity: false, maxQuality: 4 })

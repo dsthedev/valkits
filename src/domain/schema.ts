@@ -47,6 +47,18 @@ export const gameRecipeSchema = z.object({
   upgradeRequirements: z.array(recipeRequirementSchema).optional(),
 })
 
+export const gamePieceSchema = z.object({
+  prefab: identifierSchema,
+  nameToken: identifierSchema,
+  craftingStation: identifierSchema.optional(),
+  minStationLevel: positiveIntegerSchema.optional(),
+  disabled: z.boolean().optional(),
+  isUpgrade: z.boolean(),
+  upgradeStationPrefab: identifierSchema.optional(),
+  upgradeLevel: positiveIntegerSchema.optional(),
+  buildRequirements: z.array(recipeRequirementSchema),
+})
+
 export const kitItemGoalSchema = z.object({
   prefab: identifierSchema,
   quantity: positiveIntegerSchema.optional(),
@@ -81,5 +93,6 @@ export type Biome = z.infer<typeof biomeSchema>
 export type GameItem = z.infer<typeof gameItemSchema>
 export type RecipeRequirement = z.infer<typeof recipeRequirementSchema>
 export type GameRecipe = z.infer<typeof gameRecipeSchema>
+export type GamePiece = z.infer<typeof gamePieceSchema>
 export type KitItemGoal = z.infer<typeof kitItemGoalSchema>
 export type Kit = z.infer<typeof kitSchema>

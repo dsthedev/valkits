@@ -4,6 +4,7 @@ import type { ImportResult } from "./wackydb-import"
 import {
   linkRecipeResult,
   parseItemYaml,
+  parsePieceYaml,
   parseRecipeYaml,
 } from "./wackydb-import"
 
@@ -120,5 +121,30 @@ reqs: []
     )
 
     expect(candidate.noCraftOnlyUpgrade).toBe(true)
+  })
+
+  it("normalizes workbench upgrade order and construction requirements", () => {
+    const piece = getData(
+      parsePieceYaml(
+        readSourceFile(
+          "../../public/data/wackydb/pieces/Piece_piece_workbench_ext2.yml",
+        ),
+      ),
+    )
+
+    expect(piece).toMatchObject({
+      prefab: "piece_workbench_ext2",
+      nameToken: "$piece_workbench_ext2",
+      craftingStation: "$piece_workbench",
+      isUpgrade: true,
+      upgradeStationPrefab: "piece_workbench",
+      upgradeLevel: 3,
+      buildRequirements: [
+        { prefab: "Wood", amount: 10, amountPerLevel: 1, recover: true },
+        { prefab: "Flint", amount: 15, amountPerLevel: 1, recover: true },
+        { prefab: "LeatherScraps", amount: 20, amountPerLevel: 1, recover: true },
+        { prefab: "DeerHide", amount: 5, amountPerLevel: 1, recover: true },
+      ],
+    })
   })
 })
