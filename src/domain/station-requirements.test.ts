@@ -158,11 +158,18 @@ describe("kit station requirement calculation", () => {
     ).toEqual(["fermenter", "piece_MeadCauldron"])
   })
 
-  it("resolves the selected craft recipe station and minimum level per item", () => {
+  it("adds quality levels to the selected recipe's minimum station level", () => {
+    const armor = gameItemSchema.parse({
+      prefab: "Armor",
+      nameToken: "$item_armor",
+      itemType: "Helmet",
+      maxQuality: 4,
+      maxStackSize: 1,
+    })
     const result = calculateKitStationRequirements(
       kit([{ prefab: "Armor", targetQuality: 3 }]),
       dataAccess(
-        [item("Armor")],
+        [armor],
         [
           recipe("Armor", {
             craftingStation: "$piece_forge",
@@ -180,16 +187,23 @@ describe("kit station requirement calculation", () => {
         status: "required",
         stationReference: "$piece_forge",
         stationPrefab: "piece_forge",
-        stationLevel: 1,
+        stationLevel: 3,
       },
     ])
   })
 
-  it("does not infer station levels from target quality or missing recipe fields", () => {
+  it("does not infer station levels when the recipe minimum is missing", () => {
+    const armor = gameItemSchema.parse({
+      prefab: "Armor",
+      nameToken: "$item_armor",
+      itemType: "Helmet",
+      maxQuality: 4,
+      maxStackSize: 1,
+    })
     const result = calculateKitStationRequirements(
       kit([{ prefab: "Armor", targetQuality: 4 }]),
       dataAccess(
-        [item("Armor")],
+        [armor],
         [recipe("Armor", { craftingStation: "$piece_forge" })],
         [station("piece_forge", "$piece_forge")],
       ),
@@ -201,6 +215,69 @@ describe("kit station requirement calculation", () => {
       status: "unresolved",
       reason: "missing-station-level",
     })
+  })
+
+  it("requires leather hood workbench levels 3 and 4 for quality 2 and 3", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+
+    for (const [targetQuality, expectedStationLevel] of [
+      [2, 3],
+      [3, 4],
+    ]) {
+      const result = calculateKitStationRequirements(
+        kit([{ prefab: "HelmetLeather", targetQuality }]),
+        data,
+      )
+
+      expect(result.itemRequirements[0]).toMatchObject({
+        itemPrefab: "HelmetLeather",
+        targetQuality,
+        status: "required",
+        stationReference: "$piece_workbench",
+        stationPrefab: "piece_workbench",
+        stationLevel: expectedStationLevel,
+      })
+    }
+  })
+
+  it("keeps invalid or disabled quality station requirements unresolved", () => {
+    const qualityItem = gameItemSchema.parse({
+      prefab: "QualityItem",
+      nameToken: "$item_quality",
+      itemType: "Helmet",
+      maxQuality: 3,
+      maxStackSize: 1,
+    })
+    const result = calculateKitStationRequirements(
+      kit([
+        { prefab: "QualityItem", targetQuality: 4 },
+        { prefab: "LockedItem", targetQuality: 2 },
+      ]),
+      dataAccess(
+        [qualityItem, { ...qualityItem, prefab: "LockedItem" }],
+        [
+          recipe("QualityItem", {
+            craftingStation: "$piece_workbench",
+            minStationLevel: 2,
+          }),
+          recipe("LockedItem", {
+            craftingStation: "$piece_workbench",
+            minStationLevel: 2,
+            disabledUpgrade: true,
+          }),
+        ],
+        [station("piece_workbench", "$piece_workbench")],
+      ),
+    )
+
+    expect(result.itemRequirements).toMatchObject([
+      { itemPrefab: "QualityItem", status: "unresolved", reason: "invalid-target-quality" },
+      { itemPrefab: "LockedItem", status: "unresolved", reason: "quality-upgrades-disabled" },
+    ])
   })
 
   it("groups shared stations using the highest minimum level and retains item details", () => {

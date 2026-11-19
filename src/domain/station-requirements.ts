@@ -5,6 +5,7 @@ import type {
   GameRecipe,
   Kit,
 } from "./schema"
+import { getItemGoalCapabilities } from "./item-goal-capabilities"
 
 export type StationRequirementReason =
   | "unknown-item"
@@ -17,6 +18,8 @@ export type StationRequirementReason =
   | "processing-cycle"
   | "unresolved-station"
   | "missing-station-level"
+  | "invalid-target-quality"
+  | "quality-upgrades-disabled"
 
 interface ItemStationRequirementBase {
   itemPrefab: string
@@ -132,7 +135,8 @@ export function calculateKitStationRequirements(
       })
       return
     }
-    if (!data.getItem(prefab)) {
+    const item = data.getItem(prefab)
+    if (!item) {
       itemRequirements.push({
         ...base,
         status: "unresolved",
@@ -215,13 +219,42 @@ export function calculateKitStationRequirements(
       return
     }
 
+    const capabilities = getItemGoalCapabilities(item)
+    if (
+      targetQuality > 1 &&
+      (capabilities.maxQuality === null ||
+        targetQuality > capabilities.maxQuality)
+    ) {
+      itemRequirements.push({
+        ...base,
+        stationReference: recipe.craftingStation,
+        status: "unresolved",
+        reason: "invalid-target-quality",
+      })
+      return
+    }
+    if (targetQuality > 1 && recipe.disabledUpgrade) {
+      itemRequirements.push({
+        ...base,
+        stationReference: recipe.craftingStation,
+        status: "unresolved",
+        reason: "quality-upgrades-disabled",
+      })
+      return
+    }
+
+    const stationLevel =
+      recipe.minStationLevel === undefined
+        ? undefined
+        : recipe.minStationLevel + targetQuality - 1
+
     const stationPiece = data.getStationPiece(recipe.craftingStation)
     const stationInfo = {
       ...base,
       stationReference: recipe.craftingStation,
       ...(stationPiece ? { stationPrefab: stationPiece.prefab } : {}),
-      ...(recipe.minStationLevel !== undefined
-        ? { stationLevel: recipe.minStationLevel }
+      ...(stationLevel !== undefined
+        ? { stationLevel }
         : {}),
     }
     if (!stationPiece) {
@@ -244,7 +277,7 @@ export function calculateKitStationRequirements(
     itemRequirements.push({
       ...stationInfo,
       stationPrefab: stationPiece.prefab,
-      stationLevel: recipe.minStationLevel,
+      stationLevel,
       status: "required",
     })
   }
