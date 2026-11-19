@@ -101,6 +101,14 @@ export function createWackyDbDataAccess(
   const items = hideUpgraderItems
     ? catalog.items.filter((item) => !isUpgraderItemPrefab(item.prefab))
     : catalog.items
+  const searchableItems = items.map((item) => ({
+    item,
+    searchableText: normalizeSearchText(
+      [item.prefab, item.nameToken, item.descriptionToken, item.itemType]
+        .filter(Boolean)
+        .join(" "),
+    ),
+  }))
   const pieces = hideUpgraderItems
     ? catalog.pieces.map((piece) => ({
         ...piece,
@@ -180,15 +188,11 @@ export function createWackyDbDataAccess(
     const terms = normalizeSearchText(query).split(" ").filter(Boolean)
     if (terms.length === 0) return items
 
-    return items.filter((item) => {
-      const searchableText = normalizeSearchText(
-        [item.prefab, item.nameToken, item.descriptionToken, item.itemType]
-          .filter(Boolean)
-          .join(" "),
+    return searchableItems
+      .filter(({ searchableText }) =>
+        terms.every((term) => searchableText.includes(term)),
       )
-
-      return terms.every((term) => searchableText.includes(term))
-    })
+      .map(({ item }) => item)
   }
 
   return {

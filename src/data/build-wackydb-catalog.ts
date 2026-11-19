@@ -18,16 +18,12 @@ async function readYamlDirectory(
   const fileNames = (await readdir(directoryPath))
     .filter((fileName) => fileName.endsWith(".yml"))
     .sort()
-  const files: YamlSourceFile[] = []
-
-  for (const fileName of fileNames) {
-    files.push({
+  return Promise.all(
+    fileNames.map(async (fileName): Promise<YamlSourceFile> => ({
       path: `${category}/${fileName}`,
       contents: await readFile(join(directoryPath, fileName), "utf8"),
-    })
-  }
-
-  return files
+    })),
+  )
 }
 
 export async function readWackyDbSourceFiles(

@@ -42,12 +42,25 @@ export type ItemStationRequirement = ItemStationRequirementBase &
       }
   )
 
+  type GroupedStationRequirement =
+    | Extract<ItemStationRequirement, { status: "required" }>
+    | (Extract<ItemStationRequirement, { status: "unresolved" }> & {
+        stationPrefab: string
+      })
+
 export interface StationRequirementGroup {
   stationPrefab: string
   stationLevel?: number
-  itemRequirements: Array<
-    ItemStationRequirement & { stationPrefab: string }
-  >
+    itemRequirements: GroupedStationRequirement[]
+  }
+
+  function hasStationPrefab(
+    requirement: ItemStationRequirement,
+  ): requirement is GroupedStationRequirement {
+    return (
+      (requirement.status === "required" || requirement.status === "unresolved") &&
+      typeof requirement.stationPrefab === "string"
+    )
 }
 
 export function groupStationRequirements(
@@ -56,8 +69,8 @@ export function groupStationRequirements(
   const groups = new Map<string, StationRequirementGroup>()
 
   for (const requirement of itemRequirements) {
+    if (!hasStationPrefab(requirement)) continue
     const stationPrefab = requirement.stationPrefab
-    if (!stationPrefab) continue
 
     const group = groups.get(stationPrefab)
     if (group) {

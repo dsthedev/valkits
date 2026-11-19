@@ -283,7 +283,11 @@ describe("kit station requirement calculation", () => {
       ),
     )
 
-    expect(result.itemRequirements.map(({ reason }) => reason)).toEqual([
+    expect(
+      result.itemRequirements.map((requirement) =>
+        requirement.status === "unresolved" ? requirement.reason : undefined,
+      ),
+    ).toEqual([
       "unknown-item",
       "no-recipe",
       "disabled-recipe",

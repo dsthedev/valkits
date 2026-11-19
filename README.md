@@ -4,9 +4,10 @@ Valkits is a local-first Valheim kit planner. Create a kit for a biome or
 progression milestone, add items and target quantities or quality levels, and
 calculate the resources and crafting-station requirements needed for the kit.
 
-The app runs entirely in your browser. Kits and preferences are stored in that
-browser's local storage; they are not uploaded or synchronized between browsers
-or devices. Use the kit export/import actions to move a kit between devices.
+The app runs entirely in your browser. Kits, preferences, and the latest
+calculation for each kit are stored in that browser's local storage; they are
+not uploaded or synchronized between browsers or devices. Use the kit
+export/import actions to move a kit between devices.
 
 ## Try it
 
@@ -80,7 +81,12 @@ repository's plan and settings.
   The build generates the browser catalog from those source files.
 - Example kits are app-owned JSON templates; user kits remain separate in local
   storage.
-- Resource calculations can report unresolved or unsupported game-data cases.
-  Treat those results as estimates where the app marks requirements unresolved.
+- Kit resources recursively expand known recipes and supported processing
+  conversions. Quality upgrade inputs are included; recipe recovery flags and
+  processing removal flags are not applied.
+- Unknown, ambiguous, or unsupported item sources and station costs remain
+  visibly unresolved. A partial plan is not a complete gather checklist.
+- Previous calculations are retained per kit and marked stale when relevant
+  kit inputs or game data changes.
 - Clearing site data or using a different browser/device does not carry over
   saved kits. Export kits before clearing browser data.

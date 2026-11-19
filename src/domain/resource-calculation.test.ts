@@ -4,6 +4,7 @@ import { buildWackyDbCatalog } from "../data/build-wackydb-catalog"
 import { createWackyDbDataAccess } from "../data/wackydb-catalog"
 import {
   gameItemSchema,
+  type GameProcessingConversion,
   gameRecipeSchema,
   kitSchema,
   type GameItem,
@@ -100,6 +101,71 @@ describe("kit resource calculation", () => {
     )
 
     expect(result.leafRequirements).toEqual([{ prefab: "Leaf", amount: 4 }])
+  })
+
+  it("recursively expands base and quality ingredients", () => {
+    const result = calculateKitResources(
+      kit([{ prefab: "QualityGear", targetQuality: 3 }]),
+      dataAccess(
+        [
+          gameItemSchema.parse({
+            prefab: "QualityGear",
+            nameToken: "$item_qualitygear",
+            itemType: "Chest",
+            maxQuality: 3,
+            maxStackSize: 1,
+          }),
+          item("Bar"),
+          item("Ore"),
+        ],
+        [
+          recipe("QualityGear", [
+            { prefab: "Bar", amount: 2, amountPerLevel: 2, recover: false },
+          ]),
+          recipe("Bar", [
+            { prefab: "Ore", amount: 2, amountPerLevel: 0, recover: false },
+          ]),
+        ],
+      ),
+    )
+
+    expect(result.directRequirements).toEqual([
+      { prefab: "Bar", craftAmount: 2, qualityAmount: 4, totalAmount: 6 },
+    ])
+    expect(result.leafRequirements).toEqual([{ prefab: "Ore", amount: 12 }])
+  })
+
+  it("uses exported processing yield to resolve required input batches", () => {
+    const baseData = dataAccess(
+      [item("Mead"), item("MeadBase"), item("Honey")],
+      [
+        recipe("MeadBase", [
+          { prefab: "Honey", amount: 3, amountPerLevel: 0, recover: false },
+        ]),
+      ],
+    )
+    const conversions: GameProcessingConversion[] = [
+      {
+        inputPrefab: "MeadBase",
+        resultPrefab: "Mead",
+        outputAmount: 6,
+        removeInput: true,
+      },
+    ]
+    const result = calculateKitResources(
+      kit([{ prefab: "Mead", quantity: 5 }]),
+      {
+        ...baseData,
+        getProcessingConversions: (prefab) =>
+          conversions.filter((conversion) => conversion.resultPrefab === prefab),
+      },
+    )
+
+    expect(result.leafRequirements).toEqual([{ prefab: "Honey", amount: 3 }])
+    expect(result.unresolved).toEqual([
+      { prefab: "Honey", amount: 3, reason: "known-item-no-recipe" },
+    ])
+    expect(result.isComplete).toBe(false)
   })
 
   it("reports a known item without a recipe and an unknown prefab separately", () => {

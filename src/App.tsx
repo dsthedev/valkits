@@ -47,7 +47,7 @@ import {
   type KitCollection,
 } from "@/data/kits"
 import { type Kit } from "@/domain/schema"
-import { calculateImmediateKitRequirements } from "@/domain/immediate-calculation"
+import { calculateKitResources } from "@/domain/resource-calculation"
 import { calculateKitStationRequirements } from "@/domain/station-requirements"
 import { calculateStationResources } from "@/domain/station-resource-calculation"
 import { withoutUpgraderItemGoals } from "@/domain/upgrader-items"
@@ -70,6 +70,13 @@ import {
   loadUpgraderItemPreference,
   saveUpgraderItemPreference,
 } from "@/data/upgrader-item-preference"
+import {
+  loadCalculationSnapshots,
+  removeCalculationSnapshot,
+  saveCalculationSnapshots,
+  upsertCalculationSnapshot,
+  type KitCalculationSnapshot,
+} from "@/data/calculation-snapshots"
 
 type CatalogState =
   | { status: "loading" }
@@ -77,7 +84,6 @@ type CatalogState =
   | {
       status: "ready"
       catalog: WackyDbCatalog
-      dataAccess: ReturnType<typeof createWackyDbDataAccess>
     }
 
 const ITEMS_PER_PAGE = 75
@@ -127,6 +133,9 @@ export function App() {
   const hideUpgraderItems = upgraderItemPreference.hideUpgraderItems
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
   const [kitState, setKitState] = useState(readBrowserKits)
+  const [snapshotState, setSnapshotState] = useState(() =>
+    loadCalculationSnapshots(getBrowserStorage()),
+  )
   const [manageExclusions, setManageExclusions] = useState(false)
   const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(null)
   const [importMessage, setImportMessage] = useState<string | null>(null)
@@ -140,6 +149,23 @@ export function App() {
         : undefined,
     [catalogState, hideUpgraderItems],
   )
+  const searchedItems = useMemo(
+    () => dataAccess?.searchItems(deferredQuery) ?? [],
+    [dataAccess, deferredQuery],
+  )
+  const results = useMemo(
+    () =>
+      filterExcludedItems(
+        searchedItems,
+        exclusionState.settings,
+        manageExclusions,
+      ),
+    [searchedItems, exclusionState.settings, manageExclusions],
+  )
+  const excludedPrefabs = useMemo(
+    () => new Set(exclusionState.settings.excludedPrefabs),
+    [exclusionState.settings.excludedPrefabs],
+  )
 
   useEffect(() => {
     let active = true
@@ -150,7 +176,6 @@ export function App() {
           setCatalogState({
             status: "ready",
             catalog,
-            dataAccess: createWackyDbDataAccess(catalog),
           })
         }
       })
@@ -171,12 +196,6 @@ export function App() {
     }
   }, [loadAttempt])
 
-  const searchedItems = dataAccess?.searchItems(deferredQuery) ?? []
-  const results = filterExcludedItems(
-    searchedItems,
-    exclusionState.settings,
-    manageExclusions,
-  )
   const pageCount = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE))
   const currentPage = Math.min(resultPage, pageCount - 1)
   const visibleResults = results.slice(
@@ -189,14 +208,13 @@ export function App() {
     (currentPage + 1) * ITEMS_PER_PAGE,
     results.length,
   )
-  const excludedPrefabs = new Set(exclusionState.settings.excludedPrefabs)
   const activeKit = kitState.collection.kits.find(
     (kit) => kit.id === kitState.collection.activeKitId,
   )
   const unknownImportedCount =
     catalogState.status === "ready" && pendingImport
       ? pendingImport.excludedPrefabs.filter(
-          (prefab) => !catalogState.dataAccess.getItem(prefab),
+          (prefab) => !dataAccess?.getItem(prefab),
         ).length
       : 0
 
@@ -222,6 +240,16 @@ export function App() {
     })
   }
 
+  function persistSnapshots(
+    snapshots: Record<string, KitCalculationSnapshot>,
+  ) {
+    const saved = saveCalculationSnapshots(getBrowserStorage(), snapshots)
+    setSnapshotState({
+      snapshots,
+      warning: saved.success ? null : saved.message,
+    })
+  }
+
   function addNewKit(kit: Kit) {
     const withKit = addKitToCollection(kitState.collection, kit)
     persistKits(selectKit(withKit, kit.id))
@@ -237,6 +265,7 @@ export function App() {
 
   function deleteKit(kitId: string) {
     persistKits(removeKitFromCollection(kitState.collection, kitId))
+    persistSnapshots(removeCalculationSnapshot(snapshotState.snapshots, kitId))
   }
 
   function addGoalToActiveKit(prefab: string) {
@@ -269,12 +298,12 @@ export function App() {
     )
   }
 
-  function calculateImmediateForKit(kit: Kit) {
+  function calculateResourcesForKit(kit: Kit) {
     if (!dataAccess) {
       throw new Error("The item catalog is not ready.")
     }
 
-    return calculateImmediateKitRequirements(
+    return calculateKitResources(
       hideUpgraderItems ? withoutUpgraderItemGoals(kit) : kit,
       dataAccess,
     )
@@ -448,7 +477,7 @@ export function App() {
           }
           getItem={(prefab) => dataAccess?.getItem(prefab)}
           onCreateKit={addNewKit}
-          onCalculateImmediate={calculateImmediateForKit}
+          onCalculateResources={calculateResourcesForKit}
           onCalculateStationRequirements={calculateStationRequirementsForKit}
           onCalculateStationResources={calculateStationResourcesForKit}
           onDeleteKit={deleteKit}
@@ -456,7 +485,15 @@ export function App() {
           onSelectKit={selectActiveKit}
           onUpdateGoal={updateGoalInActiveKit}
           onUpdateKit={updateExistingKit}
-          warning={kitState.warning}
+          calculationSnapshots={snapshotState.snapshots}
+          onSaveCalculationSnapshot={(snapshot) =>
+            persistSnapshots(
+              upsertCalculationSnapshot(snapshotState.snapshots, snapshot),
+            )
+          }
+          warning={[kitState.warning, snapshotState.warning]
+            .filter(Boolean)
+            .join(" ") || null}
         />
 
         {catalogState.status === "loading" && (

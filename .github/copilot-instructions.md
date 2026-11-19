@@ -167,10 +167,11 @@ Calculations are user-triggered, not automatic. A kit should retain its
 previous result when edited, but the result must be visibly marked stale
 when its calculation inputs have changed.
 
-A calculation snapshot should eventually include: - Calculation
-timestamp. - Fingerprint of calculation-relevant kit inputs. - Game-data
-version or fingerprint. - Kit resource totals. - Station resource
-totals. - Any unresolved requirements or warnings.
+A calculation snapshot includes: - Calculation timestamp. - Fingerprint of
+calculation-relevant kit inputs. - Game-data version or fingerprint. - Kit
+resource totals. - Station resource totals. - Any unresolved requirements or
+warnings. Snapshots are persisted separately from kits in a versioned
+localStorage collection keyed by kit ID.
 
 Use a deterministic fingerprint based only on calculation-relevant
 inputs. A stale result must never be presented as current.
@@ -223,8 +224,8 @@ listed; do not infer why.
 
 For supported processing conversions, report the processing station and
 follow the conversion input to determine its crafting station. Preserve
-the exported output yield as metadata, but do not derive batch counts or
-resource costs from it until the calculation step is requested.
+the exported output yield and use it to calculate input batches. Preserve
+`removeInput`, but do not apply it until its semantics are verified.
 
 After per-item requirements are validated, combine requirements for the
 same station by taking the highest required level, not by adding levels.
@@ -359,23 +360,25 @@ missing.
 
 ### Phase 5 --- Recipe graph and resource calculation
 
--   Build pure functions for recipe lookup, craft-count calculation,
-    recursive dependency resolution, and aggregation.
--   Detect circular recipe dependencies.
--   Handle missing/disabled/ambiguous recipes explicitly.
--   Implement and test output quantities and verified quality-upgrade
-    costs.
+-   [x] Build pure functions for unique enabled recipe lookup, craft-count
+    calculation, recursive dependency resolution, and aggregation.
+-   [x] Detect circular recipe dependencies.
+-   [x] Surface missing, disabled, ambiguous recipes and alternative
+    requirements as unresolved.
+-   [x] Calculate output quantities and per-level quality ingredients;
+    recursively resolve those ingredients.
+-   [x] Resolve supported processing conversions using exported output
+    yields; leave removal-flag semantics unapplied.
 -   Start with known simple recipes and expand as source cases are
     verified.
 
 ### Phase 6 --- Manual calculation snapshots
 
--   Add an explicit Calculate action.
--   Store results with timestamp, kit fingerprint, and game-data
-    fingerprint/version.
--   Detect stale calculations when relevant kit inputs or source data
-    change.
--   Preserve old results while marking them stale.
+-   [x] Add an explicit Calculate action.
+-   [x] Store validated per-kit results in a versioned localStorage
+    collection with timestamp and input/data fingerprints.
+-   [x] Detect stale calculations when relevant kit inputs or source data
+    change; preserve the previous result while marking it stale.
 -   Test current/stale/never-calculated states.
 
 ### Phase 7 --- Station requirements and station-resource calculation
@@ -393,7 +396,8 @@ missing.
 
 ### Phase 8 --- Combined totals and usability
 
--   Derive combined resource totals from kit and station lists.
+-   [x] Derive combined resource totals from kit and station lists without
+    mutating either list.
 -   Add filtering/sorting and useful display grouping only when needed.
 -   Improve empty states, error messages, accessibility, and import
     diagnostics.
