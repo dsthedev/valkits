@@ -72,7 +72,7 @@ type CatalogState =
       dataAccess: ReturnType<typeof createWackyDbDataAccess>
     }
 
-const MAX_VISIBLE_ITEMS = 75
+const ITEMS_PER_PAGE = 75
 
 function readBrowserExclusions() {
   try {
@@ -108,6 +108,7 @@ export function App() {
   })
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [query, setQuery] = useState("")
+  const [resultPage, setResultPage] = useState(0)
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
   const [kitState, setKitState] = useState(readBrowserKits)
   const [manageExclusions, setManageExclusions] = useState(false)
@@ -156,7 +157,18 @@ export function App() {
     exclusionState.settings,
     manageExclusions,
   )
-  const visibleResults = results.slice(0, MAX_VISIBLE_ITEMS)
+  const pageCount = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE))
+  const currentPage = Math.min(resultPage, pageCount - 1)
+  const visibleResults = results.slice(
+    currentPage * ITEMS_PER_PAGE,
+    (currentPage + 1) * ITEMS_PER_PAGE,
+  )
+  const firstVisibleResult =
+    results.length === 0 ? 0 : currentPage * ITEMS_PER_PAGE + 1
+  const lastVisibleResult = Math.min(
+    (currentPage + 1) * ITEMS_PER_PAGE,
+    results.length,
+  )
   const excludedPrefabs = new Set(exclusionState.settings.excludedPrefabs)
   const activeKit = kitState.collection.kits.find(
     (kit) => kit.id === kitState.collection.activeKitId,
@@ -256,6 +268,7 @@ export function App() {
 
   function setExclusionManager(enabled: boolean) {
     setManageExclusions(enabled)
+    setResultPage(0)
     setPendingImport(null)
     setImportMessage(null)
     setImportError(null)
@@ -509,7 +522,7 @@ export function App() {
             )}
 
             <div
-              className="mb-4 flex items-center justify-between gap-2"
+              className="mb-4 flex flex-wrap items-center justify-between gap-2"
             >
               <div className="w-full max-w-xl">
                 <label className="sr-only" htmlFor="item-search">
@@ -524,7 +537,10 @@ export function App() {
                     autoComplete="off"
                     className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
                     id="item-search"
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => {
+                      setQuery(event.target.value)
+                      setResultPage(0)
+                    }}
                     placeholder="Search items"
                     spellCheck={false}
                     value={query}
@@ -532,7 +548,10 @@ export function App() {
                   {query && (
                     <Button
                       aria-label="Clear search"
-                      onClick={() => setQuery("")}
+                      onClick={() => {
+                        setQuery("")
+                        setResultPage(0)
+                      }}
                       size="icon-sm"
                       title="Clear search"
                       type="button"
@@ -543,12 +562,41 @@ export function App() {
                   )}
                 </div>
               </div>
-              <p className="shrink-0 text-sm text-muted-foreground">
-                Showing {visibleResults.length.toLocaleString()}
-                {results.length > MAX_VISIBLE_ITEMS
-                  ? ` of ${results.length.toLocaleString()}`
-                  : ""}
-              </p>
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  Showing {firstVisibleResult.toLocaleString()}–
+                  {lastVisibleResult.toLocaleString()} of{" "}
+                  {results.length.toLocaleString()}
+                </p>
+                {pageCount > 1 && (
+                  <nav
+                    aria-label="Item result pages"
+                    className="flex items-center gap-2"
+                  >
+                    <Button
+                      disabled={currentPage === 0}
+                      onClick={() => setResultPage(currentPage - 1)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Previous
+                    </Button>
+                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                      Page {currentPage + 1} of {pageCount}
+                    </span>
+                    <Button
+                      disabled={currentPage === pageCount - 1}
+                      onClick={() => setResultPage(currentPage + 1)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Next
+                    </Button>
+                  </nav>
+                )}
+              </div>
             </div>
 
             {visibleResults.length > 0 ? (
