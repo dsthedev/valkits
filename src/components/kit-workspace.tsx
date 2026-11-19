@@ -101,6 +101,9 @@ const stationRequirementReasonLabels: Record<StationRequirementReason, string> =
   "disabled-recipe": "Recipe is disabled",
   "upgrade-only-recipe": "Only upgrade recipes are available",
   "ambiguous-recipe": "Multiple enabled craft recipes",
+  "ambiguous-processing-conversion": "Multiple processing conversions",
+  "ambiguous-acquisition-source": "Both craft and processing sources are available",
+  "processing-cycle": "Processing conversion chain loops",
   "unresolved-station": "Station reference could not be matched",
   "missing-station-level": "Recipe does not specify a minimum level",
 }
@@ -606,7 +609,9 @@ export function KitWorkspace({
                                 )}
                               </span>
                               <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                                Level {group.stationLevel}
+                                {group.stationLevel !== undefined
+                                  ? `Level ${group.stationLevel}`
+                                  : null}
                               </span>
                             </div>
                             <details className="mt-1 text-xs text-muted-foreground">
@@ -620,10 +625,16 @@ export function KitWorkspace({
                                 {group.itemRequirements.map((requirement) => (
                                   <li key={requirement.itemPrefab}>
                                     {humanizePrefab(requirement.itemPrefab)}
-                                    {requirement.stationLevel < group.stationLevel &&
+                                    {requirement.stationLevel !== undefined &&
+                                      group.stationLevel !== undefined &&
+                                      requirement.stationLevel < group.stationLevel &&
                                       ` (level ${requirement.stationLevel})`}
                                     {requirement.targetQuality > 1 &&
                                       ` · Quality ${requirement.targetQuality}`}
+                                    {requirement.outputAmountPerInput !== undefined &&
+                                      ` · ${requirement.outputAmountPerInput} per base`}
+                                    {requirement.reason &&
+                                      ` · ${stationRequirementReasonLabels[requirement.reason]}`}
                                   </li>
                                 ))}
                               </ul>

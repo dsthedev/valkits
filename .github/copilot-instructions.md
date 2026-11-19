@@ -130,6 +130,13 @@ required for all upgrades. - Item YAML includes `name`, `m_name`,
 `m_description`, `m_itemType`, `m_maxStackSize`, and `m_maxQuality`,
 among many irrelevant gameplay fields.
 
+Fermenter piece YAML can include `fermStationData.fermConversion` records
+with `FromName`, `ToName`, `Amount`, and `Remove`. The Poison Resist mead
+record maps `MeadBasePoisonResist` to `MeadPoisonResist` with `Amount: 6`;
+the user confirms this means one base produces six potions. Import and
+preserve these conversion fields. Do not use `Remove` to calculate
+consumption until its semantics are separately verified.
+
 Treat these observations as provisional source-format knowledge. Keep
 parsing isolated so it can be adjusted when more examples are inspected.
 
@@ -213,6 +220,11 @@ resource requirements and surface missing or ambiguous data. Do not infer
 station levels from target quality until those upgrade rules are
 verified. A recipe with no station field means only that no station was
 listed; do not infer why.
+
+For supported processing conversions, report the processing station and
+follow the conversion input to determine its crafting station. Preserve
+the exported output yield as metadata, but do not derive batch counts or
+resource costs from it until the calculation step is requested.
 
 After per-item requirements are validated, combine requirements for the
 same station by taking the highest required level, not by adding levels.
@@ -310,7 +322,7 @@ missing.
 -   Add a small representative fixture set from real WackyDatabase
     exports.
 -   Implement YAML loading and parsing.
--   Normalize item and recipe records.
+-   Normalize item, recipe, and supported processing-conversion records.
 -   Validate prefab references and duplicate records.
 -   Build an item lookup/search index.
 -   Test valid, malformed, incomplete, and duplicate records.

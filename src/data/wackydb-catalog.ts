@@ -2,6 +2,7 @@ import { z } from "zod"
 import {
   gameItemSchema,
   gamePieceSchema,
+  type GameProcessingConversion,
   gameRecipeSchema,
   type GameItem,
   type GamePiece,
@@ -23,6 +24,8 @@ const importDiagnosticSchema = z.object({
     "unresolved-recipe-result",
     "unresolved-requirement-prefab",
     "unresolved-upgrade-station",
+    "unresolved-processing-input",
+    "unresolved-processing-result",
   ]),
   message: z.string().min(1),
 })
@@ -79,6 +82,9 @@ export async function loadWackyDbCatalog(
 export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   getItem(prefab: string): GameItem | undefined
   getRecipes(resultPrefab: string): readonly GameRecipe[]
+  getProcessingConversions(resultPrefab: string): readonly (GameProcessingConversion & {
+    stationPrefab: string
+  })[]
   getPiece(prefab: string): GamePiece | undefined
   getStationPiece(stationReference: string): GamePiece | undefined
   getStationUpgrades(stationPrefab: string): readonly GamePiece[]
@@ -96,6 +102,10 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
     catalog.pieces.map((piece) => [piece.nameToken, piece] as const),
   )
   const upgradesByStation = new Map<string, GamePiece[]>()
+  const conversionsByResult = new Map<
+    string,
+    Array<GameProcessingConversion & { stationPrefab: string }>
+  >()
 
   for (const piece of catalog.pieces) {
     if (!piece.upgradeStationPrefab || !piece.upgradeLevel) continue
@@ -110,6 +120,14 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
       recipes.push(recipe)
     } else {
       recipesByResultPrefab.set(recipe.resultPrefab, [recipe])
+    }
+  }
+
+  for (const piece of catalog.pieces) {
+    for (const conversion of piece.processingConversions ?? []) {
+      const conversions = conversionsByResult.get(conversion.resultPrefab) ?? []
+      conversions.push({ ...conversion, stationPrefab: piece.prefab })
+      conversionsByResult.set(conversion.resultPrefab, conversions)
     }
   }
 
@@ -131,6 +149,8 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   return {
     getItem: (prefab) => itemsByPrefab.get(prefab),
     getRecipes: (resultPrefab) => recipesByResultPrefab.get(resultPrefab) ?? [],
+    getProcessingConversions: (resultPrefab) =>
+      conversionsByResult.get(resultPrefab) ?? [],
     getPiece: (prefab) => piecesByPrefab.get(prefab),
     getStationPiece: (stationReference) =>
       piecesByPrefab.get(stationReference) ??

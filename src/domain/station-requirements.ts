@@ -1,4 +1,10 @@
-import type { GameItem, GamePiece, GameRecipe, Kit } from "./schema"
+import type {
+  GameItem,
+  GamePiece,
+  GameProcessingConversion,
+  GameRecipe,
+  Kit,
+} from "./schema"
 
 export type StationRequirementReason =
   | "unknown-item"
@@ -6,6 +12,9 @@ export type StationRequirementReason =
   | "disabled-recipe"
   | "upgrade-only-recipe"
   | "ambiguous-recipe"
+  | "ambiguous-processing-conversion"
+  | "ambiguous-acquisition-source"
+  | "processing-cycle"
   | "unresolved-station"
   | "missing-station-level"
 
@@ -20,7 +29,8 @@ export type ItemStationRequirement = ItemStationRequirementBase &
         status: "required"
         stationReference: string
         stationPrefab: string
-        stationLevel: number
+        stationLevel?: number
+        outputAmountPerInput?: number
       }
     | { status: "no-station-listed" }
     | {
@@ -34,8 +44,10 @@ export type ItemStationRequirement = ItemStationRequirementBase &
 
 export interface StationRequirementGroup {
   stationPrefab: string
-  stationLevel: number
-  itemRequirements: Extract<ItemStationRequirement, { status: "required" }>[]
+  stationLevel?: number
+  itemRequirements: Array<
+    ItemStationRequirement & { stationPrefab: string }
+  >
 }
 
 export function groupStationRequirements(
@@ -44,19 +56,27 @@ export function groupStationRequirements(
   const groups = new Map<string, StationRequirementGroup>()
 
   for (const requirement of itemRequirements) {
-    if (requirement.status !== "required") continue
+    const stationPrefab = requirement.stationPrefab
+    if (!stationPrefab) continue
 
-    const group = groups.get(requirement.stationPrefab)
+    const group = groups.get(stationPrefab)
     if (group) {
-      group.stationLevel = Math.max(group.stationLevel, requirement.stationLevel)
-      group.itemRequirements.push(requirement)
+      if (requirement.stationLevel !== undefined) {
+        group.stationLevel =
+          group.stationLevel === undefined
+            ? requirement.stationLevel
+            : Math.max(group.stationLevel, requirement.stationLevel)
+      }
+      group.itemRequirements.push({ ...requirement, stationPrefab })
       continue
     }
 
-    groups.set(requirement.stationPrefab, {
-      stationPrefab: requirement.stationPrefab,
-      stationLevel: requirement.stationLevel,
-      itemRequirements: [requirement],
+    groups.set(stationPrefab, {
+      stationPrefab,
+      ...(requirement.stationLevel !== undefined
+        ? { stationLevel: requirement.stationLevel }
+        : {}),
+      itemRequirements: [{ ...requirement, stationPrefab }],
     })
   }
 
@@ -73,6 +93,9 @@ export interface KitStationRequirementCalculation {
 export interface StationRequirementDataAccess {
   getItem(prefab: string): GameItem | undefined
   getRecipes(resultPrefab: string): readonly GameRecipe[]
+  getProcessingConversions(
+    resultPrefab: string,
+  ): readonly (GameProcessingConversion & { stationPrefab: string })[]
   getStationPiece(stationReference: string): GamePiece | undefined
 }
 
@@ -80,42 +103,103 @@ export function calculateKitStationRequirements(
   kit: Kit,
   data: StationRequirementDataAccess,
 ): KitStationRequirementCalculation {
-  const itemRequirements = kit.itemGoals.map((goal): ItemStationRequirement => {
-    const base = {
-      itemPrefab: goal.prefab,
-      targetQuality: goal.targetQuality ?? 1,
+  const itemRequirements: ItemStationRequirement[] = []
+
+  function resolveItem(
+    prefab: string,
+    targetQuality: number,
+    ancestors: ReadonlySet<string>,
+  ): void {
+    const base = { itemPrefab: prefab, targetQuality }
+    if (ancestors.has(prefab)) {
+      itemRequirements.push({
+        ...base,
+        status: "unresolved",
+        reason: "processing-cycle",
+      })
+      return
+    }
+    if (!data.getItem(prefab)) {
+      itemRequirements.push({
+        ...base,
+        status: "unresolved",
+        reason: "unknown-item",
+      })
+      return
     }
 
-    if (!data.getItem(goal.prefab)) {
-      return { ...base, status: "unresolved", reason: "unknown-item" }
-    }
-
-    const recipes = data.getRecipes(goal.prefab)
-    if (recipes.length === 0) {
-      return { ...base, status: "unresolved", reason: "no-recipe" }
-    }
-
+    const recipes = data.getRecipes(prefab)
     const enabledRecipes = recipes.filter((recipe) => recipe.disabled !== true)
-    if (enabledRecipes.length === 0) {
-      return { ...base, status: "unresolved", reason: "disabled-recipe" }
-    }
-
     const craftRecipes = enabledRecipes.filter(
       (recipe) => recipe.noCraftOnlyUpgrade !== true,
     )
-    if (craftRecipes.length === 0) {
-      return { ...base, status: "unresolved", reason: "upgrade-only-recipe" }
+    const conversions = data.getProcessingConversions(prefab)
+
+    if (craftRecipes.length > 1 || conversions.length > 1) {
+      itemRequirements.push({
+        ...base,
+        status: "unresolved",
+        reason:
+          craftRecipes.length > 1
+            ? "ambiguous-recipe"
+            : "ambiguous-processing-conversion",
+      })
+      return
     }
-    if (craftRecipes.length > 1) {
-      return { ...base, status: "unresolved", reason: "ambiguous-recipe" }
+    if (craftRecipes.length > 0 && conversions.length > 0) {
+      itemRequirements.push({
+        ...base,
+        status: "unresolved",
+        reason: "ambiguous-acquisition-source",
+      })
+      return
+    }
+
+    const conversion = conversions[0]
+    if (conversion) {
+      const stationPiece = data.getStationPiece(conversion.stationPrefab)
+      if (!stationPiece) {
+        itemRequirements.push({
+          ...base,
+          stationReference: conversion.stationPrefab,
+          status: "unresolved",
+          reason: "unresolved-station",
+        })
+        return
+      }
+
+      itemRequirements.push({
+        ...base,
+        stationReference: conversion.stationPrefab,
+        stationPrefab: stationPiece.prefab,
+        outputAmountPerInput: conversion.outputAmount,
+        status: "required",
+      })
+      const nextAncestors = new Set(ancestors)
+      nextAncestors.add(prefab)
+      resolveItem(conversion.inputPrefab, 1, nextAncestors)
+      return
+    }
+
+    if (craftRecipes.length === 0) {
+      const reason =
+        recipes.length === 0
+          ? "no-recipe"
+          : enabledRecipes.length === 0
+            ? "disabled-recipe"
+            : "upgrade-only-recipe"
+      itemRequirements.push({ ...base, status: "unresolved", reason })
+      return
     }
 
     const recipe = craftRecipes[0]
     if (!recipe) {
-      return { ...base, status: "unresolved", reason: "no-recipe" }
+      itemRequirements.push({ ...base, status: "unresolved", reason: "no-recipe" })
+      return
     }
     if (!recipe.craftingStation) {
-      return { ...base, status: "no-station-listed" }
+      itemRequirements.push({ ...base, status: "no-station-listed" })
+      return
     }
 
     const stationPiece = data.getStationPiece(recipe.craftingStation)
@@ -128,27 +212,33 @@ export function calculateKitStationRequirements(
         : {}),
     }
     if (!stationPiece) {
-      return {
+      itemRequirements.push({
         ...stationInfo,
         status: "unresolved",
         reason: "unresolved-station",
-      }
+      })
+      return
     }
     if (recipe.minStationLevel === undefined) {
-      return {
+      itemRequirements.push({
         ...stationInfo,
         status: "unresolved",
         reason: "missing-station-level",
-      }
+      })
+      return
     }
 
-    return {
+    itemRequirements.push({
       ...stationInfo,
       stationPrefab: stationPiece.prefab,
       stationLevel: recipe.minStationLevel,
       status: "required",
-    }
-  })
+    })
+  }
+
+  for (const goal of kit.itemGoals) {
+    resolveItem(goal.prefab, goal.targetQuality ?? 1, new Set())
+  }
 
   return { kitId: kit.id, itemRequirements }
 }

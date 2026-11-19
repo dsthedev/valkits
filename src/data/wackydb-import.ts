@@ -3,10 +3,12 @@ import { parse as parseYaml } from "yaml"
 import {
   gameItemSchema,
   gamePieceSchema,
+  gameProcessingConversionSchema,
   gameRecipeSchema,
   recipeRequirementSchema,
   type GameItem,
   type GamePiece,
+  type GameProcessingConversion,
   type GameRecipe,
   type RecipeRequirement,
 } from "../domain/schema"
@@ -180,6 +182,57 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
           typeof entry === "object" && entry !== null && !Array.isArray(entry),
       )?.MainCraftingStationName
     : undefined
+  const fermentationStation = source.data.fermStationData
+  let processingConversions: GameProcessingConversion[] | undefined
+  if (fermentationStation !== undefined && fermentationStation !== null) {
+    if (
+      typeof fermentationStation !== "object" ||
+      Array.isArray(fermentationStation)
+    ) {
+      return failure("fermStationData: expected an object")
+    }
+
+    const rawConversions = (
+      fermentationStation as Record<string, unknown>
+    ).fermConversion
+    if (rawConversions !== undefined && rawConversions !== null) {
+      if (!Array.isArray(rawConversions)) {
+        return failure("fermStationData.fermConversion: expected a YAML list")
+      }
+
+      processingConversions = []
+      for (const [index, rawConversion] of rawConversions.entries()) {
+        if (
+          typeof rawConversion !== "object" ||
+          rawConversion === null ||
+          Array.isArray(rawConversion)
+        ) {
+          return failure(
+            `fermStationData.fermConversion[${index}]: expected an object`,
+          )
+        }
+
+        const sourceConversion = rawConversion as Record<string, unknown>
+        const conversion = gameProcessingConversionSchema.safeParse({
+          inputPrefab: sourceConversion.FromName,
+          resultPrefab: sourceConversion.ToName,
+          outputAmount: sourceConversion.Amount,
+          removeInput: sourceConversion.Remove,
+        })
+        if (!conversion.success) {
+          return {
+            success: false,
+            errors: conversion.error.issues.map(
+              (issue) =>
+                `fermStationData.fermConversion[${index}].${issue.path.join(".")}: ${issue.message}`,
+            ),
+          }
+        }
+
+        processingConversions.push(conversion.data)
+      }
+    }
+  }
   const prefab = source.data.name
   const isUpgrade = source.data.isUpgrade === true
   const extensionOrder =
@@ -200,6 +253,7 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
         ? Number(extensionOrder) + 1
         : undefined,
     buildRequirements: requirements.data,
+    processingConversions,
   })
 
   if (!piece.success) {

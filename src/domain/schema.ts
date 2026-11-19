@@ -34,6 +34,13 @@ export const recipeRequirementSchema = z.object({
   recover: z.boolean(),
 })
 
+export const gameProcessingConversionSchema = z.object({
+  inputPrefab: identifierSchema,
+  resultPrefab: identifierSchema,
+  outputAmount: positiveIntegerSchema,
+  removeInput: z.boolean(),
+})
+
 export const gameRecipeSchema = z.object({
   resultPrefab: identifierSchema,
   outputAmount: positiveIntegerSchema,
@@ -57,6 +64,7 @@ export const gamePieceSchema = z.object({
   upgradeStationPrefab: identifierSchema.optional(),
   upgradeLevel: positiveIntegerSchema.optional(),
   buildRequirements: z.array(recipeRequirementSchema),
+  processingConversions: z.array(gameProcessingConversionSchema).optional(),
 })
 
 export const kitItemGoalSchema = z.object({
@@ -92,6 +100,9 @@ export const kitSchema = z
 export type Biome = z.infer<typeof biomeSchema>
 export type GameItem = z.infer<typeof gameItemSchema>
 export type RecipeRequirement = z.infer<typeof recipeRequirementSchema>
+export type GameProcessingConversion = z.infer<
+  typeof gameProcessingConversionSchema
+>
 export type GameRecipe = z.infer<typeof gameRecipeSchema>
 export type GamePiece = z.infer<typeof gamePieceSchema>
 export type KitItemGoal = z.infer<typeof kitItemGoalSchema>

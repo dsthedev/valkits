@@ -16,6 +16,8 @@ export type ImportDiagnosticCode =
   | "unresolved-recipe-result"
   | "unresolved-requirement-prefab"
   | "unresolved-upgrade-station"
+  | "unresolved-processing-input"
+  | "unresolved-processing-result"
 
 export interface ImportDiagnostic {
   sourcePath: string
@@ -191,6 +193,25 @@ export function indexWackyDbFiles(
           `pieces/${piece.prefab}.yml`,
           "unresolved-requirement-prefab",
           `Build requirement prefab "${requirement.prefab}" is not in the item index.`,
+        )
+      }
+    }
+
+    for (const conversion of piece.processingConversions ?? []) {
+      if (!itemsByPrefab.has(conversion.inputPrefab)) {
+        addDiagnostic(
+          diagnostics,
+          `pieces/${piece.prefab}.yml`,
+          "unresolved-processing-input",
+          `Processing input prefab "${conversion.inputPrefab}" is not in the item index.`,
+        )
+      }
+      if (!itemsByPrefab.has(conversion.resultPrefab)) {
+        addDiagnostic(
+          diagnostics,
+          `pieces/${piece.prefab}.yml`,
+          "unresolved-processing-result",
+          `Processing result prefab "${conversion.resultPrefab}" is not in the item index.`,
         )
       }
     }

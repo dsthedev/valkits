@@ -5,6 +5,7 @@ import { createWackyDbDataAccess } from "../data/wackydb-catalog"
 import {
   gameItemSchema,
   gamePieceSchema,
+  type GameProcessingConversion,
   gameRecipeSchema,
   kitSchema,
   type GameItem,
@@ -42,7 +43,13 @@ function station(prefab: string, nameToken: string): GamePiece {
   })
 }
 
-function kit(itemGoals: Array<{ prefab: string; targetQuality?: number }>) {
+function kit(
+  itemGoals: Array<{
+    prefab: string
+    quantity?: number
+    targetQuality?: number
+  }>,
+) {
   return kitSchema.parse({
     id: "kit-test",
     name: "Test kit",
@@ -55,6 +62,9 @@ function dataAccess(
   items: GameItem[],
   recipes: GameRecipe[],
   stations: GamePiece[] = [],
+  processingConversions: Array<
+    GameProcessingConversion & { stationPrefab: string }
+  > = [],
 ): StationRequirementDataAccess {
   const itemsByPrefab = new Map(items.map((gameItem) => [gameItem.prefab, gameItem]))
   const recipesByResult = new Map<string, GameRecipe[]>()
@@ -72,6 +82,10 @@ function dataAccess(
   return {
     getItem: (prefab) => itemsByPrefab.get(prefab),
     getRecipes: (prefab) => recipesByResult.get(prefab) ?? [],
+    getProcessingConversions: (prefab) =>
+      processingConversions.filter(
+        (conversion) => conversion.resultPrefab === prefab,
+      ),
     getStationPiece: (reference) => stationsByReference.get(reference),
   }
 }
@@ -106,6 +120,42 @@ describe("kit station requirement calculation", () => {
         stationLevel: 5,
       },
     ])
+  })
+
+  it("finds fermenter and cauldron stations through the mead-base conversion", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+    const result = calculateKitStationRequirements(
+      kit([{ prefab: "MeadPoisonResist", quantity: 5 }]),
+      data,
+    )
+
+    expect(result.itemRequirements).toEqual([
+      {
+        itemPrefab: "MeadPoisonResist",
+        targetQuality: 1,
+        stationReference: "fermenter",
+        stationPrefab: "fermenter",
+        outputAmountPerInput: 6,
+        status: "required",
+      },
+      {
+        itemPrefab: "MeadBasePoisonResist",
+        targetQuality: 1,
+        stationReference: "$piece_meadcauldron",
+        stationPrefab: "piece_meadcauldron",
+        stationLevel: 1,
+        status: "required",
+      },
+    ])
+    expect(
+      groupStationRequirements(result.itemRequirements).map(
+        ({ stationPrefab }) => stationPrefab,
+      ),
+    ).toEqual(["fermenter", "piece_meadcauldron"])
   })
 
   it("resolves the selected craft recipe station and minimum level per item", () => {
@@ -244,6 +294,40 @@ describe("kit station requirement calculation", () => {
       stationReference: "$piece_missing",
       stationLevel: 2,
       status: "unresolved",
+    })
+
+    it("detects cycles in processing conversions", () => {
+      const conversions = [
+        {
+          inputPrefab: "B",
+          resultPrefab: "A",
+          outputAmount: 1,
+          removeInput: true,
+          stationPrefab: "fermenter",
+        },
+        {
+          inputPrefab: "A",
+          resultPrefab: "B",
+          outputAmount: 1,
+          removeInput: true,
+          stationPrefab: "fermenter",
+        },
+      ]
+      const result = calculateKitStationRequirements(
+        kit([{ prefab: "A" }]),
+        dataAccess(
+          [item("A"), item("B")],
+          [],
+          [station("fermenter", "$piece_fermenter")],
+          conversions,
+        ),
+      )
+
+      expect(result.itemRequirements.at(-1)).toMatchObject({
+        itemPrefab: "A",
+        status: "unresolved",
+        reason: "processing-cycle",
+      })
     })
   })
 })

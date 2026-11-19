@@ -147,4 +147,19 @@ reqs: []
       ],
     })
   })
+
+  it("imports fermenter conversions with their input, output, and yield", () => {
+    const piece = getData(
+      parsePieceYaml(
+        readSourceFile("../../public/data/wackydb/pieces/Piece_fermenter.yml"),
+      ),
+    )
+
+    expect(piece.processingConversions).toContainEqual({
+      inputPrefab: "MeadBasePoisonResist",
+      resultPrefab: "MeadPoisonResist",
+      outputAmount: 6,
+      removeInput: false,
+    })
+  })
 })
