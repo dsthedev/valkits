@@ -217,10 +217,12 @@ requirements.
 
 For each kit item, first report the station and minimum level stated on
 its selected craft recipe. Keep this per-item result separate from
-resource requirements and surface missing or ambiguous data. Do not infer
-station levels from target quality until those upgrade rules are
-verified. A recipe with no station field means only that no station was
-listed; do not infer why.
+resource requirements and surface missing or ambiguous data. When the
+item supports the requested quality and its recipe permits upgrades,
+calculate the required station level as the recipe minimum plus
+`targetQuality - 1`. Report invalid quality requests and disabled upgrades
+as unresolved. A recipe with no station field means only that no station
+was listed; do not infer why.
 
 For supported processing conversions, report the processing station and
 follow the conversion input to determine its crafting station. Preserve
@@ -383,8 +385,9 @@ missing.
 
 ### Phase 7 --- Station requirements and station-resource calculation
 
--   [x] Report per-item base recipe station and minimum level without
-    inferring quality-upgrade levels or station costs.
+-   [x] Report per-item station levels for the requested item quality using
+    the verified recipe minimum plus one station level per quality upgrade.
+    Keep station-resource costs separate and surface unsupported requests.
 -   [x] Group per-kit station requirements at the highest minimum level
     and keep the item breakdown expandable.
 -   [x] Validate the reported station requirements against source records.
@@ -421,7 +424,8 @@ Shared station requirement deduplication. - Kit fingerprint and stale
 snapshot detection. - localStorage validation and recovery.
 
 Use small fixtures that represent real exported records. Avoid tests
-that merely restate implementation details.
+that merely restate implementation details. Test quality-dependent station
+levels against representative item and recipe exports.
 
 Run the project's available typecheck, lint, and test scripts after each
 relevant change. Do not claim a check passed unless it was actually run.

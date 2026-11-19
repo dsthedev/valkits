@@ -73,6 +73,9 @@ const stationRequirementReasonLabels: Record<StationRequirementReason, string> =
     "processing-cycle": "Processing conversion chain loops",
     "unresolved-station": "Station reference could not be matched",
     "missing-station-level": "Recipe does not specify a minimum level",
+    "invalid-target-quality":
+      "Target quality is outside the item's supported range",
+    "quality-upgrades-disabled": "Recipe does not allow quality upgrades",
   }
 
 const stationResourceIssueLabels = {
@@ -370,8 +373,8 @@ export function CalculationResults({
                 Crafting station requirements
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Highest base-recipe minimum per station. Quality upgrades and
-                station build or upgrade costs are not included.
+                Highest level needed for the base recipe and requested quality.
+                Station construction and upgrade materials are shown separately.
               </p>
               {groupedStationRequirements.length > 0 ? (
                 <ul className="mt-3 divide-y divide-border/70 border-y border-border/70">

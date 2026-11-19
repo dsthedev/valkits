@@ -43,6 +43,8 @@ const stationRequirementReasonSchema = z.enum([
   "processing-cycle",
   "unresolved-station",
   "missing-station-level",
+  "invalid-target-quality",
+  "quality-upgrades-disabled",
 ]) satisfies z.ZodType<StationRequirementReason>
 
 const stationResourceIssueReasonSchema = z.enum([
