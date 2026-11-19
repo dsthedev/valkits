@@ -50,6 +50,7 @@ import type {
   StationRequirementReason,
 } from "@/domain/station-requirements"
 import { groupStationRequirements } from "@/domain/station-requirements"
+import type { StationResourceCalculation } from "@/domain/station-resource-calculation"
 import {
   createKit,
   updateKitDetails,
@@ -71,6 +72,9 @@ interface KitWorkspaceProps {
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
   onCalculateImmediate(kit: Kit): ImmediateKitCalculation
   onCalculateStationRequirements(kit: Kit): KitStationRequirementCalculation
+  onCalculateStationResources(
+    requirements: KitStationRequirementCalculation,
+  ): StationResourceCalculation
 }
 
 interface ImmediateCalculationSnapshot {
@@ -79,6 +83,7 @@ interface ImmediateCalculationSnapshot {
   sourceFingerprint: string
   calculation: ImmediateKitCalculation
   stationRequirements: KitStationRequirementCalculation
+  stationResources: StationResourceCalculation
 }
 
 const immediateReasonLabels: Record<ImmediateCalculationReason, string> = {
@@ -108,6 +113,15 @@ const stationRequirementReasonLabels: Record<StationRequirementReason, string> =
   "missing-station-level": "Recipe does not specify a minimum level",
 }
 
+const stationResourceIssueLabels = {
+  "missing-station-piece": "Station piece data is missing",
+  "disabled-station-piece": "Station piece is disabled",
+  "missing-station-upgrade": "Required station upgrade data is missing",
+  "unmapped-station-upgrade": "Station upgrade level is not verified in the source data",
+  "ambiguous-station-upgrade": "Multiple upgrades match this station level",
+  "disabled-station-upgrade": "Required station upgrade is disabled",
+} as const
+
 function humanizePrefab(prefab: string): string {
   return prefab
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
@@ -128,6 +142,7 @@ export function KitWorkspace({
   onUpdateGoal,
   onCalculateImmediate,
   onCalculateStationRequirements,
+  onCalculateStationResources,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId,
@@ -166,12 +181,14 @@ export function KitWorkspace({
 
   function calculateImmediate() {
     if (!activeKit || !inputFingerprint || sourceFingerprint === null) return
+    const stationRequirements = onCalculateStationRequirements(activeKit)
     setImmediateSnapshot({
       kitId: activeKit.id,
       inputFingerprint,
       sourceFingerprint,
       calculation: onCalculateImmediate(activeKit),
-      stationRequirements: onCalculateStationRequirements(activeKit),
+      stationRequirements,
+      stationResources: onCalculateStationResources(stationRequirements),
     })
     setCostSheetOpen(true)
   }
@@ -667,6 +684,97 @@ export function KitWorkspace({
                         </ul>
                       </details>
                     )}
+                  </section>
+
+                  <section className="mt-6 border-t border-border/70 pt-4">
+                    <h3 className="text-sm font-medium">Station resources</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Separate from direct kit recipe costs. Includes station
+                      construction, required upgrade pieces, and their item
+                      recipe chains.
+                    </p>
+                    {visibleSnapshot.stationResources.stationResources.length > 0 ? (
+                      <Table className="mt-2">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="pl-0">Resource</TableHead>
+                            <TableHead className="pr-0 text-right">
+                              Amount
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {visibleSnapshot.stationResources.stationResources.map(
+                            (resource) => (
+                              <TableRow key={resource.prefab}>
+                                <TableCell className="min-w-0 pl-0">
+                                  <span className="flex min-w-0 items-center gap-2">
+                                    <ItemIcon prefab={resource.prefab} size="sm" />
+                                    <span className="break-words">
+                                      {humanizePrefab(resource.prefab)}
+                                    </span>
+                                  </span>
+                                </TableCell>
+                                <TableCell className="pr-0 text-right font-medium tabular-nums">
+                                  {resource.amount.toLocaleString()}
+                                </TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        No station resource totals are available.
+                      </p>
+                    )}
+                    {visibleSnapshot.stationResources.unresolvedStations.length >
+                      0 && (
+                      <ul className="mt-3 space-y-1 text-xs text-amber-800 dark:text-amber-200">
+                        {visibleSnapshot.stationResources.unresolvedStations.map(
+                          (issue, index) => (
+                            <li key={`${issue.stationPrefab}:${issue.level}:${index}`}>
+                              {humanizePrefab(issue.stationPrefab)}
+                              {issue.level !== undefined && ` level ${issue.level}`}:{" "}
+                              {stationResourceIssueLabels[issue.reason]}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                    {visibleSnapshot.stationResources.unresolvedResources.length >
+                      0 && (
+                      <details className="mt-3 text-xs">
+                        <summary className="w-fit cursor-pointer text-muted-foreground underline decoration-dotted underline-offset-2 focus-visible:outline-2 focus-visible:outline-ring">
+                          Unresolved station materials (
+                          {visibleSnapshot.stationResources.unresolvedResources.length})
+                        </summary>
+                        <ul className="mt-2 space-y-1 text-muted-foreground">
+                          {visibleSnapshot.stationResources.unresolvedResources.map(
+                            (issue) => (
+                              <li key={`${issue.prefab}:${issue.reason}`}>
+                                {humanizePrefab(issue.prefab)} × {issue.amount}:{" "}
+                                {issue.reason.replaceAll("-", " ")}
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </details>
+                    )}
+                    {visibleSnapshot.stationResources.unresolvedStationRequirements
+                      .length > 0 && (
+                      <p className="mt-3 text-xs text-amber-800 dark:text-amber-200">
+                        Some kit items have unresolved station requirements; this
+                        station resource list is incomplete.
+                      </p>
+                    )}
+                    <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      {visibleSnapshot.stationResources.limitations.map(
+                        (limitation) => (
+                          <li key={limitation}>{limitation}</li>
+                        ),
+                      )}
+                    </ul>
                   </section>
 
                   {visibleSnapshot.calculation.unresolved.length > 0 && (

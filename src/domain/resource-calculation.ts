@@ -26,6 +26,12 @@ export interface RecipeDataAccess {
   getRecipes(resultPrefab: string): readonly GameRecipe[]
 }
 
+export interface ResourceResolution {
+  leafRequirements: ResourceRequirement[]
+  unresolved: UnresolvedRequirement[]
+  isComplete: boolean
+}
+
 export interface KitResourceCalculation {
   kitId: string
   leafRequirements: ResourceRequirement[]
@@ -40,10 +46,10 @@ const calculationLimitations = [
   "Requirement recovery flags do not reduce crafting input totals.",
 ]
 
-export function calculateKitResources(
-  kit: Kit,
+export function calculateResourceRequirements(
+  requirements: readonly ResourceRequirement[],
   data: RecipeDataAccess,
-): KitResourceCalculation {
+): ResourceResolution {
   const leafTotals = new Map<string, number>()
   const unresolvedTotals = new Map<string, UnresolvedRequirement>()
 
@@ -121,35 +127,8 @@ export function calculateKitResources(
     }
   }
 
-  for (const goal of kit.itemGoals) {
-    const item = data.getItem(goal.prefab)
-    const quantity = goal.quantity ?? 1
-
-    if (!item) {
-      addLeaf(goal.prefab, quantity)
-      addUnresolved(goal.prefab, quantity, "unknown-prefab")
-      continue
-    }
-
-    const capabilities = getItemGoalCapabilities(item)
-    if (quantity > 1 && !capabilities.quantity) {
-      addUnresolved(goal.prefab, quantity, "invalid-quantity")
-      continue
-    }
-
-    if (goal.targetQuality !== undefined && goal.targetQuality > 1) {
-      if (
-        capabilities.maxQuality === null ||
-        goal.targetQuality > capabilities.maxQuality
-      ) {
-        addUnresolved(goal.prefab, quantity, "invalid-target-quality")
-      } else {
-        addUnresolved(goal.prefab, quantity, "unsupported-quality")
-      }
-      continue
-    }
-
-    resolvePrefab(goal.prefab, quantity, new Set())
+  for (const requirement of requirements) {
+    resolvePrefab(requirement.prefab, requirement.amount, new Set())
   }
 
   const leafRequirements = [...leafTotals]
@@ -162,8 +141,74 @@ export function calculateKitResources(
   )
 
   return {
-    kitId: kit.id,
     leafRequirements,
+    unresolved,
+    isComplete: unresolved.length === 0,
+  }
+}
+
+export function calculateKitResources(
+  kit: Kit,
+  data: RecipeDataAccess,
+): KitResourceCalculation {
+  const validRequirements: ResourceRequirement[] = []
+  const invalidRequirements: UnresolvedRequirement[] = []
+
+  for (const goal of kit.itemGoals) {
+    const item = data.getItem(goal.prefab)
+    const quantity = goal.quantity ?? 1
+
+    if (!item) {
+      validRequirements.push({ prefab: goal.prefab, amount: quantity })
+      continue
+    }
+
+    const capabilities = getItemGoalCapabilities(item)
+    if (quantity > 1 && !capabilities.quantity) {
+      invalidRequirements.push({
+        prefab: goal.prefab,
+        amount: quantity,
+        reason: "invalid-quantity",
+      })
+      continue
+    }
+
+    if (goal.targetQuality !== undefined && goal.targetQuality > 1) {
+      invalidRequirements.push({
+        prefab: goal.prefab,
+        amount: quantity,
+        reason:
+          capabilities.maxQuality === null ||
+          goal.targetQuality > capabilities.maxQuality
+            ? "invalid-target-quality"
+            : "unsupported-quality",
+      })
+      continue
+    }
+
+    validRequirements.push({ prefab: goal.prefab, amount: quantity })
+  }
+
+  const resolved = calculateResourceRequirements(validRequirements, data)
+  const unresolvedByKey = new Map<string, UnresolvedRequirement>()
+  for (const issue of [...resolved.unresolved, ...invalidRequirements]) {
+    const key = `${issue.reason}:${issue.prefab}`
+    const existing = unresolvedByKey.get(key)
+    if (existing) {
+      existing.amount += issue.amount
+    } else {
+      unresolvedByKey.set(key, { ...issue })
+    }
+  }
+  const unresolved = [...unresolvedByKey.values()].sort((left, right) =>
+    left.prefab === right.prefab
+      ? left.reason.localeCompare(right.reason)
+      : left.prefab.localeCompare(right.prefab),
+  )
+
+  return {
+    kitId: kit.id,
+    leafRequirements: resolved.leafRequirements,
     unresolved,
     limitations: [...calculationLimitations],
     isComplete: unresolved.length === 0,

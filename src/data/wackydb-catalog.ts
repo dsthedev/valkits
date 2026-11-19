@@ -108,7 +108,7 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   >()
 
   for (const piece of catalog.pieces) {
-    if (!piece.upgradeStationPrefab || !piece.upgradeLevel) continue
+    if (!piece.upgradeStationPrefab) continue
     const upgrades = upgradesByStation.get(piece.upgradeStationPrefab) ?? []
     upgrades.push(piece)
     upgradesByStation.set(piece.upgradeStationPrefab, upgrades)

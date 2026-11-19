@@ -49,6 +49,12 @@ describe("WackyDatabase index", () => {
         .map((piece) => piece.upgradeLevel),
     ).toEqual([2, 3, 4, 5])
     expect(
+      dataAccess
+        .getStationUpgrades("piece_cauldron")
+        .find((piece) => piece.prefab === "cauldron_ext1_spice")
+        ?.upgradeLevel,
+    ).toBeUndefined()
+    expect(
       getItemGoalCapabilities(dataAccess.getItem("ArmorBronzeChest")!),
     ).toEqual({ quantity: false, maxQuality: 4 })
     expect(

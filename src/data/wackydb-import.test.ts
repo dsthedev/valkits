@@ -34,6 +34,7 @@ describe("WackyDatabase YAML import", () => {
     })
   })
 
+
   it("links a recipe to an item only by an exact prefab match", () => {
     const item = getData(
       parseItemYaml(
@@ -161,5 +162,22 @@ reqs: []
       outputAmount: 6,
       removeInput: false,
     })
+  })
+
+  it("leaves station upgrade levels unresolved for compound prefab suffixes", () => {
+    const piece = getData(
+      parsePieceYaml(
+        readSourceFile(
+          "../../public/data/wackydb/pieces/Piece_cauldron_ext1_spice.yml",
+        ),
+      ),
+    )
+
+    expect(piece).toMatchObject({
+      prefab: "cauldron_ext1_spice",
+      isUpgrade: true,
+      upgradeStationPrefab: "piece_cauldron",
+    })
+    expect(piece.upgradeLevel).toBeUndefined()
   })
 })

@@ -231,9 +231,19 @@ same station by taking the highest required level, not by adding levels.
 Keep the station list concise by grouping requirements per kit and making
 the related item list expandable; retain the per-item levels for context.
 This per-kit presentation does not replace the later cross-kit summary.
-Then calculate the materials and upgrade pieces needed to
-construct/upgrade the required station, recursively resolving recipes
-where supported.
+Keep station-resource totals separate from kit-resource totals. Calculate
+base station construction materials and every known upgrade piece through
+the required level, recursively resolving their item recipes. Report
+missing or ambiguous station/upgrade data rather than estimating costs.
+Only derive an upgrade level from a source identifier when that mapping is
+verified; retain upgrades with unknown levels as unresolved instead of
+guessing from a complex prefab suffix.
+For now, do not recursively include stations needed to build station
+pieces; state this limitation. Derive combined totals later without
+mutating either source list.
+Do not apply requirement per-level increments or recovery flags until their
+semantics for station-piece construction are verified; surface these as
+calculation limitations.
 
 Do not treat special prefab requirements such as `Upgrader1Weapon` or
 `Upgrader1Armor` as station levels unless verified. They may be actual
@@ -375,10 +385,11 @@ missing.
 -   [x] Group per-kit station requirements at the highest minimum level
     and keep the item breakdown expandable.
 -   [x] Validate the reported station requirements against source records.
--   Aggregate the highest required level per station.
--   Model station upgrades and their resource costs.
--   Reuse the recursive resource resolver where appropriate.
--   Surface unresolved station dependencies.
+-   [x] Calculate station construction and known upgrade-piece resource
+    totals separately from kit resources.
+-   [x] Reuse recursive item-recipe resolution for station materials.
+-   [x] Surface unresolved station dependencies and material sources.
+-   Expand stations required to build station pieces.
 
 ### Phase 8 --- Combined totals and usability
 

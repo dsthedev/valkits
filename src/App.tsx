@@ -48,6 +48,7 @@ import {
 import { type Kit } from "@/domain/schema"
 import { calculateImmediateKitRequirements } from "@/domain/immediate-calculation"
 import { calculateKitStationRequirements } from "@/domain/station-requirements"
+import { calculateStationResources } from "@/domain/station-resource-calculation"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -266,6 +267,19 @@ export function App() {
     return calculateKitStationRequirements(kit, catalogState.dataAccess)
   }
 
+  function calculateStationResourcesForKit(
+    stationRequirements: ReturnType<typeof calculateKitStationRequirements>,
+  ) {
+    if (catalogState.status !== "ready") {
+      throw new Error("The item catalog is not ready.")
+    }
+
+    return calculateStationResources(
+      stationRequirements.itemRequirements,
+      catalogState.dataAccess,
+    )
+  }
+
   function togglePrefabExclusion(prefab: string) {
     const settings = setPrefabExcluded(
       exclusionState.settings,
@@ -380,6 +394,7 @@ export function App() {
           onCreateKit={addNewKit}
           onCalculateImmediate={calculateImmediateForKit}
           onCalculateStationRequirements={calculateStationRequirementsForKit}
+          onCalculateStationResources={calculateStationResourcesForKit}
           onDeleteKit={deleteKit}
           onRemoveGoal={removeGoalFromActiveKit}
           onSelectKit={selectActiveKit}
