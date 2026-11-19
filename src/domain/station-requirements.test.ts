@@ -108,7 +108,7 @@ describe("kit station requirement calculation", () => {
         targetQuality: 1,
         status: "required",
         stationReference: "$piece_forge",
-        stationPrefab: "piece_forge",
+        stationPrefab: "forge",
         stationLevel: 1,
       },
       {
@@ -146,7 +146,7 @@ describe("kit station requirement calculation", () => {
         itemPrefab: "MeadBasePoisonResist",
         targetQuality: 1,
         stationReference: "$piece_meadcauldron",
-        stationPrefab: "piece_meadcauldron",
+        stationPrefab: "piece_MeadCauldron",
         stationLevel: 1,
         status: "required",
       },
@@ -155,7 +155,7 @@ describe("kit station requirement calculation", () => {
       groupStationRequirements(result.itemRequirements).map(
         ({ stationPrefab }) => stationPrefab,
       ),
-    ).toEqual(["fermenter", "piece_meadcauldron"])
+    ).toEqual(["fermenter", "piece_MeadCauldron"])
   })
 
   it("resolves the selected craft recipe station and minimum level per item", () => {
@@ -295,39 +295,39 @@ describe("kit station requirement calculation", () => {
       stationLevel: 2,
       status: "unresolved",
     })
+  })
 
-    it("detects cycles in processing conversions", () => {
-      const conversions = [
-        {
-          inputPrefab: "B",
-          resultPrefab: "A",
-          outputAmount: 1,
-          removeInput: true,
-          stationPrefab: "fermenter",
-        },
-        {
-          inputPrefab: "A",
-          resultPrefab: "B",
-          outputAmount: 1,
-          removeInput: true,
-          stationPrefab: "fermenter",
-        },
-      ]
-      const result = calculateKitStationRequirements(
-        kit([{ prefab: "A" }]),
-        dataAccess(
-          [item("A"), item("B")],
-          [],
-          [station("fermenter", "$piece_fermenter")],
-          conversions,
-        ),
-      )
+  it("detects cycles in processing conversions", () => {
+    const conversions = [
+      {
+        inputPrefab: "B",
+        resultPrefab: "A",
+        outputAmount: 1,
+        removeInput: true,
+        stationPrefab: "fermenter",
+      },
+      {
+        inputPrefab: "A",
+        resultPrefab: "B",
+        outputAmount: 1,
+        removeInput: true,
+        stationPrefab: "fermenter",
+      },
+    ]
+    const result = calculateKitStationRequirements(
+      kit([{ prefab: "A" }]),
+      dataAccess(
+        [item("A"), item("B")],
+        [],
+        [station("fermenter", "$piece_fermenter")],
+        conversions,
+      ),
+    )
 
-      expect(result.itemRequirements.at(-1)).toMatchObject({
-        itemPrefab: "A",
-        status: "unresolved",
-        reason: "processing-cycle",
-      })
+    expect(result.itemRequirements.at(-1)).toMatchObject({
+      itemPrefab: "A",
+      status: "unresolved",
+      reason: "processing-cycle",
     })
   })
 })
