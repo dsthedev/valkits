@@ -19,9 +19,9 @@ class MemoryStorage implements UpgraderItemPreferenceStorage {
 }
 
 describe("upgrader item preference", () => {
-  it("defaults to showing upgrader items when storage is empty", () => {
+  it("defaults to hiding upgrader items when storage is empty", () => {
     expect(loadUpgraderItemPreference(new MemoryStorage())).toEqual({
-      hideUpgraderItems: false,
+      hideUpgraderItems: true,
       warning: null,
     })
   })
@@ -44,7 +44,7 @@ describe("upgrader item preference", () => {
     storage.setItem(UPGRADER_ITEM_PREFERENCE_STORAGE_KEY, "not-json")
 
     expect(loadUpgraderItemPreference(storage)).toEqual({
-      hideUpgraderItems: false,
+      hideUpgraderItems: true,
       warning: expect.stringContaining("could not be read"),
     })
   })

@@ -33,7 +33,7 @@ export function loadUpgraderItemPreference(
 ): UpgraderItemPreferenceLoadResult {
   if (!storage) {
     return {
-      hideUpgraderItems: false,
+      hideUpgraderItems: true,
       warning: "Browser storage is unavailable; this preference will not be saved.",
     }
   }
@@ -41,7 +41,7 @@ export function loadUpgraderItemPreference(
   try {
     const storedValue = storage.getItem(UPGRADER_ITEM_PREFERENCE_STORAGE_KEY)
     if (storedValue === null) {
-      return { hideUpgraderItems: false, warning: null }
+      return { hideUpgraderItems: true, warning: null }
     }
 
     const parsed = upgraderItemPreferenceSchema.safeParse(
@@ -49,8 +49,9 @@ export function loadUpgraderItemPreference(
     )
     if (!parsed.success) {
       return {
-        hideUpgraderItems: false,
-        warning: "Saved upgrader-item preference is invalid; showing all items.",
+        hideUpgraderItems: true,
+        warning:
+          "Saved upgrader-item preference is invalid; hiding upgrader armor/weapon items.",
       }
     }
 
@@ -60,8 +61,9 @@ export function loadUpgraderItemPreference(
     }
   } catch {
     return {
-      hideUpgraderItems: false,
-      warning: "Saved upgrader-item preference could not be read; showing all items.",
+      hideUpgraderItems: true,
+      warning:
+        "Saved upgrader-item preference could not be read; hiding upgrader armor/weapon items.",
     }
   }
 }

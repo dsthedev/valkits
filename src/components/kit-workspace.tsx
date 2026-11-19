@@ -91,6 +91,11 @@ interface ImmediateCalculationSnapshot {
   stationResources: StationResourceCalculation
 }
 
+interface CostRow {
+  prefab: string
+  amount: number
+}
+
 const immediateReasonLabels: Record<ImmediateCalculationReason, string> = {
   "unknown-item": "Item not found in game data",
   "no-recipe": "No recipe available in the imported data",
@@ -133,6 +138,68 @@ function humanizePrefab(prefab: string): string {
     .replace(/[_-]+/g, " ")
 }
 
+function combineCosts(
+  directCosts: readonly CostRow[],
+  stationCosts: readonly CostRow[],
+): CostRow[] {
+  const amountsByPrefab = new Map<string, number>()
+  for (const cost of [...directCosts, ...stationCosts]) {
+    amountsByPrefab.set(
+      cost.prefab,
+      (amountsByPrefab.get(cost.prefab) ?? 0) + cost.amount,
+    )
+  }
+
+  return [...amountsByPrefab]
+    .map(([prefab, amount]) => ({ prefab, amount }))
+    .sort((left, right) => left.prefab.localeCompare(right.prefab))
+}
+
+function CostTable({
+  title,
+  costs,
+}: {
+  title: string
+  costs: readonly CostRow[]
+}) {
+  return (
+    <section className="mt-5 first:mt-0">
+      <h3 className="font-medium">{title}</h3>
+      {costs.length > 0 ? (
+        <Table className="mt-2">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-0">Resource</TableHead>
+              <TableHead className="pr-0 text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {costs.map((cost) => (
+              <TableRow key={cost.prefab}>
+                <TableCell className="min-w-0 pl-0">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ItemIcon prefab={cost.prefab} size="sm" />
+                    <span className="break-words">
+                      {humanizePrefab(cost.prefab)}
+                    </span>
+                  </span>
+                </TableCell>
+                <TableCell className="pr-0 text-right font-medium tabular-nums">
+                  {cost.amount.toLocaleString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">
+          No cost totals are available.
+        </p>
+      )}
+    </section>
+  )
+}
+
 export function KitWorkspace({
   collection,
   warning,
@@ -169,7 +236,9 @@ export function KitWorkspace({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [immediateSnapshot, setImmediateSnapshot] =
     useState<ImmediateCalculationSnapshot | null>(null)
-  const [costSheetOpen, setCostSheetOpen] = useState(false)
+  const [costsSheetOpen, setCostsSheetOpen] = useState(false)
+  const [advancedSheetOpen, setAdvancedSheetOpen] = useState(false)
+  const [showCombinedCosts, setShowCombinedCosts] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total",
   )
@@ -228,6 +297,17 @@ export function KitWorkspace({
           ),
       }
     : null
+  const directCosts: CostRow[] =
+    displayedCalculation?.requirements.map((requirement) => ({
+      prefab: requirement.prefab,
+      amount: requirement.totalAmount,
+    })) ?? []
+  const requiredStationCosts: CostRow[] =
+    displayedStationResources?.stationResources.map((resource) => ({
+      prefab: resource.prefab,
+      amount: resource.amount,
+    })) ?? []
+  const combinedCosts = combineCosts(directCosts, requiredStationCosts)
 
   function calculateImmediate() {
     if (!calculationKit || !inputFingerprint || sourceFingerprint === null) return
@@ -241,7 +321,7 @@ export function KitWorkspace({
       stationRequirements,
       stationResources: onCalculateStationResources(stationRequirements),
     })
-    setCostSheetOpen(true)
+    setCostsSheetOpen(true)
   }
 
   function openForm(mode: "create" | "edit") {
@@ -578,24 +658,99 @@ export function KitWorkspace({
             disabled={visibleGoals.length === 0 || sourceFingerprint === null}
             onClick={calculateImmediate}
           >
-            {visibleSnapshot ? "Recalculate direct costs" : "Calculate direct costs"}
+            {visibleSnapshot ? "Recalculate costs" : "Calculate costs"}
             <RiArrowRightSLine aria-hidden="true" />
           </Button>
+          {visibleSnapshot && (
+            <>
+              <Button
+                onClick={() => setCostsSheetOpen(true)}
+                variant="outline"
+              >
+                View costs
+              </Button>
+              <Button
+                onClick={() => setAdvancedSheetOpen(true)}
+                variant="outline"
+              >
+                Advanced breakdown
+              </Button>
+            </>
+          )}
           {calculationIsStale && (
             <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
               Costs are stale
             </p>
           )}
 
-          <Sheet open={costSheetOpen} onOpenChange={setCostSheetOpen}>
+          <Sheet open={costsSheetOpen} onOpenChange={setCostsSheetOpen}>
             <SheetContent
               className="w-full overflow-y-auto sm:max-w-xl"
               side="right"
             >
               <SheetHeader className="border-b border-border">
-                <SheetTitle>Direct recipe costs</SheetTitle>
+                <SheetTitle>View costs</SheetTitle>
                 <SheetDescription>
-                  {activeKit.name} · Direct ingredients only; recipe chains and station costs are not included.
+                  {activeKit.name} · Direct recipe costs and required station
+                  costs are shown separately.
+                </SheetDescription>
+              </SheetHeader>
+              {visibleSnapshot && (
+                <div className="p-4 sm:p-6">
+                  {calculationIsStale && (
+                    <p
+                      className="mb-4 text-sm text-amber-800 dark:text-amber-200"
+                      role="status"
+                    >
+                      Kit contents or game data changed. Recalculate to refresh
+                      these costs.
+                    </p>
+                  )}
+                  <CostTable title="Direct costs" costs={directCosts} />
+                  <CostTable
+                    title="Required station costs"
+                    costs={requiredStationCosts}
+                  />
+                  <Button
+                    aria-pressed={showCombinedCosts}
+                    className="mt-5"
+                    onClick={() =>
+                      setShowCombinedCosts((showCombined) => !showCombined)
+                    }
+                    variant={showCombinedCosts ? "secondary" : "outline"}
+                  >
+                    {showCombinedCosts
+                      ? "Hide combined costs"
+                      : "Show combined costs"}
+                  </Button>
+                  {showCombinedCosts && (
+                    <CostTable
+                      title="Combined costs"
+                      costs={combinedCosts}
+                    />
+                  )}
+                  {(displayedCalculation?.unresolved.length ?? 0) > 0 ||
+                  (displayedStationResources?.isComplete === false) ? (
+                    <p className="mt-4 text-sm text-amber-800 dark:text-amber-200">
+                      Some costs could not be resolved. See the advanced
+                      breakdown for details.
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+
+          <Sheet open={advancedSheetOpen} onOpenChange={setAdvancedSheetOpen}>
+            <SheetContent
+              className="w-full overflow-y-auto sm:max-w-xl"
+              side="right"
+            >
+              <SheetHeader className="border-b border-border">
+                <SheetTitle>Advanced breakdown</SheetTitle>
+                <SheetDescription>
+                  {activeKit.name} · Detailed recipe, station requirement, and
+                  unresolved cost information.
                 </SheetDescription>
               </SheetHeader>
 
