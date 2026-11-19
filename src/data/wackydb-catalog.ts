@@ -12,6 +12,7 @@ import {
   type ImportDiagnostic,
   type WackyDbIndex,
 } from "./wackydb-index"
+import { isUpgraderItemPrefab } from "../domain/upgrader-items"
 
 const importDiagnosticSchema = z.object({
   sourcePath: z.string().min(1),
@@ -79,7 +80,10 @@ export async function loadWackyDbCatalog(
   return parsed.data
 }
 
-export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
+export function createWackyDbDataAccess(
+  catalog: WackyDbCatalog,
+  options: { hideUpgraderItems?: boolean } = {},
+): {
   getItem(prefab: string): GameItem | undefined
   getRecipes(resultPrefab: string): readonly GameRecipe[]
   getProcessingConversions(resultPrefab: string): readonly (GameProcessingConversion & {
@@ -91,15 +95,32 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   searchItems(query: string): GameItem[]
   diagnostics: readonly ImportDiagnostic[]
 } {
+  const { hideUpgraderItems = false } = options
+  const items = hideUpgraderItems
+    ? catalog.items.filter((item) => !isUpgraderItemPrefab(item.prefab))
+    : catalog.items
+  const pieces = hideUpgraderItems
+    ? catalog.pieces.map((piece) => ({
+        ...piece,
+        buildRequirements: piece.buildRequirements.filter(
+          (requirement) => !isUpgraderItemPrefab(requirement.prefab),
+        ),
+        processingConversions: piece.processingConversions?.filter(
+          (conversion) =>
+            !isUpgraderItemPrefab(conversion.inputPrefab) &&
+            !isUpgraderItemPrefab(conversion.resultPrefab),
+        ),
+      }))
+    : catalog.pieces
   const itemsByPrefab = new Map(
-    catalog.items.map((item) => [item.prefab, item] as const),
+    items.map((item) => [item.prefab, item] as const),
   )
   const recipesByResultPrefab = new Map<string, GameRecipe[]>()
   const piecesByPrefab = new Map(
-    catalog.pieces.map((piece) => [piece.prefab, piece] as const),
+    pieces.map((piece) => [piece.prefab, piece] as const),
   )
   const piecesByNameToken = new Map(
-    catalog.pieces.map((piece) => [piece.nameToken, piece] as const),
+    pieces.map((piece) => [piece.nameToken, piece] as const),
   )
   const upgradesByStation = new Map<string, GamePiece[]>()
   const conversionsByResult = new Map<
@@ -107,7 +128,7 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
     Array<GameProcessingConversion & { stationPrefab: string }>
   >()
 
-  for (const piece of catalog.pieces) {
+  for (const piece of pieces) {
     if (!piece.upgradeStationPrefab) continue
     const upgrades = upgradesByStation.get(piece.upgradeStationPrefab) ?? []
     upgrades.push(piece)
@@ -115,16 +136,38 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
   }
 
   for (const recipe of catalog.recipes) {
+    if (hideUpgraderItems && isUpgraderItemPrefab(recipe.resultPrefab)) {
+      continue
+    }
+
+    const filteredRecipe = hideUpgraderItems
+      ? {
+          ...recipe,
+          requirements: recipe.requirements.filter(
+            (requirement) => !isUpgraderItemPrefab(requirement.prefab),
+          ),
+          upgradeRequirements: recipe.upgradeRequirements?.filter(
+            (requirement) => !isUpgraderItemPrefab(requirement.prefab),
+          ),
+        }
+      : recipe
     const recipes = recipesByResultPrefab.get(recipe.resultPrefab)
     if (recipes) {
-      recipes.push(recipe)
+      recipes.push(filteredRecipe)
     } else {
-      recipesByResultPrefab.set(recipe.resultPrefab, [recipe])
+      recipesByResultPrefab.set(recipe.resultPrefab, [filteredRecipe])
     }
   }
 
-  for (const piece of catalog.pieces) {
+  for (const piece of pieces) {
     for (const conversion of piece.processingConversions ?? []) {
+      if (
+        hideUpgraderItems &&
+        (isUpgraderItemPrefab(conversion.inputPrefab) ||
+          isUpgraderItemPrefab(conversion.resultPrefab))
+      ) {
+        continue
+      }
       const conversions = conversionsByResult.get(conversion.resultPrefab) ?? []
       conversions.push({ ...conversion, stationPrefab: piece.prefab })
       conversionsByResult.set(conversion.resultPrefab, conversions)
@@ -133,9 +176,9 @@ export function createWackyDbDataAccess(catalog: WackyDbCatalog): {
 
   function searchItems(query: string): GameItem[] {
     const terms = normalizeSearchText(query).split(" ").filter(Boolean)
-    if (terms.length === 0) return catalog.items
+    if (terms.length === 0) return items
 
-    return catalog.items.filter((item) => {
+    return items.filter((item) => {
       const searchableText = normalizeSearchText(
         [item.prefab, item.nameToken, item.descriptionToken, item.itemType]
           .filter(Boolean)

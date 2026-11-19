@@ -249,4 +249,19 @@ describe("kit resource calculation", () => {
       ["Wood", "known-item-no-recipe"],
     ])
   })
+
+  it("omits upgrader armor ingredients with the filtered catalog", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const result = calculateKitResources(
+      kit([{ prefab: "ArmorBronzeChest" }]),
+      createWackyDbDataAccess(catalog, { hideUpgraderItems: true }),
+    )
+
+    expect(
+      result.leafRequirements.map((requirement) => requirement.prefab),
+    ).not.toContain("Upgrader1Armor")
+  })
 })

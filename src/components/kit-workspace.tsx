@@ -52,6 +52,10 @@ import type {
 import { groupStationRequirements } from "@/domain/station-requirements"
 import type { StationResourceCalculation } from "@/domain/station-resource-calculation"
 import {
+  isUpgraderItemPrefab,
+  withoutUpgraderItemGoals,
+} from "@/domain/upgrader-items"
+import {
   createKit,
   updateKitDetails,
   type ItemGoalUpdates,
@@ -62,6 +66,7 @@ interface KitWorkspaceProps {
   collection: KitCollection
   warning: string | null
   excludedPrefabs: ReadonlySet<string>
+  hideUpgraderItems: boolean
   sourceFingerprint: string | null
   getItem(prefab: string): GameItem | undefined
   onCreateKit(kit: Kit): void
@@ -132,6 +137,7 @@ export function KitWorkspace({
   collection,
   warning,
   excludedPrefabs,
+  hideUpgraderItems,
   sourceFingerprint,
   getItem,
   onCreateKit,
@@ -147,6 +153,15 @@ export function KitWorkspace({
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId,
   )
+  const visibleGoals =
+    activeKit?.itemGoals.filter(
+      (goal) => !hideUpgraderItems || !isUpgraderItemPrefab(goal.prefab),
+    ) ?? []
+  const calculationKit = activeKit
+    ? hideUpgraderItems
+      ? withoutUpgraderItemGoals(activeKit)
+      : activeKit
+    : null
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null)
   const [nameDraft, setNameDraft] = useState("")
   const [biomeDraft, setBiomeDraft] = useState<Biome>("Meadows")
@@ -159,7 +174,7 @@ export function KitWorkspace({
     "total",
   )
   const inputFingerprint = activeKit
-    ? JSON.stringify(activeKit.itemGoals)
+    ? JSON.stringify({ itemGoals: visibleGoals, hideUpgraderItems })
     : null
   const visibleSnapshot =
     activeKit && immediateSnapshot?.kitId === activeKit.id
@@ -169,24 +184,60 @@ export function KitWorkspace({
     visibleSnapshot !== null &&
     (visibleSnapshot.inputFingerprint !== inputFingerprint ||
       visibleSnapshot.sourceFingerprint !== sourceFingerprint)
+  const visibleStationItemRequirements =
+    visibleSnapshot?.stationRequirements.itemRequirements.filter(
+      (requirement) =>
+        !hideUpgraderItems || !isUpgraderItemPrefab(requirement.itemPrefab),
+    ) ?? []
   const groupedStationRequirements = visibleSnapshot
-    ? groupStationRequirements(
-        visibleSnapshot.stationRequirements.itemRequirements,
-      )
+    ? groupStationRequirements(visibleStationItemRequirements)
     : []
   const ungroupedStationRequirements =
-    visibleSnapshot?.stationRequirements.itemRequirements.filter(
+    visibleStationItemRequirements.filter(
       (requirement) => requirement.status !== "required",
-    ) ?? []
+    )
+  const displayedCalculation = visibleSnapshot
+    ? {
+        ...visibleSnapshot.calculation,
+        requirements: visibleSnapshot.calculation.requirements.filter(
+          (requirement) =>
+            !hideUpgraderItems || !isUpgraderItemPrefab(requirement.prefab),
+        ),
+        unresolved: visibleSnapshot.calculation.unresolved.filter(
+          (issue) => !hideUpgraderItems || !isUpgraderItemPrefab(issue.prefab),
+        ),
+      }
+    : null
+  const displayedStationResources = visibleSnapshot
+    ? {
+        ...visibleSnapshot.stationResources,
+        stationResources: visibleSnapshot.stationResources.stationResources.filter(
+          (resource) =>
+            !hideUpgraderItems || !isUpgraderItemPrefab(resource.prefab),
+        ),
+        unresolvedResources:
+          visibleSnapshot.stationResources.unresolvedResources.filter(
+            (issue) =>
+              !hideUpgraderItems || !isUpgraderItemPrefab(issue.prefab),
+          ),
+        unresolvedStationRequirements:
+          visibleSnapshot.stationResources.unresolvedStationRequirements.filter(
+            (requirement) =>
+              !hideUpgraderItems ||
+              !isUpgraderItemPrefab(requirement.itemPrefab),
+          ),
+      }
+    : null
 
   function calculateImmediate() {
-    if (!activeKit || !inputFingerprint || sourceFingerprint === null) return
-    const stationRequirements = onCalculateStationRequirements(activeKit)
+    if (!calculationKit || !inputFingerprint || sourceFingerprint === null) return
+    const stationRequirements =
+      onCalculateStationRequirements(calculationKit)
     setImmediateSnapshot({
       kitId: activeKit.id,
       inputFingerprint,
       sourceFingerprint,
-      calculation: onCalculateImmediate(activeKit),
+      calculation: onCalculateImmediate(calculationKit),
       stationRequirements,
       stationResources: onCalculateStationResources(stationRequirements),
     })
@@ -246,7 +297,7 @@ export function KitWorkspace({
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {activeKit
-              ? `${activeKit.itemGoals.length} item goals`
+              ? `${visibleGoals.length} item goals`
               : "Create a kit to start collecting items."}
           </p>
           {warning && (
@@ -401,12 +452,12 @@ export function KitWorkspace({
           <div className="mb-2 flex items-center justify-between gap-3">
             <h3 className="font-medium">Item goals</h3>
             <span className="text-sm text-muted-foreground">
-              {activeKit.itemGoals.length}
+              {visibleGoals.length}
             </span>
           </div>
-          {activeKit.itemGoals.length > 0 ? (
+          {visibleGoals.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              {activeKit.itemGoals.map((goal) => {
+              {visibleGoals.map((goal) => {
                 const item = getItem(goal.prefab)
                 const excluded = excludedPrefabs.has(goal.prefab)
                 const capabilities = item
@@ -513,7 +564,9 @@ export function KitWorkspace({
             </div>
           ) : (
             <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
-              No item goals
+              {hideUpgraderItems && activeKit.itemGoals.length > 0
+                ? "No visible item goals; upgrader armor/weapon items are hidden."
+                : "No item goals"}
             </p>
           )}
         </div>
@@ -522,7 +575,7 @@ export function KitWorkspace({
       {activeKit && (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Button
-            disabled={activeKit.itemGoals.length === 0 || sourceFingerprint === null}
+            disabled={visibleGoals.length === 0 || sourceFingerprint === null}
             onClick={calculateImmediate}
           >
             {visibleSnapshot ? "Recalculate direct costs" : "Calculate direct costs"}
@@ -568,7 +621,8 @@ export function KitWorkspace({
                     ))}
                   </div>
 
-                  {visibleSnapshot.calculation.requirements.length > 0 ? (
+                  {displayedCalculation &&
+                  displayedCalculation.requirements.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -579,7 +633,7 @@ export function KitWorkspace({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {visibleSnapshot.calculation.requirements.map((requirement) => (
+                        {displayedCalculation.requirements.map((requirement) => (
                           <TableRow key={requirement.prefab}>
                             <TableCell className="min-w-0 pl-0">
                               <span className="flex min-w-0 items-center gap-2">
@@ -693,7 +747,8 @@ export function KitWorkspace({
                       construction, required upgrade pieces, and their item
                       recipe chains.
                     </p>
-                    {visibleSnapshot.stationResources.stationResources.length > 0 ? (
+                    {displayedStationResources &&
+                    displayedStationResources.stationResources.length > 0 ? (
                       <Table className="mt-2">
                         <TableHeader>
                           <TableRow>
@@ -704,7 +759,7 @@ export function KitWorkspace({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {visibleSnapshot.stationResources.stationResources.map(
+                          {displayedStationResources.stationResources.map(
                             (resource) => (
                               <TableRow key={resource.prefab}>
                                 <TableCell className="min-w-0 pl-0">
@@ -742,15 +797,16 @@ export function KitWorkspace({
                         )}
                       </ul>
                     )}
-                    {visibleSnapshot.stationResources.unresolvedResources.length >
+                    {displayedStationResources &&
+                      displayedStationResources.unresolvedResources.length >
                       0 && (
                       <details className="mt-3 text-xs">
                         <summary className="w-fit cursor-pointer text-muted-foreground underline decoration-dotted underline-offset-2 focus-visible:outline-2 focus-visible:outline-ring">
                           Unresolved station materials (
-                          {visibleSnapshot.stationResources.unresolvedResources.length})
+                          {displayedStationResources.unresolvedResources.length})
                         </summary>
                         <ul className="mt-2 space-y-1 text-muted-foreground">
-                          {visibleSnapshot.stationResources.unresolvedResources.map(
+                          {displayedStationResources.unresolvedResources.map(
                             (issue) => (
                               <li key={`${issue.prefab}:${issue.reason}`}>
                                 {humanizePrefab(issue.prefab)} × {issue.amount}:{" "}
@@ -761,8 +817,9 @@ export function KitWorkspace({
                         </ul>
                       </details>
                     )}
-                    {visibleSnapshot.stationResources.unresolvedStationRequirements
-                      .length > 0 && (
+                    {displayedStationResources &&
+                      displayedStationResources.unresolvedStationRequirements
+                        .length > 0 && (
                       <p className="mt-3 text-xs text-amber-800 dark:text-amber-200">
                         Some kit items have unresolved station requirements; this
                         station resource list is incomplete.
@@ -777,11 +834,12 @@ export function KitWorkspace({
                     </ul>
                   </section>
 
-                  {visibleSnapshot.calculation.unresolved.length > 0 && (
+                  {displayedCalculation &&
+                  displayedCalculation.unresolved.length > 0 && (
                     <div className="mt-5">
                       <h3 className="text-sm font-medium">Unresolved items</h3>
                       <ul className="mt-1 list-inside list-disc text-sm text-muted-foreground">
-                        {visibleSnapshot.calculation.unresolved.map((issue) => (
+                        {displayedCalculation.unresolved.map((issue) => (
                           <li key={`${issue.prefab}:${issue.reason}`}>
                             {humanizePrefab(issue.prefab)}: {immediateReasonLabels[issue.reason]}
                           </li>

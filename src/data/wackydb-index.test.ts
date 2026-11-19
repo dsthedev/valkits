@@ -69,6 +69,17 @@ describe("WackyDatabase index", () => {
         .getRecipes("ArmorBronzeChest")[0]
         ?.requirements.some((requirement) => requirement.prefab === "Upgrader1Armor"),
     ).toBe(true)
+
+    const dataAccessWithoutUpgraders = createWackyDbDataAccess(catalog, {
+      hideUpgraderItems: true,
+    })
+    expect(dataAccessWithoutUpgraders.getItem("Upgrader1Armor")).toBeUndefined()
+    expect(dataAccessWithoutUpgraders.searchItems("Upgrader1Armor")).toEqual([])
+    expect(
+      dataAccessWithoutUpgraders
+        .getRecipes("ArmorBronzeChest")[0]
+        ?.requirements.some((requirement) => requirement.prefab === "Upgrader1Armor"),
+    ).toBe(false)
     expect(catalog.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

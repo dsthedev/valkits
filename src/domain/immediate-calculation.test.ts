@@ -108,6 +108,21 @@ describe("immediate kit calculation", () => {
     expect(result.isComplete).toBe(true)
   })
 
+  it("omits upgrader armor ingredients when the filtered catalog is used", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const result = calculateImmediateKitRequirements(
+      kit([{ prefab: "ArmorBronzeChest" }]),
+      createWackyDbDataAccess(catalog, { hideUpgraderItems: true }),
+    )
+
+    expect(
+      result.requirements.map((requirement) => requirement.prefab),
+    ).not.toContain("Upgrader1Armor")
+  })
+
   it("rounds direct ingredient costs up to the recipe output batch", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),

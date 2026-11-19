@@ -1,6 +1,7 @@
 import {
   useDeferredValue,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -49,6 +50,7 @@ import { type Kit } from "@/domain/schema"
 import { calculateImmediateKitRequirements } from "@/domain/immediate-calculation"
 import { calculateKitStationRequirements } from "@/domain/station-requirements"
 import { calculateStationResources } from "@/domain/station-resource-calculation"
+import { withoutUpgraderItemGoals } from "@/domain/upgrader-items"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -64,6 +66,10 @@ import {
   setPrefabExcluded,
   type ExclusionSettings,
 } from "@/data/exclusions"
+import {
+  loadUpgraderItemPreference,
+  saveUpgraderItemPreference,
+} from "@/data/upgrader-item-preference"
 
 type CatalogState =
   | { status: "loading" }
@@ -98,6 +104,10 @@ function readBrowserKits() {
   return loadKitCollection(getBrowserStorage())
 }
 
+function readBrowserUpgraderItemPreference() {
+  return loadUpgraderItemPreference(getBrowserStorage())
+}
+
 function humanizePrefab(prefab: string): string {
   return prefab
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
@@ -111,6 +121,10 @@ export function App() {
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [query, setQuery] = useState("")
   const [resultPage, setResultPage] = useState(0)
+  const [upgraderItemPreference, setUpgraderItemPreference] = useState(
+    readBrowserUpgraderItemPreference,
+  )
+  const hideUpgraderItems = upgraderItemPreference.hideUpgraderItems
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
   const [kitState, setKitState] = useState(readBrowserKits)
   const [manageExclusions, setManageExclusions] = useState(false)
@@ -119,6 +133,13 @@ export function App() {
   const [importError, setImportError] = useState<string | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const deferredQuery = useDeferredValue(query)
+  const dataAccess = useMemo(
+    () =>
+      catalogState.status === "ready"
+        ? createWackyDbDataAccess(catalogState.catalog, { hideUpgraderItems })
+        : undefined,
+    [catalogState, hideUpgraderItems],
+  )
 
   useEffect(() => {
     let active = true
@@ -150,10 +171,7 @@ export function App() {
     }
   }, [loadAttempt])
 
-  const searchedItems =
-    catalogState.status === "ready"
-      ? catalogState.dataAccess.searchItems(deferredQuery)
-      : []
+  const searchedItems = dataAccess?.searchItems(deferredQuery) ?? []
   const results = filterExcludedItems(
     searchedItems,
     exclusionState.settings,
@@ -252,32 +270,47 @@ export function App() {
   }
 
   function calculateImmediateForKit(kit: Kit) {
-    if (catalogState.status !== "ready") {
+    if (!dataAccess) {
       throw new Error("The item catalog is not ready.")
     }
 
-    return calculateImmediateKitRequirements(kit, catalogState.dataAccess)
+    return calculateImmediateKitRequirements(
+      hideUpgraderItems ? withoutUpgraderItemGoals(kit) : kit,
+      dataAccess,
+    )
   }
 
   function calculateStationRequirementsForKit(kit: Kit) {
-    if (catalogState.status !== "ready") {
+    if (!dataAccess) {
       throw new Error("The item catalog is not ready.")
     }
 
-    return calculateKitStationRequirements(kit, catalogState.dataAccess)
+    return calculateKitStationRequirements(
+      hideUpgraderItems ? withoutUpgraderItemGoals(kit) : kit,
+      dataAccess,
+    )
   }
 
   function calculateStationResourcesForKit(
     stationRequirements: ReturnType<typeof calculateKitStationRequirements>,
   ) {
-    if (catalogState.status !== "ready") {
+    if (!dataAccess) {
       throw new Error("The item catalog is not ready.")
     }
 
     return calculateStationResources(
       stationRequirements.itemRequirements,
-      catalogState.dataAccess,
+      dataAccess,
     )
+  }
+
+  function toggleUpgraderItemVisibility() {
+    const nextValue = !hideUpgraderItems
+    const saved = saveUpgraderItemPreference(getBrowserStorage(), nextValue)
+    setUpgraderItemPreference({
+      hideUpgraderItems: nextValue,
+      warning: saved.success ? null : saved.message,
+    })
   }
 
   function togglePrefabExclusion(prefab: string) {
@@ -360,7 +393,7 @@ export function App() {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="border-b border-border/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <a className="flex items-center gap-3" href="/" aria-label="Valkits home">
             <span className="grid size-9 place-items-center rounded-lg bg-emerald-800 text-sm font-bold text-white dark:bg-emerald-300 dark:text-emerald-950">
               V
@@ -368,10 +401,36 @@ export function App() {
             <span className="text-base font-semibold">Valkits</span>
           </a>
           {catalogState.status === "ready" && (
-            <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground sm:text-sm">
-              <span>{catalogState.catalog.items.length.toLocaleString()} items</span>
-              <span aria-hidden="true" className="h-3 w-px bg-border" />
-              <span>{catalogState.catalog.recipes.length.toLocaleString()} recipes</span>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button
+                aria-pressed={hideUpgraderItems}
+                onClick={toggleUpgraderItemVisibility}
+                size="sm"
+                variant={hideUpgraderItems ? "secondary" : "outline"}
+              >
+                {hideUpgraderItems
+                  ? "Show upgrader armor/weapon"
+                  : "Hide upgrader armor/weapon"}
+              </Button>
+              {upgraderItemPreference.warning && (
+                <span
+                  className="max-w-48 text-xs text-destructive"
+                  role="status"
+                >
+                  {upgraderItemPreference.warning}
+                </span>
+              )}
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground sm:text-sm">
+                <span>
+                  {(dataAccess?.searchItems("").length ??
+                    catalogState.catalog.items.length).toLocaleString()}{" "}
+                  items
+                </span>
+                <span aria-hidden="true" className="h-3 w-px bg-border" />
+                <span>
+                  {catalogState.catalog.recipes.length.toLocaleString()} recipes
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -381,16 +440,13 @@ export function App() {
         <KitWorkspace
           collection={kitState.collection}
           excludedPrefabs={excludedPrefabs}
+          hideUpgraderItems={hideUpgraderItems}
           sourceFingerprint={
             catalogState.status === "ready"
-              ? catalogState.catalog.sourceFingerprint
+              ? `${catalogState.catalog.sourceFingerprint}:hide-upgraders=${hideUpgraderItems}`
               : null
           }
-          getItem={(prefab) =>
-            catalogState.status === "ready"
-              ? catalogState.dataAccess.getItem(prefab)
-              : undefined
-          }
+          getItem={(prefab) => dataAccess?.getItem(prefab)}
           onCreateKit={addNewKit}
           onCalculateImmediate={calculateImmediateForKit}
           onCalculateStationRequirements={calculateStationRequirementsForKit}
