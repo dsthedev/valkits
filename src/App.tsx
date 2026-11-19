@@ -47,10 +47,6 @@ import {
   type KitCollection,
 } from "@/data/kits"
 import { type Kit } from "@/domain/schema"
-import { calculateKitResources } from "@/domain/resource-calculation"
-import { calculateKitStationRequirements } from "@/domain/station-requirements"
-import { calculateStationResources } from "@/domain/station-resource-calculation"
-import { withoutUpgraderItemGoals } from "@/domain/upgrader-items"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -70,13 +66,6 @@ import {
   loadUpgraderItemPreference,
   saveUpgraderItemPreference,
 } from "@/data/upgrader-item-preference"
-import {
-  loadCalculationSnapshots,
-  removeCalculationSnapshot,
-  saveCalculationSnapshots,
-  upsertCalculationSnapshot,
-  type KitCalculationSnapshot,
-} from "@/data/calculation-snapshots"
 
 type CatalogState =
   | { status: "loading" }
@@ -133,9 +122,6 @@ export function App() {
   const hideUpgraderItems = upgraderItemPreference.hideUpgraderItems
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
   const [kitState, setKitState] = useState(readBrowserKits)
-  const [snapshotState, setSnapshotState] = useState(() =>
-    loadCalculationSnapshots(getBrowserStorage()),
-  )
   const [manageExclusions, setManageExclusions] = useState(false)
   const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(null)
   const [importMessage, setImportMessage] = useState<string | null>(null)
@@ -240,16 +226,6 @@ export function App() {
     })
   }
 
-  function persistSnapshots(
-    snapshots: Record<string, KitCalculationSnapshot>,
-  ) {
-    const saved = saveCalculationSnapshots(getBrowserStorage(), snapshots)
-    setSnapshotState({
-      snapshots,
-      warning: saved.success ? null : saved.message,
-    })
-  }
-
   function addNewKit(kit: Kit) {
     const withKit = addKitToCollection(kitState.collection, kit)
     persistKits(selectKit(withKit, kit.id))
@@ -265,7 +241,6 @@ export function App() {
 
   function deleteKit(kitId: string) {
     persistKits(removeKitFromCollection(kitState.collection, kitId))
-    persistSnapshots(removeCalculationSnapshot(snapshotState.snapshots, kitId))
   }
 
   function addGoalToActiveKit(prefab: string) {
@@ -295,41 +270,6 @@ export function App() {
         kitState.collection,
         updateItemGoal(activeKit, prefab, updates),
       ),
-    )
-  }
-
-  function calculateResourcesForKit(kit: Kit) {
-    if (!dataAccess) {
-      throw new Error("The item catalog is not ready.")
-    }
-
-    return calculateKitResources(
-      hideUpgraderItems ? withoutUpgraderItemGoals(kit) : kit,
-      dataAccess,
-    )
-  }
-
-  function calculateStationRequirementsForKit(kit: Kit) {
-    if (!dataAccess) {
-      throw new Error("The item catalog is not ready.")
-    }
-
-    return calculateKitStationRequirements(
-      hideUpgraderItems ? withoutUpgraderItemGoals(kit) : kit,
-      dataAccess,
-    )
-  }
-
-  function calculateStationResourcesForKit(
-    stationRequirements: ReturnType<typeof calculateKitStationRequirements>,
-  ) {
-    if (!dataAccess) {
-      throw new Error("The item catalog is not ready.")
-    }
-
-    return calculateStationResources(
-      stationRequirements.itemRequirements,
-      dataAccess,
     )
   }
 
@@ -470,30 +410,15 @@ export function App() {
           collection={kitState.collection}
           excludedPrefabs={excludedPrefabs}
           hideUpgraderItems={hideUpgraderItems}
-          sourceFingerprint={
-            catalogState.status === "ready"
-              ? `${catalogState.catalog.sourceFingerprint}:hide-upgraders=${hideUpgraderItems}`
-              : null
-          }
+          calculationData={dataAccess ?? null}
           getItem={(prefab) => dataAccess?.getItem(prefab)}
           onCreateKit={addNewKit}
-          onCalculateResources={calculateResourcesForKit}
-          onCalculateStationRequirements={calculateStationRequirementsForKit}
-          onCalculateStationResources={calculateStationResourcesForKit}
           onDeleteKit={deleteKit}
           onRemoveGoal={removeGoalFromActiveKit}
           onSelectKit={selectActiveKit}
           onUpdateGoal={updateGoalInActiveKit}
           onUpdateKit={updateExistingKit}
-          calculationSnapshots={snapshotState.snapshots}
-          onSaveCalculationSnapshot={(snapshot) =>
-            persistSnapshots(
-              upsertCalculationSnapshot(snapshotState.snapshots, snapshot),
-            )
-          }
-          warning={[kitState.warning, snapshotState.warning]
-            .filter(Boolean)
-            .join(" ") || null}
+          warning={kitState.warning}
         />
 
         {catalogState.status === "loading" && (

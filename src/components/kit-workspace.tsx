@@ -1,7 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import {
   RiAddLine,
-  RiArrowRightSLine,
   RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
@@ -32,15 +31,17 @@ import {
   type ItemGoalUpdates,
   type KitCollection,
 } from "@/data/kits"
-import {
-  isCalculationSnapshotStale,
-  type KitCalculationSnapshot,
-} from "@/data/calculation-snapshots"
 import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
-import type { KitResourceCalculation } from "@/domain/resource-calculation"
+import { calculateKitResources } from "@/domain/resource-calculation"
 import { biomes, type Biome, type GameItem, type Kit } from "@/domain/schema"
-import type { KitStationRequirementCalculation } from "@/domain/station-requirements"
-import type { StationResourceCalculation } from "@/domain/station-resource-calculation"
+import {
+  calculateKitStationRequirements,
+  type StationRequirementDataAccess,
+} from "@/domain/station-requirements"
+import {
+  calculateStationResources,
+  type StationResourceDataAccess,
+} from "@/domain/station-resource-calculation"
 import {
   isUpgraderItemPrefab,
   withoutUpgraderItemGoals,
@@ -51,8 +52,10 @@ interface KitWorkspaceProps {
   warning: string | null
   excludedPrefabs: ReadonlySet<string>
   hideUpgraderItems: boolean
-  sourceFingerprint: string | null
-  calculationSnapshots: Record<string, KitCalculationSnapshot>
+  calculationData:
+    | (StationRequirementDataAccess &
+        Pick<StationResourceDataAccess, "getStationUpgrades">)
+    | null
   getItem(prefab: string): GameItem | undefined
   onCreateKit(kit: Kit): void
   onSelectKit(kitId: string): void
@@ -60,12 +63,6 @@ interface KitWorkspaceProps {
   onDeleteKit(kitId: string): void
   onRemoveGoal(prefab: string): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
-  onCalculateResources(kit: Kit): KitResourceCalculation
-  onCalculateStationRequirements(kit: Kit): KitStationRequirementCalculation
-  onCalculateStationResources(
-    requirements: KitStationRequirementCalculation
-  ): StationResourceCalculation
-  onSaveCalculationSnapshot(snapshot: KitCalculationSnapshot): void
 }
 
 function humanizePrefab(prefab: string): string {
@@ -88,8 +85,7 @@ export function KitWorkspace({
   warning,
   excludedPrefabs,
   hideUpgraderItems,
-  sourceFingerprint,
-  calculationSnapshots,
+  calculationData,
   getItem,
   onCreateKit,
   onSelectKit,
@@ -97,10 +93,6 @@ export function KitWorkspace({
   onDeleteKit,
   onRemoveGoal,
   onUpdateGoal,
-  onCalculateResources,
-  onCalculateStationRequirements,
-  onCalculateStationResources,
-  onSaveCalculationSnapshot,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId
@@ -119,7 +111,6 @@ export function KitWorkspace({
   const [biomeDraft, setBiomeDraft] = useState<Biome>("Meadows")
   const [formError, setFormError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [costsSheetOpen, setCostsSheetOpen] = useState(false)
   const [pendingImportedKit, setPendingImportedKit] = useState<Kit | null>(null)
   const [kitFileError, setKitFileError] = useState<string | null>(null)
   const [kitFileMessage, setKitFileMessage] = useState<string | null>(null)
@@ -127,43 +118,21 @@ export function KitWorkspace({
     exampleKitOptions[0]?.id ?? ""
   )
   const kitImportInputRef = useRef<HTMLInputElement>(null)
-  const inputFingerprint = activeKit
-    ? JSON.stringify({ itemGoals: visibleGoals, hideUpgraderItems })
-    : null
-  const visibleSnapshot = activeKit
-    ? (calculationSnapshots[activeKit.id] ?? null)
-    : null
-  const calculationIsStale =
-    visibleSnapshot !== null &&
-    isCalculationSnapshotStale(
-      visibleSnapshot,
-      inputFingerprint,
-      sourceFingerprint
-    )
-
-  function calculateResources() {
-    if (
-      !activeKit ||
-      !calculationKit ||
-      !inputFingerprint ||
-      sourceFingerprint === null
-    ) {
-      return
-    }
-
-    const calculation = onCalculateResources(calculationKit)
-    const stationRequirements = onCalculateStationRequirements(calculationKit)
-    onSaveCalculationSnapshot({
-      kitId: activeKit.id,
-      inputFingerprint,
-      sourceFingerprint,
-      calculatedAt: new Date().toISOString(),
-      calculation,
-      stationRequirements,
-      stationResources: onCalculateStationResources(stationRequirements),
-    })
-    setCostsSheetOpen(true)
-  }
+  const liveCalculation =
+    activeKit && calculationKit && calculationData
+      ? calculateKitResources(calculationKit, calculationData)
+      : null
+  const liveStationRequirements =
+    activeKit && calculationKit && calculationData
+      ? calculateKitStationRequirements(calculationKit, calculationData)
+      : null
+  const liveStationResources =
+    liveStationRequirements && calculationData
+      ? calculateStationResources(
+          liveStationRequirements.itemRequirements,
+          calculationData
+        )
+      : null
 
   function openForm(mode: "create" | "edit") {
     setFormMode(mode)
@@ -547,159 +516,147 @@ export function KitWorkspace({
       )}
 
       {activeKit && (
-        <div className="mt-5 border-t border-border/70 pt-4">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="font-medium">Item goals</h2>
-            <span className="text-sm text-muted-foreground">
-              {visibleGoals.length}
-            </span>
-          </div>
-          {visibleGoals.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {visibleGoals.map((goal) => {
-                const item = getItem(goal.prefab)
-                const capabilities = item
-                  ? getItemGoalCapabilities(item)
-                  : { quantity: false, maxQuality: null }
-                return (
-                  <Card className="rounded-lg shadow-sm" key={goal.prefab}>
-                    <CardContent className="flex items-center gap-2.5 p-2.5">
-                      <ItemIcon prefab={goal.prefab} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <CardTitle className="text-sm leading-tight break-words">
-                            {humanizePrefab(item?.prefab ?? goal.prefab)}
-                          </CardTitle>
-                          <Button
-                            aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
-                            onClick={() => onRemoveGoal(goal.prefab)}
-                            size="icon-sm"
-                            title="Remove from kit"
-                            variant="ghost"
-                          >
-                            <RiCloseLine aria-hidden="true" />
-                          </Button>
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                          {item?.itemType && (
-                            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
-                              {item.itemType}
-                            </span>
-                          )}
-                          {excludedPrefabs.has(goal.prefab) && (
-                            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                              Excluded
-                            </span>
-                          )}
-                          {!item && (
-                            <span className="text-xs text-muted-foreground">
-                              Not in current item data
-                            </span>
-                          )}
-                          {capabilities.quantity && (
-                            <label
-                              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                              title="Quantity"
-                            >
-                              Qty
-                              <Input
-                                aria-label={`Quantity of ${goal.prefab}`}
-                                className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
-                                min={1}
-                                onChange={(event) => {
-                                  const value = parseGoalInput(
-                                    event.target.value
-                                  )
-                                  if (value !== undefined)
-                                    onUpdateGoal(goal.prefab, {
-                                      quantity: value,
-                                    })
-                                }}
-                                type="number"
-                                value={goal.quantity ?? 1}
-                              />
-                              {item?.maxStackSize && item.maxStackSize > 1 && (
-                                <span className="tabular-nums">
-                                  /{item.maxStackSize}
-                                </span>
-                              )}
-                            </label>
-                          )}
-                          {capabilities.maxQuality !== null && (
-                            <label
-                              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                              title="Target quality"
-                            >
-                              LVL
-                              <Input
-                                aria-label={`Target quality of ${goal.prefab}`}
-                                className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
-                                max={capabilities.maxQuality}
-                                min={1}
-                                onChange={(event) => {
-                                  const value = parseGoalInput(
-                                    event.target.value,
-                                    capabilities.maxQuality ?? undefined
-                                  )
-                                  if (value !== undefined)
-                                    onUpdateGoal(goal.prefab, {
-                                      targetQuality: value,
-                                    })
-                                }}
-                                type="number"
-                                value={goal.targetQuality ?? 1}
-                              />
-                              <span className="tabular-nums">
-                                /{capabilities.maxQuality}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+        <div className="mt-5 grid gap-6 border-t border-border/70 pt-4 md:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h2 className="font-medium">Item goals</h2>
+              <span className="text-sm text-muted-foreground">
+                {visibleGoals.length}
+              </span>
             </div>
-          ) : (
-            <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
-              {hideUpgraderItems && activeKit.itemGoals.length > 0
-                ? "No visible item goals; upgrader armor/weapon items are hidden."
-                : "No item goals"}
-            </p>
-          )}
-        </div>
-      )}
-
-      {activeKit && (
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button
-            disabled={visibleGoals.length === 0 || sourceFingerprint === null}
-            onClick={calculateResources}
-          >
-            {visibleSnapshot
-              ? "Recalculate resource plan"
-              : "Calculate resource plan"}
-            <RiArrowRightSLine aria-hidden="true" />
-          </Button>
-          {calculationIsStale && (
-            <p
-              className="text-sm text-amber-800 dark:text-amber-200"
-              role="status"
-            >
-              Costs are stale
-            </p>
-          )}
-          {visibleSnapshot && (
-            <CalculationResults
-              costsSheetOpen={costsSheetOpen}
-              hideUpgraderItems={hideUpgraderItems}
-              kit={activeKit}
-              onCostsSheetOpenChange={setCostsSheetOpen}
-              snapshot={visibleSnapshot}
-              stale={calculationIsStale}
-            />
-          )}
+            {visibleGoals.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {visibleGoals.map((goal) => {
+                  const item = getItem(goal.prefab)
+                  const capabilities = item
+                    ? getItemGoalCapabilities(item)
+                    : { quantity: false, maxQuality: null }
+                  return (
+                    <Card className="rounded-lg shadow-sm" key={goal.prefab}>
+                      <CardContent className="flex items-center gap-2.5 p-2.5">
+                        <ItemIcon prefab={goal.prefab} size="md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <CardTitle className="text-sm leading-tight break-words">
+                              {humanizePrefab(item?.prefab ?? goal.prefab)}
+                            </CardTitle>
+                            <Button
+                              aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
+                              onClick={() => onRemoveGoal(goal.prefab)}
+                              size="icon-sm"
+                              title="Remove from kit"
+                              variant="ghost"
+                            >
+                              <RiCloseLine aria-hidden="true" />
+                            </Button>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            {item?.itemType && (
+                              <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
+                                {item.itemType}
+                              </span>
+                            )}
+                            {excludedPrefabs.has(goal.prefab) && (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                Excluded
+                              </span>
+                            )}
+                            {!item && (
+                              <span className="text-xs text-muted-foreground">
+                                Not in current item data
+                              </span>
+                            )}
+                            {capabilities.quantity && (
+                              <label
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                                title="Quantity"
+                              >
+                                Qty
+                                <Input
+                                  aria-label={`Quantity of ${goal.prefab}`}
+                                  className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
+                                  min={1}
+                                  onChange={(event) => {
+                                    const value = parseGoalInput(
+                                      event.target.value
+                                    )
+                                    if (value !== undefined)
+                                      onUpdateGoal(goal.prefab, {
+                                        quantity: value,
+                                      })
+                                  }}
+                                  type="number"
+                                  value={goal.quantity ?? 1}
+                                />
+                                {item?.maxStackSize &&
+                                  item.maxStackSize > 1 && (
+                                    <span className="tabular-nums">
+                                      /{item.maxStackSize}
+                                    </span>
+                                  )}
+                              </label>
+                            )}
+                            {capabilities.maxQuality !== null && (
+                              <label
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                                title="Target quality"
+                              >
+                                LVL
+                                <Input
+                                  aria-label={`Target quality of ${goal.prefab}`}
+                                  className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
+                                  max={capabilities.maxQuality}
+                                  min={1}
+                                  onChange={(event) => {
+                                    const value = parseGoalInput(
+                                      event.target.value,
+                                      capabilities.maxQuality ?? undefined
+                                    )
+                                    if (value !== undefined)
+                                      onUpdateGoal(goal.prefab, {
+                                        targetQuality: value,
+                                      })
+                                  }}
+                                  type="number"
+                                  value={goal.targetQuality ?? 1}
+                                />
+                                <span className="tabular-nums">
+                                  /{capabilities.maxQuality}
+                                </span>
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
+                {hideUpgraderItems && activeKit.itemGoals.length > 0
+                  ? "No visible item goals; upgrader armor/weapon items are hidden."
+                  : "No item goals"}
+              </p>
+            )}
+          </div>
+          <div className="min-w-0">
+            {calculationData === null && (
+              <p className="mt-4 text-sm text-muted-foreground" role="status">
+                Live costs will appear when item data is ready.
+              </p>
+            )}
+            {liveCalculation &&
+              liveStationRequirements &&
+              liveStationResources && (
+                <CalculationResults
+                  calculation={liveCalculation}
+                  hideUpgraderItems={hideUpgraderItems}
+                  stationRequirements={liveStationRequirements}
+                  stationResourceCalculation={liveStationResources}
+                />
+              )}
+          </div>
         </div>
       )}
     </section>

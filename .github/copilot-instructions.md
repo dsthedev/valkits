@@ -145,8 +145,7 @@ parsing isolated so it can be adjusted when more examples are inspected.
 A user-created milestone containing desired item acquisition goals.
 
 A kit should have: - A stable app-generated ID. - A name. - A biome. -
-An optional description. - An ordered list of item goals. - An optional
-last-calculated snapshot.
+An optional description. - An ordered list of item goals.
 
 Do not add tags or elaborate guide hierarchies to the initial kit
 feature.
@@ -161,20 +160,13 @@ cases explicit rather than guessing from one property alone.
 Do not duplicate imported item metadata inside each kit goal. Store the
 prefab reference and only the user-selected goal values.
 
-### Kit calculation snapshot
+### Live calculation results
 
-Calculations are user-triggered, not automatic. A kit should retain its
-previous result when edited, but the result must be visibly marked stale
-when its calculation inputs have changed.
-
-A calculation snapshot includes: - Calculation timestamp. - Fingerprint of
-calculation-relevant kit inputs. - Game-data version or fingerprint. - Kit
-resource totals. - Station resource totals. - Any unresolved requirements or
-warnings. Snapshots are persisted separately from kits in a versioned
-localStorage collection keyed by kit ID.
-
-Use a deterministic fingerprint based only on calculation-relevant
-inputs. A stale result must never be presented as current.
+Kit resources, station requirements, and station-resource calculations are
+derived live whenever kit goals or relevant data settings change. Keep the
+three results independent. Derive combined totals by aggregating kit and
+station resources without mutating either result. Do not persist calculation
+snapshots or show stale-result state in the current workflow.
 
 ## Resource calculation rules
 
@@ -302,10 +294,11 @@ appropriate.
     metadata.
 -   Adding an item to a kit should prevent accidental duplicate goals or
     define a clear duplicate behavior.
--   Editing a kit should mark its previous calculation stale, not erase
-    it.
--   A Calculate action should explicitly run the calculation and update
-    the snapshot.
+-   Update kit resources, station requirements, and station resources
+    immediately when kit goals change.
+-   Show direct kit ingredients and combined recursive kit/station totals
+    in the quick reference; keep detailed station and unresolved information
+    in the advanced breakdown.
 -   Show unresolved requirements and calculation limitations clearly.
 -   Keep kit resources, station resources, and combined totals
     distinguishable.
@@ -374,14 +367,14 @@ missing.
 -   Start with known simple recipes and expand as source cases are
     verified.
 
-### Phase 6 --- Manual calculation snapshots
+### Phase 6 --- Live calculation results
 
--   [x] Add an explicit Calculate action.
--   [x] Store validated per-kit results in a versioned localStorage
-    collection with timestamp and input/data fingerprints.
--   [x] Detect stale calculations when relevant kit inputs or source data
-    change; preserve the previous result while marking it stale.
--   Test current/stale/never-calculated states.
+-   [x] Derive kit resource, station requirement, and station-resource
+    results from the current kit and source data.
+-   [x] Keep each result independent and derive combined totals without
+    mutating the source lists.
+-   [x] Show direct and full costs in a quick reference and detailed
+    requirements in an advanced breakdown.
 
 ### Phase 7 --- Station requirements and station-resource calculation
 
@@ -420,8 +413,9 @@ Recipe output quantities. - Per-quality ingredient increments. -
 Recursive ingredient resolution. - Aggregation of shared resources. -
 Circular dependencies. - Missing and disabled recipes. - Alternative
 ingredient behavior once confirmed. - Station-level calculation. -
-Shared station requirement deduplication. - Kit fingerprint and stale
-snapshot detection. - localStorage validation and recovery.
+Shared station requirement deduplication. - Live recalculation when goal
+membership, quantity, or quality changes. - localStorage validation and
+recovery.
 
 Use small fixtures that represent real exported records. Avoid tests
 that merely restate implementation details. Test quality-dependent station

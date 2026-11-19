@@ -2,13 +2,6 @@ import { useState } from "react"
 import { ItemIcon } from "@/components/item-icon"
 import { Button } from "@/components/ui/button"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import {
   Table,
   TableBody,
   TableCell,
@@ -16,22 +9,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Kit } from "@/domain/schema"
 import type { UnresolvedReason } from "@/domain/resource-calculation"
+import type { KitResourceCalculation } from "@/domain/resource-calculation"
 import {
   groupStationRequirements,
+  type KitStationRequirementCalculation,
   type StationRequirementReason,
 } from "@/domain/station-requirements"
-import type { KitCalculationSnapshot } from "@/data/calculation-snapshots"
+import type { StationResourceCalculation } from "@/domain/station-resource-calculation"
 import { isUpgraderItemPrefab } from "@/domain/upgrader-items"
 
 interface CalculationResultsProps {
-  kit: Kit
-  snapshot: KitCalculationSnapshot
-  stale: boolean
+  calculation: KitResourceCalculation
+  stationRequirements: KitStationRequirementCalculation
+  stationResourceCalculation: StationResourceCalculation
   hideUpgraderItems: boolean
-  costsSheetOpen: boolean
-  onCostsSheetOpenChange(open: boolean): void
 }
 
 interface CostRow {
@@ -155,26 +147,24 @@ function CostTable({
 }
 
 export function CalculationResults({
-  kit,
-  snapshot,
-  stale,
+  calculation,
+  stationRequirements,
+  stationResourceCalculation,
   hideUpgraderItems,
-  costsSheetOpen,
-  onCostsSheetOpenChange,
 }: CalculationResultsProps) {
-  const [advancedSheetOpen, setAdvancedSheetOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<"quick" | "advanced">("quick")
+  const [quickView, setQuickView] = useState<"direct" | "full">("full")
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total"
   )
-  const calculation = snapshot.calculation
   const kitResourceCosts = calculation.leafRequirements
     .filter(
       (requirement) =>
         !hideUpgraderItems || !isUpgraderItemPrefab(requirement.prefab)
     )
     .map(({ prefab, amount }) => ({ prefab, amount }))
-  const stationResources = snapshot.stationResources.stationResources
+  const stationResources = stationResourceCalculation.stationResources
     .filter(
       (resource) => !hideUpgraderItems || !isUpgraderItemPrefab(resource.prefab)
     )
@@ -184,14 +174,18 @@ export function CalculationResults({
     (issue) => !hideUpgraderItems || !isUpgraderItemPrefab(issue.prefab)
   )
   const isComplete =
-    calculation.isComplete && snapshot.stationResources.isComplete
-  const stationItemRequirements =
-    snapshot.stationRequirements.itemRequirements.filter(
-      (requirement) =>
-        !hideUpgraderItems || !isUpgraderItemPrefab(requirement.itemPrefab)
-    )
+    calculation.isComplete && stationResourceCalculation.isComplete
+  const stationItemRequirements = stationRequirements.itemRequirements.filter(
+    (requirement) =>
+      !hideUpgraderItems || !isUpgraderItemPrefab(requirement.itemPrefab)
+  )
   const groupedStationRequirements = groupStationRequirements(
     stationItemRequirements
+  )
+  const quickStationRequirements = groupStationRequirements(
+    stationItemRequirements.filter(
+      (requirement) => requirement.status === "required"
+    )
   )
   const ungroupedStationRequirements = stationItemRequirements.filter(
     (requirement) => requirement.status !== "required"
@@ -201,108 +195,168 @@ export function CalculationResults({
       !hideUpgraderItems || !isUpgraderItemPrefab(requirement.prefab)
   )
   const unresolvedStationMaterials =
-    snapshot.stationResources.unresolvedResources.filter(
+    stationResourceCalculation.unresolvedResources.filter(
       (issue) => !hideUpgraderItems || !isUpgraderItemPrefab(issue.prefab)
     )
   const unresolvedStationRequirements =
-    snapshot.stationResources.unresolvedStationRequirements.filter(
+    stationResourceCalculation.unresolvedStationRequirements.filter(
       (requirement) =>
         !hideUpgraderItems || !isUpgraderItemPrefab(requirement.itemPrefab)
     )
 
   return (
-    <>
-      <Button onClick={() => onCostsSheetOpenChange(true)} variant="outline">
-        View costs
-      </Button>
-      <Button onClick={() => setAdvancedSheetOpen(true)} variant="outline">
-        Advanced breakdown
-      </Button>
+    <section className="mt-5 border-t border-border/70 pt-4">
+      <div
+        aria-label="Calculation views"
+        className="inline-flex rounded-lg bg-muted p-1"
+        role="tablist"
+      >
+        {(
+          [
+            ["quick", "Quick reference"],
+            ["advanced", "Advanced breakdown"],
+          ] as const
+        ).map(([tab, label]) => (
+          <Button
+            aria-controls={`${tab}-calculation-panel`}
+            aria-selected={activeTab === tab}
+            id={`${tab}-calculation-tab`}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            role="tab"
+            size="sm"
+            variant={activeTab === tab ? "secondary" : "ghost"}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
 
-      <Sheet open={costsSheetOpen} onOpenChange={onCostsSheetOpenChange}>
-        <SheetContent
-          className="w-full overflow-y-auto sm:max-w-xl"
-          side="right"
+      {activeTab === "quick" ? (
+        <div
+          aria-labelledby="quick-calculation-tab"
+          className="mt-4"
+          id="quick-calculation-panel"
+          role="tabpanel"
+          tabIndex={0}
         >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle>Resource plan</SheetTitle>
-            <SheetDescription>
-              {kit.name} · Recursive kit resources and required station
-              resources.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="p-4 sm:p-6">
-            <Button
-              aria-pressed={showCombinedCosts}
-              className="mb-4"
-              onClick={() =>
-                setShowCombinedCosts((showCombined) => !showCombined)
-              }
-              variant={showCombinedCosts ? "secondary" : "outline"}
-            >
-              {showCombinedCosts
-                ? "Show separate costs"
-                : "Show combined costs"}
-            </Button>
-            {stale && (
-              <p
-                className="mb-4 text-sm text-amber-800 dark:text-amber-200"
-                role="status"
+          <div
+            aria-label="Quick cost view"
+            className="inline-flex rounded-lg bg-muted p-1"
+            role="group"
+          >
+            {(["direct", "full"] as const).map((view) => (
+              <Button
+                aria-pressed={quickView === view}
+                key={view}
+                onClick={() => setQuickView(view)}
+                size="sm"
+                variant={quickView === view ? "secondary" : "ghost"}
               >
-                Kit contents or game data changed. Recalculate to refresh these
-                costs.
-              </p>
-            )}
-            <p className="mb-4 text-sm text-muted-foreground" role="status">
-              {isComplete
-                ? "All known recipe and station requirements are resolved."
-                : "Partial plan: some item sources or station costs are unresolved."}
-            </p>
-            {showCombinedCosts ? (
-              <CostTable title="Combined costs" costs={combinedCosts} />
-            ) : (
-              <>
-                <CostTable title="Kit resources" costs={kitResourceCosts} />
-                <CostTable
-                  title="Required station costs"
-                  costs={stationResources}
-                />
-              </>
-            )}
-            {unresolvedResources.length > 0 ||
-            !snapshot.stationResources.isComplete ? (
-              <p className="mt-4 text-sm text-amber-800 dark:text-amber-200">
-                Some costs could not be resolved. See the advanced breakdown for
-                details.
-              </p>
-            ) : null}
+                {view === "direct" ? "Direct" : "Full"}
+              </Button>
+            ))}
           </div>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={advancedSheetOpen} onOpenChange={setAdvancedSheetOpen}>
-        <SheetContent
-          className="w-full overflow-y-auto sm:max-w-xl"
-          side="right"
-        >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle>Advanced breakdown</SheetTitle>
-            <SheetDescription>
-              {kit.name} · Detailed recipe, station requirement, and unresolved
-              cost information.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="p-4 sm:p-6">
-            {stale && (
-              <p
-                className="mb-3 text-sm text-amber-800 dark:text-amber-200"
-                role="status"
-              >
-                Kit contents or game data changed. Recalculate to refresh these
-                costs.
+          {quickView === "direct" ? (
+            <CostTable
+              costs={directRequirements.map(({ prefab, totalAmount }) => ({
+                prefab,
+                amount: totalAmount,
+              }))}
+              title="Direct ingredients"
+            />
+          ) : (
+            <>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-medium">
+                  {showCombinedCosts ? "Combined costs" : "Separate costs"}
+                </h3>
+                <Button
+                  aria-pressed={showCombinedCosts}
+                  onClick={() =>
+                    setShowCombinedCosts((showCombined) => !showCombined)
+                  }
+                  size="sm"
+                  variant="outline"
+                >
+                  {showCombinedCosts ? "Show separately" : "Show combined"}
+                </Button>
+              </div>
+              {showCombinedCosts ? (
+                <CostTable
+                  title="Kit and station resources"
+                  costs={combinedCosts}
+                />
+              ) : (
+                <>
+                  <CostTable title="Kit resources" costs={kitResourceCosts} />
+                  <CostTable
+                    title="Station resources"
+                    costs={stationResources}
+                  />
+                </>
+              )}
+            </>
+          )}
+          <p className="mt-3 text-sm text-muted-foreground" role="status">
+            {isComplete
+              ? "All known recipe and station requirements are resolved."
+              : "Some item sources or station costs are unresolved. See the advanced breakdown for details."}
+          </p>
+          {(unresolvedResources.length > 0 ||
+            !stationResourceCalculation.isComplete) && (
+            <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+              Totals may be incomplete.
+            </p>
+          )}
+          <section className="mt-5 border-t border-border/70 pt-4">
+            <h3 className="text-sm font-medium">Stations needed</h3>
+            {quickStationRequirements.length > 0 ? (
+              <ul className="mt-2 divide-y divide-border/70 border-y border-border/70">
+                {quickStationRequirements.map((group) => (
+                  <li
+                    className="flex items-center justify-between gap-4 py-2.5"
+                    key={group.stationPrefab}
+                  >
+                    <span className="min-w-0 font-medium break-words">
+                      {humanizePrefab(
+                        group.stationPrefab.replace(/^piece_/i, "")
+                      )}
+                    </span>
+                    {group.stationLevel !== undefined &&
+                      group.stationLevel > 1 && (
+                        <span
+                          aria-label={`Level ${group.stationLevel}`}
+                          className="shrink-0 text-2xl leading-none font-bold text-amber-700 tabular-nums dark:text-amber-300"
+                        >
+                          {group.stationLevel}
+                        </span>
+                      )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No station requirements were resolved.
               </p>
             )}
-
+            {unresolvedStationRequirements.length > 0 && (
+              <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
+                Some station requirements could not be resolved; see the
+                advanced breakdown.
+              </p>
+            )}
+          </section>
+        </div>
+      ) : (
+        <div
+          aria-labelledby="advanced-calculation-tab"
+          className="mt-4"
+          id="advanced-calculation-panel"
+          role="tabpanel"
+          tabIndex={0}
+        >
+          <div>
             <div
               className="mb-3 inline-flex rounded-lg bg-muted p-1"
               role="group"
@@ -484,9 +538,9 @@ export function CalculationResults({
                   No station resource totals are available.
                 </p>
               )}
-              {snapshot.stationResources.unresolvedStations.length > 0 && (
+              {stationResourceCalculation.unresolvedStations.length > 0 && (
                 <ul className="mt-3 space-y-1 text-xs text-amber-800 dark:text-amber-200">
-                  {snapshot.stationResources.unresolvedStations.map(
+                  {stationResourceCalculation.unresolvedStations.map(
                     (issue, index) => (
                       <li
                         key={`${issue.stationPrefab}:${issue.level}:${index}`}
@@ -523,7 +577,7 @@ export function CalculationResults({
                 </p>
               )}
               <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                {snapshot.stationResources.limitations.map((limitation) => (
+                {stationResourceCalculation.limitations.map((limitation) => (
                   <li key={limitation}>{limitation}</li>
                 ))}
               </ul>
@@ -548,15 +602,15 @@ export function CalculationResults({
               <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
                 {[
                   ...calculation.limitations,
-                  ...snapshot.stationResources.limitations,
+                  ...stationResourceCalculation.limitations,
                 ].map((limitation) => (
                   <li key={limitation}>{limitation}</li>
                 ))}
               </ul>
             </section>
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+        </div>
+      )}
+    </section>
   )
 }
