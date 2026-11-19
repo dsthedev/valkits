@@ -207,13 +207,21 @@ recipe type.
 Keep station requirements separate from ordinary item-resource
 requirements.
 
-For each kit item: - Determine its required crafting station. -
-Determine the required station level from verified recipe data and
-quality rules. - Combine requirements for the same station by taking the
-highest required level, not by adding levels. - Calculate the materials
-and upgrade pieces needed to construct/upgrade the required station. -
-Recursively resolve the recipes for those station upgrade pieces where
-supported.
+For each kit item, first report the station and minimum level stated on
+its selected craft recipe. Keep this per-item result separate from
+resource requirements and surface missing or ambiguous data. Do not infer
+station levels from target quality until those upgrade rules are
+verified. A recipe with no station field means only that no station was
+listed; do not infer why.
+
+After per-item requirements are validated, combine requirements for the
+same station by taking the highest required level, not by adding levels.
+Keep the station list concise by grouping requirements per kit and making
+the related item list expandable; retain the per-item levels for context.
+This per-kit presentation does not replace the later cross-kit summary.
+Then calculate the materials and upgrade pieces needed to
+construct/upgrade the required station, recursively resolving recipes
+where supported.
 
 Do not treat special prefab requirements such as `Upgrader1Weapon` or
 `Upgrader1Armor` as station levels unless verified. They may be actual
@@ -350,7 +358,11 @@ missing.
 
 ### Phase 7 --- Station requirements and station-resource calculation
 
--   Derive required station and level from verified recipe rules.
+-   [x] Report per-item base recipe station and minimum level without
+    inferring quality-upgrade levels or station costs.
+-   [x] Group per-kit station requirements at the highest minimum level
+    and keep the item breakdown expandable.
+-   [x] Validate the reported station requirements against source records.
 -   Aggregate the highest required level per station.
 -   Model station upgrades and their resource costs.
 -   Reuse the recursive resource resolver where appropriate.

@@ -45,6 +45,11 @@ import type {
   ImmediateCalculationReason,
   ImmediateKitCalculation,
 } from "@/domain/immediate-calculation"
+import type {
+  KitStationRequirementCalculation,
+  StationRequirementReason,
+} from "@/domain/station-requirements"
+import { groupStationRequirements } from "@/domain/station-requirements"
 import {
   createKit,
   updateKitDetails,
@@ -65,6 +70,7 @@ interface KitWorkspaceProps {
   onRemoveGoal(prefab: string): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
   onCalculateImmediate(kit: Kit): ImmediateKitCalculation
+  onCalculateStationRequirements(kit: Kit): KitStationRequirementCalculation
 }
 
 interface ImmediateCalculationSnapshot {
@@ -72,6 +78,7 @@ interface ImmediateCalculationSnapshot {
   inputFingerprint: string
   sourceFingerprint: string
   calculation: ImmediateKitCalculation
+  stationRequirements: KitStationRequirementCalculation
 }
 
 const immediateReasonLabels: Record<ImmediateCalculationReason, string> = {
@@ -86,6 +93,16 @@ const immediateReasonLabels: Record<ImmediateCalculationReason, string> = {
   "quality-upgrades-disabled": "Recipe does not allow quality upgrades",
   "unsupported-upgrade-requirements": "Separate quality requirements are not supported yet",
   "unsupported-quality-batch": "Quality upgrades for batch outputs are not supported yet",
+}
+
+const stationRequirementReasonLabels: Record<StationRequirementReason, string> = {
+  "unknown-item": "Item not found in game data",
+  "no-recipe": "No recipe available in the imported data",
+  "disabled-recipe": "Recipe is disabled",
+  "upgrade-only-recipe": "Only upgrade recipes are available",
+  "ambiguous-recipe": "Multiple enabled craft recipes",
+  "unresolved-station": "Station reference could not be matched",
+  "missing-station-level": "Recipe does not specify a minimum level",
 }
 
 function humanizePrefab(prefab: string): string {
@@ -107,6 +124,7 @@ export function KitWorkspace({
   onRemoveGoal,
   onUpdateGoal,
   onCalculateImmediate,
+  onCalculateStationRequirements,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
     (kit) => kit.id === collection.activeKitId,
@@ -133,6 +151,15 @@ export function KitWorkspace({
     visibleSnapshot !== null &&
     (visibleSnapshot.inputFingerprint !== inputFingerprint ||
       visibleSnapshot.sourceFingerprint !== sourceFingerprint)
+  const groupedStationRequirements = visibleSnapshot
+    ? groupStationRequirements(
+        visibleSnapshot.stationRequirements.itemRequirements,
+      )
+    : []
+  const ungroupedStationRequirements =
+    visibleSnapshot?.stationRequirements.itemRequirements.filter(
+      (requirement) => requirement.status !== "required",
+    ) ?? []
 
   function calculateImmediate() {
     if (!activeKit || !inputFingerprint || sourceFingerprint === null) return
@@ -141,6 +168,7 @@ export function KitWorkspace({
       inputFingerprint,
       sourceFingerprint,
       calculation: onCalculateImmediate(activeKit),
+      stationRequirements: onCalculateStationRequirements(activeKit),
     })
     setCostSheetOpen(true)
   }
@@ -558,6 +586,77 @@ export function KitWorkspace({
                       No direct ingredient totals are available.
                     </p>
                   )}
+
+                  <section className="mt-6 border-t border-border/70 pt-4">
+                    <h3 className="text-sm font-medium">
+                      Crafting station requirements
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Highest base-recipe minimum per station. Quality upgrades
+                      and station build or upgrade costs are not included.
+                    </p>
+                    {groupedStationRequirements.length > 0 ? (
+                      <ul className="mt-3 divide-y divide-border/70 border-y border-border/70">
+                        {groupedStationRequirements.map((group) => (
+                          <li className="py-2.5" key={group.stationPrefab}>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-medium">
+                                {humanizePrefab(
+                                  group.stationPrefab.replace(/^piece_/i, ""),
+                                )}
+                              </span>
+                              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                                Level {group.stationLevel}
+                              </span>
+                            </div>
+                            <details className="mt-1 text-xs text-muted-foreground">
+                              <summary className="w-fit cursor-pointer rounded-sm underline decoration-dotted underline-offset-2 focus-visible:outline-2 focus-visible:outline-ring">
+                                {group.itemRequirements.length}{" "}
+                                {group.itemRequirements.length === 1
+                                  ? "item"
+                                  : "items"}
+                              </summary>
+                              <ul className="ml-4 mt-2 list-disc space-y-1">
+                                {group.itemRequirements.map((requirement) => (
+                                  <li key={requirement.itemPrefab}>
+                                    {humanizePrefab(requirement.itemPrefab)}
+                                    {requirement.stationLevel < group.stationLevel &&
+                                      ` (level ${requirement.stationLevel})`}
+                                    {requirement.targetQuality > 1 &&
+                                      ` · Quality ${requirement.targetQuality}`}
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        No station requirements were resolved.
+                      </p>
+                    )}
+                    {ungroupedStationRequirements.length > 0 && (
+                      <details className="mt-3 text-sm">
+                        <summary className="w-fit cursor-pointer text-muted-foreground underline decoration-dotted underline-offset-2 focus-visible:outline-2 focus-visible:outline-ring">
+                          Items without a resolved station (
+                          {ungroupedStationRequirements.length})
+                        </summary>
+                        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                          {ungroupedStationRequirements.map((requirement) => (
+                            <li key={requirement.itemPrefab}>
+                              {humanizePrefab(requirement.itemPrefab)}:{" "}
+                              {requirement.status === "unresolved"
+                                ? stationRequirementReasonLabels[
+                                    requirement.reason
+                                  ]
+                                : "No station listed in recipe"}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </section>
 
                   {visibleSnapshot.calculation.unresolved.length > 0 && (
                     <div className="mt-5">
