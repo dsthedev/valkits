@@ -67,7 +67,9 @@ function formatCatalogErrors(error: z.ZodError): string {
 export async function loadWackyDbCatalog(
   fetcher: typeof fetch = fetch,
 ): Promise<WackyDbCatalog> {
-  const response = await fetcher("/data/wackydb/catalog.json")
+  const response = await fetcher(
+    `${import.meta.env.BASE_URL}data/wackydb/catalog.json`,
+  )
   if (!response.ok) {
     throw new Error(`Unable to load WackyDatabase catalog (${response.status}).`)
   }

@@ -36,7 +36,7 @@ export function ItemIcon({ prefab, size = "md" }: ItemIconProps) {
       decoding="async"
       loading="lazy"
       onError={() => setUnavailable(true)}
-      src={`/data/icons/${encodeURIComponent(prefab)}.png`}
+      src={`${import.meta.env.BASE_URL}data/icons/${encodeURIComponent(prefab)}.png`}
     />
   )
 }

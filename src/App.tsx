@@ -394,7 +394,7 @@ export function App() {
     <div className="min-h-svh bg-background text-foreground">
       <header className="border-b border-border/80">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <a className="flex items-center gap-3" href="/" aria-label="Valkits home">
+          <a className="flex items-center gap-3" href={import.meta.env.BASE_URL} aria-label="Valkits home">
             <span className="grid size-9 place-items-center rounded-lg bg-emerald-800 text-sm font-bold text-white dark:bg-emerald-300 dark:text-emerald-950">
               V
             </span>
