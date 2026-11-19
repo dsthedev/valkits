@@ -71,6 +71,15 @@ export function createKit(id: string, name: string, biome: Biome): Kit {
   return kitSchema.parse({ id, name, biome, itemGoals: [] })
 }
 
+export function createKitId(): string {
+  const randomUUID = globalThis.crypto?.randomUUID
+  if (typeof randomUUID === "function") {
+    return randomUUID.call(globalThis.crypto)
+  }
+
+  return `kit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
 export function addKitToCollection(
   collection: KitCollection,
   kit: Kit,

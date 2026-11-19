@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   KIT_STORAGE_KEY,
   addItemGoal,
   addKitToCollection,
   createKit,
+  createKitId,
   createKitCollection,
   loadKitCollection,
   removeItemGoal,
@@ -14,6 +15,10 @@ import {
   updateItemGoal,
   type KitStorage,
 } from "./kits"
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 class MemoryStorage implements KitStorage {
   private readonly values = new Map<string, string>()
@@ -40,6 +45,12 @@ describe("kit collection", () => {
     expect(saveKitCollection(storage, collection)).toEqual({ success: true })
     expect(loadKitCollection(storage).collection).toEqual(collection)
     expect(storage.getItem(KIT_STORAGE_KEY)).not.toBeNull()
+  })
+
+  it("creates a kit ID when crypto.randomUUID is unavailable", () => {
+    vi.stubGlobal("crypto", {})
+
+    expect(createKitId()).toMatch(/^kit-[a-z0-9]+-[a-z0-9]+$/)
   })
 
   it("recovers safely from malformed saved collections", () => {

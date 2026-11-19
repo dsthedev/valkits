@@ -57,6 +57,7 @@ import {
 } from "@/domain/upgrader-items"
 import {
   createKit,
+  createKitId,
   updateKitDetails,
   type ItemGoalUpdates,
   type KitCollection,
@@ -238,7 +239,7 @@ export function KitWorkspace({
     useState<ImmediateCalculationSnapshot | null>(null)
   const [costsSheetOpen, setCostsSheetOpen] = useState(false)
   const [advancedSheetOpen, setAdvancedSheetOpen] = useState(false)
-  const [showCombinedCosts, setShowCombinedCosts] = useState(false)
+  const [showCombinedCosts, setShowCombinedCosts] = useState(true)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total",
   )
@@ -349,7 +350,7 @@ export function KitWorkspace({
       if (formMode === "edit" && activeKit) {
         onUpdateKit(updateKitDetails(activeKit, name, biomeDraft))
       } else {
-        onCreateKit(createKit(crypto.randomUUID(), name, biomeDraft))
+        onCreateKit(createKit(createKitId(), name, biomeDraft))
       }
       setFormMode(null)
       setFormError(null)
@@ -697,6 +698,18 @@ export function KitWorkspace({
               </SheetHeader>
               {visibleSnapshot && (
                 <div className="p-4 sm:p-6">
+                  <Button
+                    aria-pressed={showCombinedCosts}
+                    className="mb-4"
+                    onClick={() =>
+                      setShowCombinedCosts((showCombined) => !showCombined)
+                    }
+                    variant={showCombinedCosts ? "secondary" : "outline"}
+                  >
+                    {showCombinedCosts
+                      ? "Show separate costs"
+                      : "Show combined costs"}
+                  </Button>
                   {calculationIsStale && (
                     <p
                       className="mb-4 text-sm text-amber-800 dark:text-amber-200"
@@ -706,28 +719,17 @@ export function KitWorkspace({
                       these costs.
                     </p>
                   )}
-                  <CostTable title="Direct costs" costs={directCosts} />
-                  <CostTable
-                    title="Required station costs"
-                    costs={requiredStationCosts}
-                  />
-                  <Button
-                    aria-pressed={showCombinedCosts}
-                    className="mt-5"
-                    onClick={() =>
-                      setShowCombinedCosts((showCombined) => !showCombined)
-                    }
-                    variant={showCombinedCosts ? "secondary" : "outline"}
-                  >
-                    {showCombinedCosts
-                      ? "Hide combined costs"
-                      : "Show combined costs"}
-                  </Button>
                   {showCombinedCosts && (
-                    <CostTable
-                      title="Combined costs"
-                      costs={combinedCosts}
-                    />
+                    <CostTable title="Combined costs" costs={combinedCosts} />
+                  )}
+                  {!showCombinedCosts && (
+                    <>
+                      <CostTable title="Direct costs" costs={directCosts} />
+                      <CostTable
+                        title="Required station costs"
+                        costs={requiredStationCosts}
+                      />
+                    </>
                   )}
                   {(displayedCalculation?.unresolved.length ?? 0) > 0 ||
                   (displayedStationResources?.isComplete === false) ? (
