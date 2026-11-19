@@ -1,15 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   KIT_STORAGE_KEY,
+  MAX_KIT_IMPORT_LENGTH,
   addItemGoal,
   addKitToCollection,
   createKit,
   createKitId,
+  createExampleKit,
   createKitCollection,
+  exampleKitOptions,
   loadKitCollection,
+  parseKitExport,
   removeItemGoal,
   removeKitFromCollection,
   saveKitCollection,
+  serializeKitExport,
   selectKit,
   updateKitInCollection,
   updateItemGoal,
@@ -51,6 +56,39 @@ describe("kit collection", () => {
     vi.stubGlobal("crypto", {})
 
     expect(createKitId()).toMatch(/^kit-[a-z0-9]+-[a-z0-9]+$/)
+  })
+
+  it("round-trips an exported kit and rejects unsupported imports", () => {
+    const kit = createKit("kit-1", "Starter", "Meadows")
+    const imported = parseKitExport(serializeKitExport(kit))
+
+    expect(imported).toEqual({ success: true, kit })
+    expect(parseKitExport("not JSON")).toEqual({
+      success: false,
+      message: "The kit file is not valid JSON.",
+    })
+    expect(parseKitExport("x".repeat(MAX_KIT_IMPORT_LENGTH + 1))).toEqual({
+      success: false,
+      message: "The kit file is too large.",
+    })
+  })
+
+  it("provides fresh kits from the checked-in example exports", () => {
+    const first = createExampleKit("meadows-starter")
+    const second = createExampleKit("meadows-starter")
+    const trollKit = createExampleKit("troll-stuff")
+
+    expect(first).toMatchObject({
+      name: "Meadows Starter",
+      biome: "Meadows",
+    })
+    expect(first.itemGoals.length).toBeGreaterThan(0)
+    expect(first.id).not.toBe(second.id)
+    expect(trollKit.name).toBe("troll stuff")
+    expect(exampleKitOptions).toHaveLength(2)
+    expect(() => createExampleKit("not-an-example")).toThrow(
+      'Unknown example kit "not-an-example".',
+    )
   })
 
   it("recovers safely from malformed saved collections", () => {

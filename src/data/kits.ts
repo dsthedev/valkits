@@ -1,4 +1,6 @@
 import { z } from "zod"
+import meadowsStarterExport from "./examples/meadows-starter.json"
+import trollStuffExport from "./examples/troll-stuff.json"
 import {
   biomeSchema,
   kitSchema,
@@ -8,6 +10,14 @@ import {
 } from "../domain/schema"
 
 export const KIT_STORAGE_KEY = "valkits.kits.v1"
+export const MAX_KIT_IMPORT_LENGTH = 1_000_000
+
+const kitExportSchema = z
+  .object({
+    version: z.literal(1),
+    kit: kitSchema,
+  })
+  .strict()
 
 const kitCollectionSchema = z
   .object({
@@ -40,6 +50,24 @@ const kitCollectionSchema = z
   })
 
 export type KitCollection = z.infer<typeof kitCollectionSchema>
+export type KitExport = z.infer<typeof kitExportSchema>
+export interface ExampleKitOption {
+  id: string
+  name: string
+  biome: Biome
+}
+
+const exampleKitTemplates = [
+  { id: "meadows-starter", data: meadowsStarterExport },
+  { id: "troll-stuff", data: trollStuffExport },
+].map(({ id, data }) => ({ id, kit: kitExportSchema.parse(data).kit }))
+
+export const exampleKitOptions: readonly ExampleKitOption[] =
+  exampleKitTemplates.map(({ id, kit }) => ({
+    id,
+    name: kit.name,
+    biome: kit.biome,
+  }))
 
 export interface KitStorage {
   getItem(key: string): string | null
@@ -78,6 +106,43 @@ export function createKitId(): string {
   }
 
   return `kit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
+export function createExampleKit(exampleId: string): Kit {
+  const example = exampleKitTemplates.find(({ id }) => id === exampleId)
+  if (!example) {
+    throw new Error(`Unknown example kit "${exampleId}".`)
+  }
+
+  return kitSchema.parse({ ...example.kit, id: createKitId() })
+}
+
+export type KitImportResult =
+  | { success: true; kit: Kit }
+  | { success: false; message: string }
+
+export function parseKitExport(text: string): KitImportResult {
+  if (text.length > MAX_KIT_IMPORT_LENGTH) {
+    return { success: false, message: "The kit file is too large." }
+  }
+
+  try {
+    const parsed = kitExportSchema.safeParse(JSON.parse(text))
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: "The file is not a supported Valkits kit export.",
+      }
+    }
+
+    return { success: true, kit: parsed.data.kit }
+  } catch {
+    return { success: false, message: "The kit file is not valid JSON." }
+  }
+}
+
+export function serializeKitExport(kit: Kit): string {
+  return `${JSON.stringify(kitExportSchema.parse({ version: 1, kit }), null, 2)}\n`
 }
 
 export function addKitToCollection(

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import {
   RiAddLine,
   RiArrowRightSLine,
@@ -58,6 +58,11 @@ import {
 import {
   createKit,
   createKitId,
+  createExampleKit,
+  exampleKitOptions,
+  MAX_KIT_IMPORT_LENGTH,
+  parseKitExport,
+  serializeKitExport,
   updateKitDetails,
   type ItemGoalUpdates,
   type KitCollection,
@@ -240,6 +245,13 @@ export function KitWorkspace({
   const [costsSheetOpen, setCostsSheetOpen] = useState(false)
   const [advancedSheetOpen, setAdvancedSheetOpen] = useState(false)
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
+  const [pendingImportedKit, setPendingImportedKit] = useState<Kit | null>(null)
+  const [kitFileError, setKitFileError] = useState<string | null>(null)
+  const [kitFileMessage, setKitFileMessage] = useState<string | null>(null)
+  const [selectedExampleKitId, setSelectedExampleKitId] = useState(
+    exampleKitOptions[0]?.id ?? "",
+  )
+  const kitImportInputRef = useRef<HTMLInputElement>(null)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total",
   )
@@ -366,6 +378,81 @@ export function KitWorkspace({
     setFormMode(null)
   }
 
+  function handleKitImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    input.value = ""
+    if (!file) return
+
+    setPendingImportedKit(null)
+    setKitFileError(null)
+    setKitFileMessage(null)
+    if (file.size > MAX_KIT_IMPORT_LENGTH) {
+      setKitFileError("The kit file is too large.")
+      return
+    }
+
+    void file
+      .text()
+      .then((text) => {
+        const result = parseKitExport(text)
+        if (result.success) {
+          setPendingImportedKit(result.kit)
+        } else {
+          setKitFileError(result.message)
+        }
+      })
+      .catch(() => {
+        setKitFileError("The kit file could not be read.")
+      })
+  }
+
+  function exportActiveKit() {
+    if (!activeKit) return
+
+    try {
+      const file = new Blob([serializeKitExport(activeKit)], {
+        type: "application/json",
+      })
+      const objectUrl = URL.createObjectURL(file)
+      const downloadLink = document.createElement("a")
+      const filename = activeKit.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+      downloadLink.href = objectUrl
+      downloadLink.download = `valkits-${filename || "kit"}.json`
+      downloadLink.click()
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
+      setKitFileMessage(`Exported “${activeKit.name}”.`)
+      setKitFileError(null)
+    } catch {
+      setKitFileError("The kit file could not be exported.")
+    }
+  }
+
+  function confirmKitImport() {
+    if (!pendingImportedKit) return
+
+    const importedKit: Kit = {
+      ...pendingImportedKit,
+      id: createKitId(),
+    }
+    onCreateKit(importedKit)
+    setPendingImportedKit(null)
+    setKitFileMessage(`Added “${importedKit.name}” to your kits.`)
+    setKitFileError(null)
+  }
+
+  function addSelectedExampleKit() {
+    if (!selectedExampleKitId) return
+
+    const exampleKit = createExampleKit(selectedExampleKitId)
+    onCreateKit(exampleKit)
+    setKitFileMessage(`Added “${exampleKit.name}” to your kits.`)
+    setKitFileError(null)
+  }
+
   return (
     <section aria-label="Kit workspace" className="mb-8 border-b border-border/80 py-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -432,6 +519,16 @@ export function KitWorkspace({
                   Edit kit
                 </button>
                 <button
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                  onClick={(event) => {
+                    exportActiveKit()
+                    event.currentTarget.closest("details")?.removeAttribute("open")
+                  }}
+                  type="button"
+                >
+                  Export kit
+                </button>
+                <button
                   className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
                   onClick={(event) => {
                     setConfirmDelete(true)
@@ -450,9 +547,74 @@ export function KitWorkspace({
             <RiAddLine aria-hidden="true" />
             New kit
           </Button>
+          <Button
+            onClick={() => kitImportInputRef.current?.click()}
+            variant="outline"
+          >
+            Import kit
+          </Button>
+          <Select
+            onValueChange={(value) => {
+              if (value) setSelectedExampleKitId(value)
+            }}
+            value={selectedExampleKitId}
+          >
+            <SelectTrigger aria-label="Choose a prebuilt kit">
+              <SelectValue placeholder="Choose an example kit" />
+            </SelectTrigger>
+            <SelectContent>
+              {exampleKitOptions.map((example) => (
+                <SelectItem key={example.id} value={example.id}>
+                  {example.name} · {example.biome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            disabled={!selectedExampleKitId}
+            onClick={addSelectedExampleKit}
+            variant="secondary"
+          >
+            Add example
+          </Button>
         </div>
       </div>
 
+      <input
+        accept="application/json,.json"
+        aria-label="Choose kit file"
+        className="sr-only"
+        onChange={handleKitImportFile}
+        ref={kitImportInputRef}
+        tabIndex={-1}
+        type="file"
+      />
+      {kitFileError && (
+        <p className="mt-3 text-sm text-destructive" role="alert">
+          {kitFileError}
+        </p>
+      )}
+      {kitFileMessage && (
+        <p className="mt-3 text-sm text-muted-foreground" role="status">
+          {kitFileMessage}
+        </p>
+      )}
+      {pendingImportedKit && (
+        <div className="mt-4 flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm">
+            Add “{pendingImportedKit.name}” ({pendingImportedKit.biome}, {pendingImportedKit.itemGoals.length} item goals) as a new kit?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={confirmKitImport}>Add kit</Button>
+            <Button
+              onClick={() => setPendingImportedKit(null)}
+              variant="outline"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
       {formMode && (
         <form
           className="mt-5 grid gap-4 border-t border-border/70 pt-5 sm:grid-cols-[minmax(0,1fr)_14rem_auto] sm:items-end"
