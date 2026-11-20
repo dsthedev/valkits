@@ -337,6 +337,8 @@ appropriate.
     and imported chest capacity, with direct chest build costs shown separately.
     Default to wooden chests and identify incomplete estimates.
 -   Show unresolved requirements and calculation limitations clearly.
+-   Keep incomplete-result notices visible and understated by default; the
+    persisted footer developer-mode toggle reveals additional diagnostics.
 -   Keep kit resources, station resources, and combined totals
     distinguishable.
 -   Do not add decorative dashboards or statistics that do not help

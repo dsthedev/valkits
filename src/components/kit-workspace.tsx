@@ -89,6 +89,7 @@ import {
 
 interface KitWorkspaceProps {
   collection: KitCollection
+  developerMode: boolean
   warning: string | null
   excludedPrefabs: ReadonlySet<string>
   hideUpgraderItems: boolean
@@ -321,6 +322,7 @@ function GoalStepper({
 
 export function KitWorkspace({
   collection,
+  developerMode,
   warning,
   excludedPrefabs,
   hideUpgraderItems,
@@ -1062,6 +1064,7 @@ export function KitWorkspace({
               liveStationResources && (
                 <CalculationResults
                   calculation={liveCalculation}
+                  developerMode={developerMode}
                   getItem={getItem}
                   getPiece={calculationData.getPiece}
                   getStationPiece={calculationData.getStationPiece}

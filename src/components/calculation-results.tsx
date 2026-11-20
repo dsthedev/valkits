@@ -51,6 +51,7 @@ import {
 
 interface CalculationResultsProps {
   kitId: string
+  developerMode: boolean
   calculation: KitResourceCalculation
   stationRequirements: KitStationRequirementCalculation
   stationResourceCalculation: StationResourceCalculation
@@ -401,6 +402,7 @@ export function CalculationResults({
   stationRequirements,
   stationResourceCalculation,
   hideUpgraderItems,
+  developerMode,
   getItem,
   getPiece,
   getStationPiece,
@@ -586,10 +588,9 @@ export function CalculationResults({
                 : "No stations needed."}
             </p>
           )}
-          {hasStationWarning && (
-            <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
-              Some station requirements could not be resolved.{" "}
-              {advancedBreakdownTrigger()}
+          {developerMode && hasStationWarning && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Some station requirements could not be resolved.
             </p>
           )}
         </section>
@@ -630,8 +631,8 @@ export function CalculationResults({
                 </p>
               )}
               {(!chestEstimate || chestEstimate.missingStackSizes.length > 0 || !isComplete) && (
-                <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                  {!chestEstimate ? "Chest data unavailable." : chestEstimate.missingStackSizes.length > 0 ? "Storage estimate is incomplete: some stack sizes are unknown." : "Storage estimate may be incomplete because some costs are unresolved."}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {!chestEstimate ? "Chest data unavailable." : developerMode && chestEstimate.missingStackSizes.length > 0 ? "Storage estimate is incomplete: some stack sizes are unknown." : "Storage estimate may be incomplete."}
                 </p>
               )}
             </div>
@@ -698,18 +699,13 @@ export function CalculationResults({
               {collectionWarning}
             </p>
           )}
-          <p className="mt-3 text-sm text-muted-foreground" role="status">
-            {isComplete
-              ? "All known recipe and station requirements are resolved."
-              : "Some item sources or station costs are unresolved."}{" "}
-            {!hasStationWarning && advancedBreakdownTrigger()}
+          <p className="mt-3 text-xs text-muted-foreground" role="status">
+            {(!isComplete || unresolvedStationRequirements.length > 0) && "Totals may be incomplete. "}
+            {developerMode && (isComplete && unresolvedStationRequirements.length === 0
+              ? "All known recipe and station requirements are resolved. "
+              : "Some item sources or station costs are unresolved. ")}
+            {advancedBreakdownTrigger()}
           </p>
-          {(unresolvedResources.length > 0 ||
-            !stationResourceCalculation.isComplete) && (
-              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                Totals may be incomplete.
-              </p>
-            )}
         </div>
         <SheetContent
           className={

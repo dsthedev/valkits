@@ -16,6 +16,7 @@ import {
   RiLoader4Line,
   RiMore2Line,
   RiSearchLine,
+  RiSettings3Line,
   RiArrowUpLine,
   RiCodeLine,
   RiHeartFill,
@@ -41,6 +42,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ItemIcon } from "@/components/item-icon"
+import {
+  loadDeveloperPreference,
+  saveDeveloperPreference,
+} from "@/data/developer-preference"
 import {
   Table,
   TableBody,
@@ -160,6 +165,10 @@ export function App() {
   )
   const [resultPage, setResultPage] = useState(0)
   const [favoritesFirst, setFavoritesFirst] = useState(false)
+  const [developerMode, setDeveloperMode] = useState(() =>
+    loadDeveloperPreference(getBrowserStorage())
+  )
+  const [developerPreferenceWarning, setDeveloperPreferenceWarning] = useState(false)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
     readBrowserUpgraderItemPreference
   )
@@ -718,6 +727,7 @@ export function App() {
           <div className="min-w-0">
             <KitWorkspace
               collection={kitState.collection}
+              developerMode={developerMode}
               excludedPrefabs={excludedPrefabs}
               hideUpgraderItems={hideUpgraderItems}
               calculationData={dataAccess ?? null}
@@ -1156,7 +1166,7 @@ export function App() {
           </Button>
         )}
       </main>
-      <footer className="border-t border-white/10">
+      <footer className="relative border-t border-white/10 pb-8">
         <div className="mx-auto max-w-3xl px-4 py-10 text-center sm:px-6 sm:py-12">
           <h2 className="text-sm font-semibold tracking-wide text-white/80">
             Why Valkits?
@@ -1181,6 +1191,29 @@ export function App() {
             <span aria-hidden="true">=</span>
             <span>Valkits</span>
           </a>
+        </div>
+        <div className="absolute right-0 bottom-0 flex max-w-full items-center justify-end gap-2 p-1">
+          {developerPreferenceWarning && (
+            <span className="text-xs text-muted-foreground" role="status">
+              Developer mode preference could not be saved.
+            </span>
+          )}
+          <Button
+            aria-label="Developer diagnostics"
+            aria-pressed={developerMode}
+            className={`size-7 text-white opacity-85 hover:opacity-100 ${developerMode ? "ring-1 ring-green-400" : ""}`}
+            onClick={() => {
+              const next = !developerMode
+              setDeveloperMode(next)
+              setDeveloperPreferenceWarning(!saveDeveloperPreference(getBrowserStorage(), next))
+            }}
+            size="icon"
+            title={developerMode ? "Hide developer diagnostics" : "Show developer diagnostics"}
+            type="button"
+            variant="ghost"
+          >
+            <RiSettings3Line aria-hidden="true" className="size-4" />
+          </Button>
         </div>
       </footer>
     </div>
