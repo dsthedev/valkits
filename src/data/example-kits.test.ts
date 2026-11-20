@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import type { GameItem } from "../domain/schema"
 import { kitSchema } from "../domain/schema"
+import { parseItemYaml } from "./wackydb-import"
 
 interface ExampleOption {
   id: string
@@ -9,8 +10,21 @@ interface ExampleOption {
   biome: string
 }
 
+function readPublicText(path: string): string {
+  return readFileSync(new URL(path, import.meta.url), "utf8")
+}
+
 function readPublicJson(path: string): unknown {
-  return JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"))
+  return JSON.parse(readPublicText(path))
+}
+
+function readGameItem(prefab: string): GameItem {
+  const sourcePath = `../../public/data/wackydb/items/Item_${prefab}.yml`
+  const parsed = parseItemYaml(readPublicText(sourcePath))
+  if (!parsed.success) {
+    throw new Error(`${sourcePath}: ${parsed.errors.join("; ")}`)
+  }
+  return parsed.data
 }
 
 describe("progression example kits", () => {
@@ -49,12 +63,7 @@ describe("progression example kits", () => {
     const examples = readPublicJson(
       "../../public/data/examples/catalog.json"
     ) as { examples: ExampleOption[] }
-    const itemCatalog = readPublicJson(
-      "../../public/data/wackydb/catalog.json"
-    ) as { items: GameItem[] }
-    const itemsByPrefab = new Map(
-      itemCatalog.items.map((item) => [item.prefab, item])
-    )
+    const itemsByPrefab = new Map<string, GameItem>()
 
     for (const example of examples.examples) {
       const exported = readPublicJson(
@@ -70,8 +79,12 @@ describe("progression example kits", () => {
       expect(sentenceCount).toBeGreaterThanOrEqual(2)
       expect(sentenceCount).toBeLessThanOrEqual(3)
       for (const goal of kit.itemGoals) {
-        const item = itemsByPrefab.get(goal.prefab)
-        expect(item, `${example.id} references ${goal.prefab}`).toBeDefined()
+        const item =
+          itemsByPrefab.get(goal.prefab) ?? readGameItem(goal.prefab)
+        expect(item.prefab, `${example.id} references ${goal.prefab}`).toBe(
+          goal.prefab
+        )
+        itemsByPrefab.set(goal.prefab, item)
         if (goal.targetQuality !== undefined) {
           expect(
             goal.targetQuality,
