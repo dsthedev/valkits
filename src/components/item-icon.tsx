@@ -2,10 +2,11 @@ import { useState } from "react"
 
 interface ItemIconProps {
   prefab: string
-  size?: "sm" | "md" | "lg" | "xl" | "2xl"
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 }
 
 const sizeClasses = {
+  xs: "size-6",
   sm: "size-8",
   md: "size-10",
   lg: "size-12",

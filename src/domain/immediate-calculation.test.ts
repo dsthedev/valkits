@@ -10,6 +10,7 @@ import {
   type GameRecipe,
 } from "./schema"
 import {
+  calculateImmediateItemRequirements,
   calculateImmediateKitRequirements,
   type ImmediateCalculationIssue,
 } from "./immediate-calculation"
@@ -75,6 +76,29 @@ function kit(
 }
 
 describe("immediate kit calculation", () => {
+  it("calculates direct recipe ingredients for a single item goal", () => {
+    const result = calculateImmediateItemRequirements(
+      { prefab: "PreviewItem", quantity: 2 },
+      dataAccess(
+        [item("PreviewItem")],
+        [
+          recipe("PreviewItem", [
+            { prefab: "Wood", amount: 3, amountPerLevel: 0, recover: true },
+          ]),
+        ],
+      ),
+    )
+
+    expect(result.requirements).toEqual([
+      {
+        prefab: "Wood",
+        craftAmount: 6,
+        qualityAmount: 0,
+        totalAmount: 6,
+      },
+    ])
+  })
+
   it("calculates base ingredients and per-level costs from the exported bronze armor recipe", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),

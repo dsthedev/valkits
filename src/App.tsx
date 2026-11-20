@@ -16,6 +16,7 @@ import {
   RiSearchLine,
 } from "@remixicon/react"
 import type { ExampleKitOption } from "@/data/kits"
+import { ImmediateRecipeCosts } from "@/components/immediate-recipe-costs"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -57,6 +58,7 @@ import {
   type KitCollection,
 } from "@/data/kits"
 import { type Kit } from "@/domain/schema"
+import { calculateImmediateItemRequirements } from "@/domain/immediate-calculation"
 import {
   createWackyDbDataAccess,
   loadWackyDbCatalog,
@@ -787,6 +789,12 @@ export function App() {
                   const isInActiveKit = activeKit?.itemGoals.some(
                     (goal) => goal.prefab === item.prefab
                   )
+                  const directRequirements = dataAccess
+                    ? calculateImmediateItemRequirements(
+                        { prefab: item.prefab },
+                        dataAccess,
+                      ).requirements
+                    : []
 
                   return (
                     <Card
@@ -827,23 +835,32 @@ export function App() {
                           )}
                         </div>
                       </CardHeader>
-                      {item.maxQuality !== undefined && item.maxQuality > 1 && (
+                      {((item.maxQuality !== undefined && item.maxQuality > 1) ||
+                        directRequirements.length > 0) && (
                         <CardContent className="px-4 pt-0 pb-3">
-                          <Table className="text-xs text-muted-foreground">
-                            <TableBody>
-                              <TableRow>
-                                <TableHead
-                                  className="w-28 px-1 py-1 text-xs text-muted-foreground"
-                                  scope="row"
-                                >
-                                  Max quality
-                                </TableHead>
-                                <TableCell className="px-1 py-1 text-right text-xs">
-                                  {item.maxQuality}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
+                          {item.maxQuality !== undefined && item.maxQuality > 1 && (
+                            <Table className="text-xs text-muted-foreground">
+                              <TableBody>
+                                <TableRow>
+                                  <TableHead
+                                    className="w-28 px-1 py-1 text-xs text-muted-foreground"
+                                    scope="row"
+                                  >
+                                    Max quality
+                                  </TableHead>
+                                  <TableCell className="px-1 py-1 text-right text-xs">
+                                    {item.maxQuality}
+                                  </TableCell>
+                                </TableRow>
+                              </TableBody>
+                            </Table>
+                          )}
+                          {directRequirements.length > 0 && (
+                            <ImmediateRecipeCosts
+                              className="mt-2 border-t border-border/60 pt-2"
+                              requirements={directRequirements}
+                            />
+                          )}
                         </CardContent>
                       )}
                       {manageExclusions && (

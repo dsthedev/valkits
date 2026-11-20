@@ -9,6 +9,7 @@ import {
   RiSubtractLine,
 } from "@remixicon/react"
 import { CalculationResults } from "@/components/calculation-results"
+import { ImmediateRecipeCosts } from "@/components/immediate-recipe-costs"
 import { ItemIcon } from "@/components/item-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
@@ -31,6 +32,7 @@ import {
   type KitCollection,
 } from "@/data/kits"
 import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
+import { calculateImmediateItemRequirements } from "@/domain/immediate-calculation"
 import { calculateKitResources } from "@/domain/resource-calculation"
 import { biomes, type Biome, type GameItem, type Kit } from "@/domain/schema"
 import {
@@ -574,14 +576,21 @@ export function KitWorkspace({
               <div className="grid gap-3">
                 {visibleGoals.map((goal) => {
                   const item = getItem(goal.prefab)
+                  const directRequirements = calculationData
+                    ? calculateImmediateItemRequirements(
+                        goal,
+                        calculationData,
+                      ).requirements
+                    : []
                   const capabilities = item
                     ? getItemGoalCapabilities(item)
                     : { quantity: false, maxQuality: null }
                   return (
                     <Card className="rounded-lg shadow-sm" key={goal.prefab}>
-                      <CardContent className="flex items-center gap-2.5 p-2.5">
-                        <ItemIcon prefab={goal.prefab} size="xl" />
-                        <div className="min-w-0 flex-1">
+                      <CardContent className="p-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <ItemIcon prefab={goal.prefab} size="xl" />
+                          <div className="min-w-0 flex-1">
                           <div className="flex items-start gap-2">
                             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
                               <CardTitle className="text-sm leading-tight break-words">
@@ -640,7 +649,14 @@ export function KitWorkspace({
                               />
                             )}
                           </div>
+                          </div>
                         </div>
+                        {directRequirements.length > 0 && (
+                          <ImmediateRecipeCosts
+                            className="mt-2 border-t border-border/60 pt-2"
+                            requirements={directRequirements}
+                          />
+                        )}
                       </CardContent>
                     </Card>
                   )

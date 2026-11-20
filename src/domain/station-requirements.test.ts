@@ -132,8 +132,10 @@ describe("kit station requirement calculation", () => {
         {
           itemPrefab: "Copper",
           targetQuality: 1,
-          status: "unresolved",
-          reason: "ambiguous-processing-conversion",
+          stationReference: "smelter",
+          stationPrefab: "smelter",
+          outputAmountPerInput: 1,
+          status: "required",
         },
         {
           itemPrefab: "Tin",
@@ -159,6 +161,11 @@ describe("kit station requirement calculation", () => {
         (resource) => resource.prefab === "SurtlingCore",
       )?.amount,
     ).toBeGreaterThanOrEqual(5)
+    expect(
+      stationResources.stationResources.find(
+        (resource) => resource.prefab === "Stone",
+      )?.amount,
+    ).toBeGreaterThanOrEqual(20)
   }, 15_000)
 
   it("finds fermenter and cauldron stations through the mead-base conversion", async () => {

@@ -14,6 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import type { UnresolvedReason } from "@/domain/resource-calculation"
 import type { KitResourceCalculation } from "@/domain/resource-calculation"
 import {
@@ -152,12 +160,10 @@ function sortCosts(costs: readonly CostRow[], sort: CostSort | null): CostRow[] 
 }
 
 function CostTable({
-  title,
   costs,
   groupByType,
   getItem,
 }: {
-  title: string
   costs: readonly CostRow[]
   groupByType: boolean
   getItem(prefab: string): GameItem | undefined
@@ -233,7 +239,7 @@ function CostTable({
 
   return (
     <section className="mt-5 first:mt-0">
-      <h3 className="font-medium">{title}</h3>
+      {/* <h3 className="font-medium">{title}</h3> */}
       {costs.length > 0 ? (
         <Table className="mt-2">
           <TableHeader>
@@ -274,7 +280,6 @@ export function CalculationResults({
   hideUpgraderItems,
   getItem,
 }: CalculationResultsProps) {
-  const [activeTab, setActiveTab] = useState<"quick" | "advanced">("quick")
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
   const [groupByType, setGroupByType] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
@@ -326,8 +331,29 @@ export function CalculationResults({
         !hideUpgraderItems || !isUpgraderItemPrefab(requirement.itemPrefab)
     )
 
+  const hasStationWarning =
+    unresolvedStationRequirements.length > 0 &&
+    quickStationRequirements.length > 0
+
+  function advancedBreakdownTrigger() {
+    return (
+      <SheetTrigger
+        render={
+          <Button
+            className="h-auto px-0 py-0 text-inherit underline decoration-dotted underline-offset-2"
+            size="sm"
+            variant="link"
+          >
+            Advanced breakdown
+          </Button>
+        }
+      />
+    )
+  }
+
   return (
-    <section className="mt-5 border-t border-border/70 pt-4">
+    <Sheet>
+      <section className="mt-5 border-t border-border/70 pt-4">
       <section className="mb-4 border-b border-border/70 pb-4">
         <h2 className="text-sm font-semibold">Stations needed</h2>
         {quickStationRequirements.length > 0 ? (
@@ -355,48 +381,14 @@ export function CalculationResults({
               : "No stations needed."}
           </p>
         )}
-        {unresolvedStationRequirements.length > 0 &&
-          quickStationRequirements.length > 0 && (
+        {hasStationWarning && (
             <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
-              Some station requirements could not be resolved; see the advanced
-              breakdown.
+              Some station requirements could not be resolved. {" "}
+              {advancedBreakdownTrigger()}
             </p>
-          )}
+        )}
       </section>
-      <div
-        aria-label="Calculation views"
-        className="inline-flex rounded-lg bg-muted p-1"
-        role="tablist"
-      >
-        {(
-          [
-            ["quick", "Quick reference"],
-            ["advanced", "Advanced breakdown"],
-          ] as const
-        ).map(([tab, label]) => (
-          <Button
-            aria-controls={`${tab}-calculation-panel`}
-            aria-selected={activeTab === tab}
-            id={`${tab}-calculation-tab`}
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            role="tab"
-            size="sm"
-            variant={activeTab === tab ? "secondary" : "ghost"}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-
-      {activeTab === "quick" ? (
-        <div
-          aria-labelledby="quick-calculation-tab"
-          className="mt-4"
-          id="quick-calculation-panel"
-          role="tabpanel"
-          tabIndex={0}
-        >
+      <div className="mt-4">
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-medium">
               {showCombinedCosts ? "Combined costs" : "Separate costs"}
@@ -424,7 +416,6 @@ export function CalculationResults({
           </div>
           {showCombinedCosts ? (
             <CostTable
-              title="Kit and station resources"
               costs={combinedCosts}
               getItem={getItem}
               groupByType={groupByType}
@@ -432,13 +423,11 @@ export function CalculationResults({
           ) : (
             <>
               <CostTable
-                title="Kit resources"
                 costs={kitResourceCosts}
                 getItem={getItem}
                 groupByType={groupByType}
               />
               <CostTable
-                title="Station resources"
                 costs={stationResources}
                 getItem={getItem}
                 groupByType={groupByType}
@@ -448,7 +437,8 @@ export function CalculationResults({
           <p className="mt-3 text-sm text-muted-foreground" role="status">
             {isComplete
               ? "All known recipe and station requirements are resolved."
-              : "Some item sources or station costs are unresolved. See the advanced breakdown for details."}
+              : "Some item sources or station costs are unresolved."}{" "}
+            {!hasStationWarning && advancedBreakdownTrigger()}
           </p>
           {(unresolvedResources.length > 0 ||
             !stationResourceCalculation.isComplete) && (
@@ -456,15 +446,19 @@ export function CalculationResults({
               Totals may be incomplete.
             </p>
           )}
-        </div>
-      ) : (
-        <div
-          aria-labelledby="advanced-calculation-tab"
-          className="mt-4"
-          id="advanced-calculation-panel"
-          role="tabpanel"
-          tabIndex={0}
-        >
+      </div>
+      <SheetContent
+        className="w-full sm:max-w-5xl"
+        side="right"
+      >
+        <SheetHeader>
+          <SheetTitle>Advanced breakdown</SheetTitle>
+          <SheetDescription>
+            Detailed ingredients, station requirements, unresolved sources, and
+            calculation limitations.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
           <div>
             <div
               className="mb-3 inline-flex rounded-lg bg-muted p-1"
@@ -719,7 +713,8 @@ export function CalculationResults({
             </section>
           </div>
         </div>
-      )}
-    </section>
+      </SheetContent>
+      </section>
+    </Sheet>
   )
 }

@@ -1,6 +1,6 @@
 import { getItemGoalCapabilities } from "./item-goal-capabilities"
 import type { RecipeDataAccess } from "./resource-calculation"
-import type { Kit } from "./schema"
+import type { Kit, KitItemGoal } from "./schema"
 
 export type ImmediateCalculationReason =
   | "unknown-item"
@@ -35,6 +35,11 @@ export interface ImmediateKitCalculation {
   isComplete: boolean
 }
 
+export interface ImmediateItemCalculation {
+  requirements: ImmediateRequirementTotal[]
+  unresolved: ImmediateCalculationIssue[]
+}
+
 const immediateCalculationLimitations = [
   "Only direct recipe ingredients are included; ingredient recipes and stations are not expanded.",
   "Quality totals add the exported per-level increment to the base recipe amount.",
@@ -48,97 +53,23 @@ export function calculateImmediateKitRequirements(
   const totalsByPrefab = new Map<string, ImmediateRequirementTotal>()
   const unresolvedByKey = new Map<string, ImmediateCalculationIssue>()
 
-  function addIssue(prefab: string, reason: ImmediateCalculationReason): void {
-    unresolvedByKey.set(`${reason}:${prefab}`, { prefab, reason })
-  }
-
   for (const goal of kit.itemGoals) {
-    const item = data.getItem(goal.prefab)
-    if (!item) {
-      addIssue(goal.prefab, "unknown-item")
-      continue
-    }
-
-    const quantity = goal.quantity ?? 1
-    const targetQuality = goal.targetQuality ?? 1
-    const capabilities = getItemGoalCapabilities(item)
-    if (quantity > 1 && !capabilities.quantity) {
-      addIssue(goal.prefab, "invalid-quantity")
-      continue
-    }
-
-    const recipes = data.getRecipes(goal.prefab)
-    if (recipes.length === 0) {
-      addIssue(goal.prefab, "no-recipe")
-      continue
-    }
-
-    const enabledRecipes = recipes.filter((recipe) => recipe.disabled !== true)
-    if (enabledRecipes.length === 0) {
-      addIssue(goal.prefab, "disabled-recipe")
-      continue
-    }
-
-    const craftRecipes = enabledRecipes.filter(
-      (recipe) => recipe.noCraftOnlyUpgrade !== true,
-    )
-    if (craftRecipes.length === 0) {
-      addIssue(goal.prefab, "upgrade-only-recipe")
-      continue
-    }
-    if (craftRecipes.length > 1) {
-      addIssue(goal.prefab, "ambiguous-recipe")
-      continue
-    }
-
-    const recipe = craftRecipes[0]
-    if (!recipe) continue
-    if (recipe.requireOnlyOneIngredient) {
-      addIssue(goal.prefab, "alternative-requirements")
-      continue
-    }
-
-    let includeQualityAmounts = targetQuality > 1
-    if (targetQuality > 1) {
-      if (
-        capabilities.maxQuality === null ||
-        targetQuality > capabilities.maxQuality
-      ) {
-        addIssue(goal.prefab, "invalid-target-quality")
-        includeQualityAmounts = false
-      } else if (recipe.disabledUpgrade) {
-        addIssue(goal.prefab, "quality-upgrades-disabled")
-        includeQualityAmounts = false
-      } else if (recipe.upgradeRequirements?.length) {
-        addIssue(goal.prefab, "unsupported-upgrade-requirements")
-        includeQualityAmounts = false
-      } else if (recipe.outputAmount !== 1) {
-        addIssue(goal.prefab, "unsupported-quality-batch")
-        includeQualityAmounts = false
-      }
-    }
-
-    const crafts = Math.ceil(quantity / recipe.outputAmount)
-    const qualitySteps = includeQualityAmounts ? targetQuality - 1 : 0
-
-    for (const requirement of recipe.requirements) {
-      const craftAmount = requirement.amount * crafts
-      const qualityAmount =
-        requirement.amountPerLevel * qualitySteps * quantity
+    const itemCalculation = calculateImmediateItemRequirements(goal, data)
+    for (const requirement of itemCalculation.requirements) {
       const existing = totalsByPrefab.get(requirement.prefab)
 
       if (existing) {
-        existing.craftAmount += craftAmount
-        existing.qualityAmount += qualityAmount
-        existing.totalAmount += craftAmount + qualityAmount
-      } else if (craftAmount > 0 || qualityAmount > 0) {
+        existing.craftAmount += requirement.craftAmount
+        existing.qualityAmount += requirement.qualityAmount
+        existing.totalAmount += requirement.totalAmount
+      } else {
         totalsByPrefab.set(requirement.prefab, {
-          prefab: requirement.prefab,
-          craftAmount,
-          qualityAmount,
-          totalAmount: craftAmount + qualityAmount,
+          ...requirement,
         })
       }
+    }
+    for (const issue of itemCalculation.unresolved) {
+      unresolvedByKey.set(`${issue.reason}:${issue.prefab}`, issue)
     }
   }
 
@@ -157,5 +88,105 @@ export function calculateImmediateKitRequirements(
     unresolved,
     limitations: [...immediateCalculationLimitations],
     isComplete: unresolved.length === 0,
+  }
+}
+
+export function calculateImmediateItemRequirements(
+  goal: KitItemGoal,
+  data: RecipeDataAccess,
+): ImmediateItemCalculation {
+  const totalsByPrefab = new Map<string, ImmediateRequirementTotal>()
+  const unresolvedByKey = new Map<string, ImmediateCalculationIssue>()
+
+  function addIssue(prefab: string, reason: ImmediateCalculationReason): void {
+    unresolvedByKey.set(`${reason}:${prefab}`, { prefab, reason })
+  }
+
+  const item = data.getItem(goal.prefab)
+  if (!item) {
+    addIssue(goal.prefab, "unknown-item")
+  } else {
+    const quantity = goal.quantity ?? 1
+    const targetQuality = goal.targetQuality ?? 1
+    const capabilities = getItemGoalCapabilities(item)
+    if (quantity > 1 && !capabilities.quantity) {
+      addIssue(goal.prefab, "invalid-quantity")
+    } else {
+      const recipes = data.getRecipes(goal.prefab)
+      if (recipes.length === 0) {
+        addIssue(goal.prefab, "no-recipe")
+      } else {
+        const enabledRecipes = recipes.filter(
+          (recipe) => recipe.disabled !== true,
+        )
+        if (enabledRecipes.length === 0) {
+          addIssue(goal.prefab, "disabled-recipe")
+        } else {
+          const craftRecipes = enabledRecipes.filter(
+            (recipe) => recipe.noCraftOnlyUpgrade !== true,
+          )
+          if (craftRecipes.length === 0) {
+            addIssue(goal.prefab, "upgrade-only-recipe")
+          } else if (craftRecipes.length > 1) {
+            addIssue(goal.prefab, "ambiguous-recipe")
+          } else {
+            const recipe = craftRecipes[0]
+            if (recipe?.requireOnlyOneIngredient) {
+              addIssue(goal.prefab, "alternative-requirements")
+            } else if (recipe) {
+              let includeQualityAmounts = targetQuality > 1
+              if (targetQuality > 1) {
+                if (
+                  capabilities.maxQuality === null ||
+                  targetQuality > capabilities.maxQuality
+                ) {
+                  addIssue(goal.prefab, "invalid-target-quality")
+                  includeQualityAmounts = false
+                } else if (recipe.disabledUpgrade) {
+                  addIssue(goal.prefab, "quality-upgrades-disabled")
+                  includeQualityAmounts = false
+                } else if (recipe.upgradeRequirements?.length) {
+                  addIssue(goal.prefab, "unsupported-upgrade-requirements")
+                  includeQualityAmounts = false
+                } else if (recipe.outputAmount !== 1) {
+                  addIssue(goal.prefab, "unsupported-quality-batch")
+                  includeQualityAmounts = false
+                }
+              }
+
+              const crafts = Math.ceil(quantity / recipe.outputAmount)
+              const qualitySteps = includeQualityAmounts
+                ? targetQuality - 1
+                : 0
+
+              for (const requirement of recipe.requirements) {
+                const craftAmount = requirement.amount * crafts
+                const qualityAmount =
+                  requirement.amountPerLevel * qualitySteps * quantity
+                if (craftAmount > 0 || qualityAmount > 0) {
+                  totalsByPrefab.set(requirement.prefab, {
+                    prefab: requirement.prefab,
+                    craftAmount,
+                    qualityAmount,
+                    totalAmount: craftAmount + qualityAmount,
+                  })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    requirements: [...totalsByPrefab.values()].sort((left, right) =>
+      left.prefab.localeCompare(right.prefab),
+    ),
+    unresolved: [...unresolvedByKey.values()].sort((left, right) =>
+      left.prefab === right.prefab
+        ? left.reason.localeCompare(right.reason)
+        : left.prefab.localeCompare(right.prefab),
+    ),
   }
 }

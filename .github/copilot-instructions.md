@@ -144,7 +144,10 @@ with `FromName`, `ToName`, and `Remove`, plus a shared `fuelItem.name` and
 specify output yield; the current importer assumes one output per input as
 a provisional rule. Verify that game behavior before treating the yield as
 authoritative. Preserve but do not apply `Remove` until its semantics are
-verified. Multiple processing inputs for one result remain unresolved.
+verified. Copper explicitly prefers `CopperOre` over `CopperScrap`; other
+multiple processing inputs remain unresolved until a source-selection
+workflow is added. Smelter fuel is counted as a direct resource requirement
+and is not expanded through alternate fuel-production paths.
 
 Treat these observations as provisional source-format knowledge. Keep
 parsing isolated so it can be adjusted when more examples are inspected.

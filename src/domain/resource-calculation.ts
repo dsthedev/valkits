@@ -4,6 +4,7 @@ import {
   type ImmediateRequirementTotal,
 } from "./immediate-calculation"
 import { getItemGoalCapabilities } from "./item-goal-capabilities"
+import { selectProcessingConversion } from "./processing-source"
 import type {
   GameItem,
   GameProcessingConversion,
@@ -63,6 +64,7 @@ export interface KitResourceCalculation {
 const calculationLimitations = [
   "Leaf requirements are not classified as gatherable or otherwise acquired.",
   "Smelter conversion yield is assumed to be one output per input.",
+  "Smelter fuel is listed as a direct requirement; its production source is not expanded.",
   "Requirement recovery flags do not reduce crafting input totals.",
   "Processing conversion removal flags are not interpreted.",
 ]
@@ -142,12 +144,17 @@ export function calculateResourceRequirements(
       addUnresolved(prefab, amount, "ambiguous-recipe")
       return
     }
-    if (craftRecipes.length === 0 && conversions.length > 1) {
+    const selectedConversion = selectProcessingConversion(prefab, conversions)
+    if (
+      craftRecipes.length === 0 &&
+      conversions.length > 1 &&
+      !selectedConversion
+    ) {
       addUnresolved(prefab, amount, "ambiguous-processing-conversion")
       return
     }
 
-    const conversion = craftRecipes.length === 0 ? conversions[0] : undefined
+    const conversion = craftRecipes.length === 0 ? selectedConversion : undefined
     if (conversion) {
       const inputBatches = Math.ceil(amount / conversion.outputAmount)
       const outputAmount = inputBatches * conversion.outputAmount
@@ -159,10 +166,9 @@ export function calculateResourceRequirements(
         nextAncestors,
       )
       if (conversion.fuelPrefab && conversion.fuelPerProduct) {
-        resolvePrefab(
+        addLeaf(
           conversion.fuelPrefab,
           outputAmount * conversion.fuelPerProduct,
-          nextAncestors,
         )
       }
       return

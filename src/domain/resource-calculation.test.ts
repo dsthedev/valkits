@@ -195,7 +195,7 @@ describe("kit resource calculation", () => {
     ])
   })
 
-  it("uses the bronze recipe and preserves ambiguous copper processing", async () => {
+  it("expands bronze into copper ore, tin ore, and smelter fuel", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),
     )
@@ -206,18 +206,18 @@ describe("kit resource calculation", () => {
     )
 
     expect(result.leafRequirements).toEqual(
-      expect.arrayContaining([{ prefab: "TinOre", amount: 5 }]),
+      expect.arrayContaining([
+        { prefab: "Coal", amount: 30 },
+        { prefab: "CopperOre", amount: 10 },
+        { prefab: "TinOre", amount: 5 },
+      ]),
     )
-    expect(result.unresolved).toContainEqual({
-      prefab: "Copper",
-      amount: 10,
-      reason: "ambiguous-processing-conversion",
-    })
-    expect(result.unresolved).toContainEqual({
-      prefab: "Coal",
-      amount: 10,
-      reason: "ambiguous-processing-conversion",
-    })
+    expect(result.unresolved).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ prefab: "Copper" }),
+        expect.objectContaining({ prefab: "Coal" }),
+      ]),
+    )
   }, 15_000)
 
   it("reports a known item without a recipe and an unknown prefab separately", () => {

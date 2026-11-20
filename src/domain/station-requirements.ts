@@ -6,6 +6,7 @@ import type {
   Kit,
 } from "./schema"
 import { getItemGoalCapabilities } from "./item-goal-capabilities"
+import { selectProcessingConversion } from "./processing-source"
 
 export type StationRequirementReason =
   | "unknown-item"
@@ -154,9 +155,12 @@ export function calculateKitStationRequirements(
     )
     const conversions = data.getProcessingConversions(prefab)
 
+    const selectedConversion = selectProcessingConversion(prefab, conversions)
     if (
       craftRecipes.length > 1 ||
-      (craftRecipes.length === 0 && conversions.length > 1)
+      (craftRecipes.length === 0 &&
+        conversions.length > 1 &&
+        !selectedConversion)
     ) {
       itemRequirements.push({
         ...base,
@@ -169,7 +173,7 @@ export function calculateKitStationRequirements(
       return
     }
 
-    const conversion = craftRecipes.length === 0 ? conversions[0] : undefined
+    const conversion = craftRecipes.length === 0 ? selectedConversion : undefined
     if (conversion) {
       const stationPiece = data.getStationPiece(conversion.stationPrefab)
       if (!stationPiece) {
@@ -192,9 +196,6 @@ export function calculateKitStationRequirements(
       const nextAncestors = new Set(ancestors)
       nextAncestors.add(prefab)
       resolveItem(conversion.inputPrefab, 1, nextAncestors, false)
-      if (conversion.fuelPrefab) {
-        resolveItem(conversion.fuelPrefab, 1, nextAncestors, false)
-      }
       return
     }
 
