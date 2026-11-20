@@ -75,6 +75,30 @@ describe("WackyDatabase YAML import", () => {
     })
   })
 
+  it("links the verified Black Soup source name to its item prefab", () => {
+    const item = getData(
+      parseItemYaml(
+        readSourceFile("../../public/data/wackydb/items/Item_BlackSoup.yml"),
+      ),
+    )
+    const candidate = getData(
+      parseRecipeYaml(
+        readSourceFile(
+          "../../public/data/wackydb/recipes/Recipe_Recipe_Blacksoup.yml",
+        ),
+      ),
+    )
+    const recipe = getData(
+      linkRecipeResult(candidate, new Map([[item.prefab, item]])),
+    )
+
+    expect(recipe).toMatchObject({
+      resultPrefab: "BlackSoup",
+      craftingStation: "$piece_cauldron",
+      minStationLevel: 2,
+    })
+  })
+
   it("preserves alternative-recipe metadata without guessing its result", () => {
     const candidate = getData(
       parseRecipeYaml(
@@ -189,7 +213,7 @@ reqs: []
     })
   })
 
-  it("leaves station upgrade levels unresolved for compound prefab suffixes", () => {
+  it("maps the cauldron spice rack to verified upgrade level 2", () => {
     const piece = getData(
       parsePieceYaml(
         readSourceFile(
@@ -202,7 +226,19 @@ reqs: []
       prefab: "cauldron_ext1_spice",
       isUpgrade: true,
       upgradeStationPrefab: "piece_cauldron",
+      upgradeLevel: 2,
     })
-    expect(piece.upgradeLevel).toBeUndefined()
+  })
+
+  it("maps the compound cauldron butcher table to its verified level", () => {
+    const piece = getData(
+      parsePieceYaml(
+        readSourceFile(
+          "../../public/data/wackydb/pieces/Piece_cauldron_ext3_butchertable.yml",
+        ),
+      ),
+    )
+
+    expect(piece.upgradeLevel).toBe(3)
   })
 })

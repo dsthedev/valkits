@@ -92,6 +92,70 @@ function dataAccess(
 }
 
 describe("kit station requirement calculation", () => {
+  it("includes the Black Soup cauldron level and Spice Rack construction cost", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+    const result = calculateKitStationRequirements(
+      kit([{ prefab: "BlackSoup" }]),
+      data,
+    )
+
+    expect(result.itemRequirements).toContainEqual({
+      itemPrefab: "BlackSoup",
+      targetQuality: 1,
+      status: "required",
+      stationReference: "$piece_cauldron",
+      stationPrefab: "piece_cauldron",
+      stationLevel: 2,
+    })
+
+    const stationResources = calculateStationResources(
+      result.itemRequirements,
+      data,
+    )
+    expect(stationResources.stationResources).toContainEqual({
+      prefab: "Dandelion",
+      amount: 3,
+    })
+  }, 15_000)
+
+  it("includes every explicit Forge upgrade through level 4", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+    const requirements = calculateKitStationRequirements(
+      kit([{ prefab: "AxeBronze", targetQuality: 4 }]),
+      data,
+    )
+
+    expect(requirements.itemRequirements).toContainEqual(
+      expect.objectContaining({
+        itemPrefab: "AxeBronze",
+        stationPrefab: "forge",
+        stationLevel: 4,
+        status: "required",
+      }),
+    )
+
+    const stationResources = calculateStationResources(
+      requirements.itemRequirements,
+      data,
+    )
+    expect(stationResources.stationResources).toEqual(
+      expect.arrayContaining([
+        { prefab: "Wood", amount: 45 },
+        { prefab: "DeerHide", amount: 5 },
+        { prefab: "Chain", amount: 4 },
+        { prefab: "Stone", amount: 29 },
+      ]),
+    )
+  }, 15_000)
+
   it("uses station and level values from representative current export records", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),
@@ -204,6 +268,41 @@ describe("kit station requirement calculation", () => {
         ({ stationPrefab }) => stationPrefab,
       ),
     ).toEqual(["fermenter", "piece_MeadCauldron"])
+  }, 15_000)
+
+  it("uses the cauldron spice rack for Black Soup's level-2 recipe", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+    const result = calculateKitStationRequirements(
+      kit([{ prefab: "BlackSoup" }]),
+      data,
+    )
+
+    expect(result.itemRequirements).toContainEqual({
+      itemPrefab: "BlackSoup",
+      targetQuality: 1,
+      stationReference: "$piece_cauldron",
+      stationPrefab: "piece_cauldron",
+      stationLevel: 2,
+      status: "required",
+    })
+
+    const stationResources = calculateStationResources(
+      result.itemRequirements,
+      data,
+    )
+    expect(stationResources.stationResources).toEqual(
+      expect.arrayContaining([
+        { prefab: "Dandelion", amount: 3 },
+        { prefab: "Carrot", amount: 2 },
+        { prefab: "Mushroom", amount: 5 },
+        { prefab: "Thistle", amount: 3 },
+        { prefab: "Turnip", amount: 3 },
+      ]),
+    )
   }, 15_000)
 
   it("adds quality levels to the selected recipe's minimum station level", () => {

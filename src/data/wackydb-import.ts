@@ -12,9 +12,11 @@ import {
   type GameRecipe,
   type RecipeRequirement,
 } from "../domain/schema"
+import { getStationUpgradeLevel } from "../domain/station-upgrade-paths"
 
 const sourceRecordSchema = z.record(z.string(), z.unknown())
 const requirementPattern = /^(.+):(\d+):(\d+):(true|false)$/i
+const verifiedRecipeResultAliases = new Map([["Recipe_Blacksoup", "BlackSoup"]])
 
 const recipeCandidateSchema = z.object({
   sourceName: z.string().trim().min(1),
@@ -292,8 +294,8 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
   }
   const prefab = source.data.name
   const isUpgrade = source.data.isUpgrade === true
-  const extensionOrder =
-    typeof prefab === "string" ? /_ext(\d+)$/i.exec(prefab)?.[1] : undefined
+  const verifiedUpgradeLevel =
+    typeof prefab === "string" ? getStationUpgradeLevel(prefab) : undefined
 
   const piece = gamePieceSchema.safeParse({
     prefab,
@@ -305,10 +307,7 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
     upgradeStationPrefab: isUpgrade
       ? optionalSourceValue(upgradeStation)
       : undefined,
-    upgradeLevel:
-      isUpgrade && extensionOrder !== undefined
-        ? Number(extensionOrder) + 1
-        : undefined,
+    upgradeLevel: isUpgrade ? verifiedUpgradeLevel : undefined,
     buildRequirements: requirements.data,
     processingConversions,
   })
@@ -324,7 +323,12 @@ export function linkRecipeResult(
   candidate: RecipeCandidate,
   itemsByPrefab: ReadonlyMap<string, GameItem>,
 ): ImportResult<GameRecipe> {
-  const item = itemsByPrefab.get(candidate.sourceName)
+  const directMatch = itemsByPrefab.get(candidate.sourceName)
+  const aliasedPrefab = verifiedRecipeResultAliases.get(candidate.sourceName)
+  const aliasedMatch = aliasedPrefab
+    ? itemsByPrefab.get(aliasedPrefab)
+    : undefined
+  const item = directMatch ?? aliasedMatch
   if (!item) {
     return failure(
       `No item prefab matches recipe name "${candidate.sourceName}".`,

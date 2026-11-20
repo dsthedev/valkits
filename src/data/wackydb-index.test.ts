@@ -8,6 +8,7 @@ import {
 import { createWackyDbDataAccess } from "./wackydb-catalog"
 import { indexWackyDbFiles } from "./wackydb-index"
 import { getItemGoalCapabilities } from "../domain/item-goal-capabilities"
+import { stationUpgradePaths } from "../domain/station-upgrade-paths"
 
 describe("WackyDatabase index", () => {
   it("indexes the full current export with stable diagnostics and lookup", async () => {
@@ -53,7 +54,23 @@ describe("WackyDatabase index", () => {
         .getStationUpgrades("piece_cauldron")
         .find((piece) => piece.prefab === "cauldron_ext1_spice")
         ?.upgradeLevel,
-    ).toBeUndefined()
+    ).toBe(2)
+    for (const [stationPrefab, upgrades] of Object.entries(stationUpgradePaths)) {
+      for (const upgrade of upgrades) {
+        expect(dataAccess.getPiece(upgrade.prefab)).toMatchObject({
+          prefab: upgrade.prefab,
+          isUpgrade: true,
+          upgradeStationPrefab: stationPrefab,
+          upgradeLevel: upgrade.level,
+        })
+      }
+    }
+    expect(dataAccess.getRecipes("BlackSoup")).toContainEqual(
+      expect.objectContaining({
+        craftingStation: "$piece_cauldron",
+        minStationLevel: 2,
+      }),
+    )
     expect(
       getItemGoalCapabilities(dataAccess.getItem("ArmorBronzeChest")!),
     ).toEqual({ quantity: false, maxQuality: 4 })

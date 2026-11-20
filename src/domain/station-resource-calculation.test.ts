@@ -145,13 +145,13 @@ describe("station resource calculation", () => {
     expect(result.isComplete).toBe(false)
   })
 
-  it("reports upgrades with unverified levels instead of guessing their order", () => {
+  it("reports upgrades absent from the verified path instead of guessing their order", () => {
     const result = calculateStationResources(
       [requirement("ItemA", "cauldron", 2)],
       dataAccess([
         piece("cauldron", [{ prefab: "Tin", amount: 10 }]),
         piece(
-          "cauldron_ext1_spice",
+          "cauldron_extension_unknown",
           [{ prefab: "Dandelion", amount: 3 }],
           {
             isUpgrade: true,

@@ -251,8 +251,10 @@ base station construction materials and every known upgrade piece through
 the required level, recursively resolving their item recipes. Report
 missing or ambiguous station/upgrade data rather than estimating costs.
 Only derive an upgrade level from a source identifier when that mapping is
-verified; retain upgrades with unknown levels as unresolved instead of
-guessing from a complex prefab suffix.
+verified. Maintain the user-verified station tier order in
+`src/domain/station-upgrade-paths.ts`, cross-referencing each actual piece
+prefab and its declared parent station. Do not infer tiers from prefab
+suffixes; retain upgrades absent from the explicit map as unresolved.
 For now, do not recursively include stations needed to build station
 pieces; state this limitation. Derive combined totals later without
 mutating either source list.
