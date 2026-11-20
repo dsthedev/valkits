@@ -101,14 +101,6 @@ export function createWackyDbDataAccess(
   const items = hideUpgraderItems
     ? catalog.items.filter((item) => !isUpgraderItemPrefab(item.prefab))
     : catalog.items
-  const searchableItems = items.map((item) => ({
-    item,
-    searchableText: normalizeSearchText(
-      [item.prefab, item.nameToken, item.descriptionToken, item.itemType]
-        .filter(Boolean)
-        .join(" "),
-    ),
-  }))
   const pieces = hideUpgraderItems
     ? catalog.pieces.map((piece) => ({
         ...piece,
@@ -184,13 +176,68 @@ export function createWackyDbDataAccess(
     }
   }
 
+  const searchableItems = items.map((item, index) => {
+    const recipeIngredients = (recipesByResultPrefab.get(item.prefab) ?? [])
+      .filter((recipe) => !recipe.disabled)
+      .flatMap((recipe) =>
+        recipe.requirements.flatMap((requirement) => {
+          const ingredient = itemsByPrefab.get(requirement.prefab)
+          return [requirement.prefab, ingredient?.nameToken]
+        }),
+      )
+    const processingInputs = (
+      conversionsByResult.get(item.prefab) ?? []
+    ).flatMap((conversion) => {
+      const input = itemsByPrefab.get(conversion.inputPrefab)
+      return [conversion.inputPrefab, input?.nameToken]
+    })
+
+    return {
+      item,
+      index,
+      fields: [
+        { text: item.prefab, weight: 100 },
+        { text: item.nameToken, weight: 90 },
+        { text: item.itemType ?? "", weight: 50 },
+        { text: item.descriptionToken ?? "", weight: 30 },
+        { text: recipeIngredients.join(" "), weight: 20 },
+        { text: processingInputs.join(" "), weight: 15 },
+      ].map(({ text, weight }) => ({ text: normalizeSearchText(text), weight })),
+    }
+  })
+
   function searchItems(query: string): GameItem[] {
-    const terms = normalizeSearchText(query).split(" ").filter(Boolean)
+    const normalizedQuery = normalizeSearchText(query)
+    const terms = normalizedQuery.split(" ").filter(Boolean)
     if (terms.length === 0) return items
 
     return searchableItems
-      .filter(({ searchableText }) =>
-        terms.every((term) => searchableText.includes(term)),
+      .map(({ item, index, fields }) => {
+        const score = terms.reduce((total, term) => {
+          const bestFieldMatch = fields.reduce(
+            (best, field) =>
+              field.text.includes(term) ? Math.max(best, field.weight) : best,
+            0,
+          )
+          return bestFieldMatch === 0 ? 0 : total + bestFieldMatch
+        }, 0)
+        const matchesAllTerms = terms.every((term) =>
+          fields.some((field) => field.text.includes(term)),
+        )
+        const phraseMatch = fields
+          .slice(0, 2)
+          .some((field) => field.text.includes(normalizedQuery))
+
+        return {
+          item,
+          index,
+          score: matchesAllTerms ? score + (phraseMatch ? 10 : 0) : 0,
+        }
+      })
+      .filter(({ score }) => score > 0)
+      .sort(
+        (left, right) =>
+          right.score - left.score || left.index - right.index,
       )
       .map(({ item }) => item)
   }

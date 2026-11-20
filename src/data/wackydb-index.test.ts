@@ -80,6 +80,15 @@ describe("WackyDatabase index", () => {
     expect(
       dataAccess.searchItems("bronze chest").map((item) => item.prefab),
     ).toContain("ArmorBronzeChest")
+    const deerHideMatches = dataAccess.searchItems("deer hide")
+    expect(deerHideMatches.map((item) => item.prefab)).toContain(
+      "ArmorBronzeChest",
+    )
+    expect(
+      deerHideMatches.findIndex((item) => item.prefab === "DeerHide"),
+    ).toBeLessThan(
+      deerHideMatches.findIndex((item) => item.prefab === "ArmorBronzeChest"),
+    )
     expect(dataAccess.searchItems("no-such-prefab")).toHaveLength(0)
     expect(
       dataAccess
