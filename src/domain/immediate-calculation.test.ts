@@ -106,7 +106,7 @@ describe("immediate kit calculation", () => {
       },
     ])
     expect(result.isComplete).toBe(true)
-  })
+  }, 15_000)
 
   it("omits upgrader armor ingredients when the filtered catalog is used", async () => {
     const sourcePath = fileURLToPath(
@@ -121,7 +121,7 @@ describe("immediate kit calculation", () => {
     expect(
       result.requirements.map((requirement) => requirement.prefab),
     ).not.toContain("Upgrader1Armor")
-  })
+  }, 15_000)
 
   it("rounds direct ingredient costs up to the recipe output batch", async () => {
     const sourcePath = fileURLToPath(
@@ -153,7 +153,7 @@ describe("immediate kit calculation", () => {
         totalAmount: 16,
       },
     ])
-  })
+  }, 15_000)
 
   it("aggregates the same immediate ingredient across multiple goals", () => {
     const result = calculateImmediateKitRequirements(

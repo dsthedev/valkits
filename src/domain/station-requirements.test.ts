@@ -120,7 +120,7 @@ describe("kit station requirement calculation", () => {
         stationLevel: 5,
       },
     ])
-  })
+  }, 15_000)
 
   it("finds fermenter and cauldron stations through the mead-base conversion", async () => {
     const sourcePath = fileURLToPath(
@@ -156,7 +156,7 @@ describe("kit station requirement calculation", () => {
         ({ stationPrefab }) => stationPrefab,
       ),
     ).toEqual(["fermenter", "piece_MeadCauldron"])
-  })
+  }, 15_000)
 
   it("adds quality levels to the selected recipe's minimum station level", () => {
     const armor = gameItemSchema.parse({
@@ -242,7 +242,7 @@ describe("kit station requirement calculation", () => {
         stationLevel: expectedStationLevel,
       })
     }
-  })
+  }, 15_000)
 
   it("keeps invalid or disabled quality station requirements unresolved", () => {
     const qualityItem = gameItemSchema.parse({

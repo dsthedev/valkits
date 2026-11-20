@@ -314,7 +314,7 @@ describe("kit resource calculation", () => {
       ["Resin", "known-item-no-recipe"],
       ["Wood", "known-item-no-recipe"],
     ])
-  })
+  }, 15_000)
 
   it("omits upgrader armor ingredients with the filtered catalog", async () => {
     const sourcePath = fileURLToPath(

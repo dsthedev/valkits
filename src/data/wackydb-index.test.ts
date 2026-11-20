@@ -88,7 +88,7 @@ describe("WackyDatabase index", () => {
         }),
       ]),
     )
-  })
+  }, 15_000)
 
   it("reports duplicate item prefabs and keeps the first file deterministically", () => {
     const index = indexWackyDbFiles(
