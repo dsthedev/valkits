@@ -181,28 +181,22 @@ export function App() {
     () => dataAccess?.searchItems(deferredQuery) ?? [],
     [dataAccess, deferredQuery]
   )
-  const results = useMemo(
-    () => {
-      const filteredItems = filterExcludedItems(
-        searchedItems,
-        exclusionState.settings,
-        manageExclusions
-      )
-      return favoritesFirst
-        ? prioritizeFavorites(
-            filteredItems,
-            new Set(favoriteState.prefabs),
-          )
-        : filteredItems
-    },
-    [
+  const results = useMemo(() => {
+    const filteredItems = filterExcludedItems(
       searchedItems,
       exclusionState.settings,
-      manageExclusions,
-      favoritesFirst,
-      favoriteState.prefabs,
-    ]
-  )
+      manageExclusions
+    )
+    return favoritesFirst
+      ? prioritizeFavorites(filteredItems, new Set(favoriteState.prefabs))
+      : filteredItems
+  }, [
+    searchedItems,
+    exclusionState.settings,
+    manageExclusions,
+    favoritesFirst,
+    favoriteState.prefabs,
+  ])
   const excludedPrefabs = useMemo(
     () => new Set(exclusionState.settings.excludedPrefabs),
     [exclusionState.settings.excludedPrefabs]
@@ -414,8 +408,8 @@ export function App() {
     persistKits(
       updateKitInCollection(
         kitState.collection,
-        reorderItemGoals(activeKit, orderedPrefabs),
-      ),
+        reorderItemGoals(activeKit, orderedPrefabs)
+      )
     )
   }
 
@@ -563,7 +557,10 @@ export function App() {
                     </SelectContent>
                   </Select>
                   {exampleKitState.status === "loading" && (
-                    <p className="mt-2 text-xs text-muted-foreground" role="status">
+                    <p
+                      className="mt-2 text-xs text-muted-foreground"
+                      role="status"
+                    >
                       Loading examples…
                     </p>
                   )}
@@ -628,423 +625,437 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
-        <KitWorkspace
-          collection={kitState.collection}
-          excludedPrefabs={excludedPrefabs}
-          hideUpgraderItems={hideUpgraderItems}
-          calculationData={dataAccess ?? null}
-          getItem={(prefab) => dataAccess?.getItem(prefab)}
-          onCreateKit={addNewKit}
-          onDeleteKit={deleteKit}
-          onReorderGoals={reorderGoalsInActiveKit}
-          onRemoveGoal={removeGoalFromActiveKit}
-          onScrollToItemList={scrollToItemList}
-          onSelectKit={selectActiveKit}
-          onUpdateGoal={updateGoalInActiveKit}
-          onUpdateKit={updateExistingKit}
-          warning={kitState.warning}
-        />
-
-        {catalogState.status === "loading" && (
-          <div
-            aria-live="polite"
-            className="flex items-center gap-3 py-12 text-sm text-muted-foreground"
-            role="status"
-          >
-            <RiLoader4Line
-              aria-hidden="true"
-              className="size-5 animate-spin motion-reduce:animate-none"
+      <main className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12 2xl:max-w-[1800px]">
+        <div className="2xl:grid 2xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)] 2xl:items-start 2xl:gap-6">
+          <div className="min-w-0">
+            <KitWorkspace
+              collection={kitState.collection}
+              excludedPrefabs={excludedPrefabs}
+              hideUpgraderItems={hideUpgraderItems}
+              calculationData={dataAccess ?? null}
+              getItem={(prefab) => dataAccess?.getItem(prefab)}
+              onCreateKit={addNewKit}
+              onDeleteKit={deleteKit}
+              onReorderGoals={reorderGoalsInActiveKit}
+              onRemoveGoal={removeGoalFromActiveKit}
+              onScrollToItemList={scrollToItemList}
+              onSelectKit={selectActiveKit}
+              onUpdateGoal={updateGoalInActiveKit}
+              onUpdateKit={updateExistingKit}
+              warning={kitState.warning}
             />
-            Loading item catalog
-          </div>
-        )}
 
-        {catalogState.status === "error" && (
-          <div className="mt-8 flex flex-col gap-4 border-l-2 border-destructive bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <RiErrorWarningLine
-                aria-hidden="true"
-                className="mt-0.5 size-5 shrink-0 text-destructive"
-              />
-              <div className="min-w-0">
-                <h2 className="font-medium">Catalog unavailable</h2>
-                <p className="mt-1 text-sm break-words text-muted-foreground">
-                  {catalogState.message}
-                </p>
+            {catalogState.status === "loading" && (
+              <div
+                aria-live="polite"
+                className="flex items-center gap-3 py-12 text-sm text-muted-foreground"
+                role="status"
+              >
+                <RiLoader4Line
+                  aria-hidden="true"
+                  className="size-5 animate-spin motion-reduce:animate-none"
+                />
+                Loading item catalog
               </div>
-            </div>
-            <Button onClick={retryCatalogLoad} variant="outline">
-              Retry
-            </Button>
-          </div>
-        )}
+            )}
 
-        {catalogState.status === "ready" && (
-          <section
-            aria-label="Item search results"
-            className="mt-5"
-            ref={itemListRef}
-          >
-            {importError && (
-              <p className="mt-3 text-sm text-destructive" role="alert">
-                {importError}
-              </p>
-            )}
-            {importMessage && (
-              <p className="mt-3 text-sm text-muted-foreground" role="status">
-                {importMessage}
-              </p>
-            )}
-            {pendingImport && (
-              <div className="mt-4 flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-medium">
-                    Replace the current list with{" "}
-                    {pendingImport.excludedPrefabs.length} exclusions?
-                  </p>
-                  {unknownImportedCount > 0 && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {unknownImportedCount} prefab IDs are not in this catalog
-                      and will be kept.
+            {catalogState.status === "error" && (
+              <div className="mt-8 flex flex-col gap-4 border-l-2 border-destructive bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <RiErrorWarningLine
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-destructive"
+                  />
+                  <div className="min-w-0">
+                    <h2 className="font-medium">Catalog unavailable</h2>
+                    <p className="mt-1 text-sm break-words text-muted-foreground">
+                      {catalogState.message}
                     </p>
-                  )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={confirmExclusionImport}>Replace list</Button>
-                  <Button
-                    onClick={() => setPendingImport(null)}
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                </div>
+                <Button onClick={retryCatalogLoad} variant="outline">
+                  Retry
+                </Button>
               </div>
             )}
+          </div>
 
-            <div className="sticky top-0 z-30 -mx-4 mb-4 border-y border-border/70 bg-background/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
-              <div className="grid gap-2 sm:flex sm:items-center sm:justify-between sm:gap-4">
-                <div className="order-1 flex min-w-0 items-center gap-2 sm:order-none sm:flex-1">
-                  <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15 sm:max-w-xl">
-                    <RiSearchLine
-                      aria-hidden="true"
-                      className="size-5 shrink-0 text-muted-foreground"
-                    />
-                    <label className="sr-only" htmlFor="item-search">
-                      Search items
-                    </label>
-                    <Input
-                      autoComplete="off"
-                      className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
-                      id="item-search"
-                      onChange={(event) => {
-                        setQuery(event.target.value)
-                        setResultPage(0)
-                      }}
-                      placeholder="Search items"
-                      spellCheck={false}
-                      value={query}
-                    />
-                    {query && (
-                      <Button
-                        aria-label="Clear search"
-                        onClick={() => {
-                          setQuery("")
+          {catalogState.status === "ready" && (
+            <section
+              aria-label="Item search results"
+              className="mt-5 min-w-0 2xl:mt-0"
+              ref={itemListRef}
+            >
+              {importError && (
+                <p className="mt-3 text-sm text-destructive" role="alert">
+                  {importError}
+                </p>
+              )}
+              {importMessage && (
+                <p className="mt-3 text-sm text-muted-foreground" role="status">
+                  {importMessage}
+                </p>
+              )}
+              {pendingImport && (
+                <div className="mt-4 flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium">
+                      Replace the current list with{" "}
+                      {pendingImport.excludedPrefabs.length} exclusions?
+                    </p>
+                    {unknownImportedCount > 0 && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {unknownImportedCount} prefab IDs are not in this
+                        catalog and will be kept.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={confirmExclusionImport}>
+                      Replace list
+                    </Button>
+                    <Button
+                      onClick={() => setPendingImport(null)}
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="sticky top-0 z-30 -mx-4 mb-4 border-y border-border/70 bg-background/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 2xl:mx-0 2xl:px-0">
+                <div className="grid gap-2 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                  <div className="order-1 flex min-w-0 items-center gap-2 sm:order-none sm:flex-1">
+                    <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 sm:max-w-xl dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15">
+                      <RiSearchLine
+                        aria-hidden="true"
+                        className="size-5 shrink-0 text-muted-foreground"
+                      />
+                      <label className="sr-only" htmlFor="item-search">
+                        Search items
+                      </label>
+                      <Input
+                        autoComplete="off"
+                        className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
+                        id="item-search"
+                        onChange={(event) => {
+                          setQuery(event.target.value)
                           setResultPage(0)
                         }}
-                        size="icon-sm"
-                        title="Clear search"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <RiCloseLine aria-hidden="true" />
-                      </Button>
-                    )}
-                  </div>
-                  <Button
-                    aria-label="Show favorites first"
-                    aria-pressed={favoritesFirst}
-                    className="h-11 shrink-0 px-3"
-                    onClick={toggleFavoritesFirst}
-                    size="sm"
-                    title="Show favorites first"
-                    type="button"
-                    variant={favoritesFirst ? "secondary" : "outline"}
-                  >
-                    <RiStarFill
-                      aria-hidden="true"
-                      className={
-                        favoritesFirst ? "text-amber-500" : "text-muted-foreground"
-                      }
-                    />
-                    <span className="hidden lg:inline">Favorites first</span>
-                  </Button>
-                </div>
-                <div className="order-2 flex min-w-0 items-center justify-between gap-2 sm:order-none sm:justify-end">
-                  <p
-                    aria-label={`Showing ${firstVisibleResult} to ${lastVisibleResult} of ${results.length} ${manageExclusions ? "items" : "available items"}`}
-                    aria-live="polite"
-                    className="shrink-0 text-xs whitespace-nowrap text-muted-foreground sm:text-sm"
-                  >
-                    {firstVisibleResult.toLocaleString()}–
-                    {lastVisibleResult.toLocaleString()} /{" "}
-                    {results.length.toLocaleString()}
-                  </p>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {pageCount > 1 && (
-                      <nav
-                        aria-label="Item result pages"
-                        className="flex items-center gap-1"
-                      >
+                        placeholder="Search items"
+                        spellCheck={false}
+                        value={query}
+                      />
+                      {query && (
                         <Button
-                          aria-label="Previous page"
-                          className="size-8"
-                          disabled={currentPage === 0}
-                          onClick={() => setResultPage(currentPage - 1)}
-                          size="icon-sm"
-                          title="Previous page"
-                          type="button"
-                          variant="outline"
-                        >
-                          <RiArrowLeftLine aria-hidden="true" />
-                        </Button>
-                        <span className="min-w-10 text-center text-xs tabular-nums text-muted-foreground">
-                          {currentPage + 1} / {pageCount}
-                        </span>
-                        <Button
-                          aria-label="Next page"
-                          className="size-8"
-                          disabled={currentPage === pageCount - 1}
-                          onClick={() => setResultPage(currentPage + 1)}
-                          size="icon-sm"
-                          title="Next page"
-                          type="button"
-                          variant="outline"
-                        >
-                          <RiArrowRightLine aria-hidden="true" />
-                        </Button>
-                      </nav>
-                    )}
-                    <details className="relative">
-                      <summary
-                        aria-label="Item filters and exclusions"
-                        className="grid size-8 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
-                        title="Item filters and exclusions"
-                      >
-                        <RiMore2Line aria-hidden="true" />
-                      </summary>
-                      <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-                        <p className="px-2 py-1 text-xs text-muted-foreground">
-                          Excluded items ·{" "}
-                          {exclusionState.settings.excludedPrefabs.length}
-                        </p>
-                        <button
-                          aria-pressed={manageExclusions}
-                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                          onClick={(event) => {
-                            setExclusionManager(!manageExclusions)
-                            event.currentTarget
-                              .closest("details")
-                              ?.removeAttribute("open")
+                          aria-label="Clear search"
+                          onClick={() => {
+                            setQuery("")
+                            setResultPage(0)
                           }}
+                          size="icon-sm"
+                          title="Clear search"
                           type="button"
+                          variant="ghost"
                         >
-                          Manage exclusions
-                          <span aria-hidden="true">
-                            {manageExclusions ? "On" : "Off"}
+                          <RiCloseLine aria-hidden="true" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      aria-label="Show favorites first"
+                      aria-pressed={favoritesFirst}
+                      className="h-11 shrink-0 px-3"
+                      onClick={toggleFavoritesFirst}
+                      size="sm"
+                      title="Show favorites first"
+                      type="button"
+                      variant={favoritesFirst ? "secondary" : "outline"}
+                    >
+                      <RiStarFill
+                        aria-hidden="true"
+                        className={
+                          favoritesFirst
+                            ? "text-amber-500"
+                            : "text-muted-foreground"
+                        }
+                      />
+                      <span className="hidden lg:inline">Favorites first</span>
+                    </Button>
+                  </div>
+                  <div className="order-2 flex min-w-0 items-center justify-between gap-2 sm:order-none sm:justify-end">
+                    <p
+                      aria-label={`Showing ${firstVisibleResult} to ${lastVisibleResult} of ${results.length} ${manageExclusions ? "items" : "available items"}`}
+                      aria-live="polite"
+                      className="shrink-0 text-xs whitespace-nowrap text-muted-foreground sm:text-sm"
+                    >
+                      {firstVisibleResult.toLocaleString()}–
+                      {lastVisibleResult.toLocaleString()} /{" "}
+                      {results.length.toLocaleString()}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {pageCount > 1 && (
+                        <nav
+                          aria-label="Item result pages"
+                          className="flex items-center gap-1"
+                        >
+                          <Button
+                            aria-label="Previous page"
+                            className="size-8"
+                            disabled={currentPage === 0}
+                            onClick={() => setResultPage(currentPage - 1)}
+                            size="icon-sm"
+                            title="Previous page"
+                            type="button"
+                            variant="outline"
+                          >
+                            <RiArrowLeftLine aria-hidden="true" />
+                          </Button>
+                          <span className="min-w-10 text-center text-xs text-muted-foreground tabular-nums">
+                            {currentPage + 1} / {pageCount}
                           </span>
-                        </button>
-                        {manageExclusions && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button
-                              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                              onClick={(event) => {
-                                exportExclusions()
-                                event.currentTarget
-                                  .closest("details")
-                                  ?.removeAttribute("open")
-                              }}
-                              type="button"
-                            >
-                              Export exclusions
-                            </button>
-                            <button
-                              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                              onClick={(event) => {
-                                event.currentTarget
-                                  .closest("details")
-                                  ?.removeAttribute("open")
-                                importInputRef.current?.click()
-                              }}
-                              type="button"
-                            >
-                              Import exclusions
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </details>
-                    <input
-                      accept="application/json,.json"
-                      aria-label="Choose exclusions file"
-                      className="sr-only"
-                      onChange={handleExclusionFile}
-                      ref={importInputRef}
-                      tabIndex={-1}
-                      type="file"
-                    />
+                          <Button
+                            aria-label="Next page"
+                            className="size-8"
+                            disabled={currentPage === pageCount - 1}
+                            onClick={() => setResultPage(currentPage + 1)}
+                            size="icon-sm"
+                            title="Next page"
+                            type="button"
+                            variant="outline"
+                          >
+                            <RiArrowRightLine aria-hidden="true" />
+                          </Button>
+                        </nav>
+                      )}
+                      <details className="relative">
+                        <summary
+                          aria-label="Item filters and exclusions"
+                          className="grid size-8 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
+                          title="Item filters and exclusions"
+                        >
+                          <RiMore2Line aria-hidden="true" />
+                        </summary>
+                        <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
+                          <p className="px-2 py-1 text-xs text-muted-foreground">
+                            Excluded items ·{" "}
+                            {exclusionState.settings.excludedPrefabs.length}
+                          </p>
+                          <button
+                            aria-pressed={manageExclusions}
+                            className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                            onClick={(event) => {
+                              setExclusionManager(!manageExclusions)
+                              event.currentTarget
+                                .closest("details")
+                                ?.removeAttribute("open")
+                            }}
+                            type="button"
+                          >
+                            Manage exclusions
+                            <span aria-hidden="true">
+                              {manageExclusions ? "On" : "Off"}
+                            </span>
+                          </button>
+                          {manageExclusions && (
+                            <>
+                              <div className="my-1 border-t border-border" />
+                              <button
+                                className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                                onClick={(event) => {
+                                  exportExclusions()
+                                  event.currentTarget
+                                    .closest("details")
+                                    ?.removeAttribute("open")
+                                }}
+                                type="button"
+                              >
+                                Export exclusions
+                              </button>
+                              <button
+                                className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                                onClick={(event) => {
+                                  event.currentTarget
+                                    .closest("details")
+                                    ?.removeAttribute("open")
+                                  importInputRef.current?.click()
+                                }}
+                                type="button"
+                              >
+                                Import exclusions
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </details>
+                      <input
+                        accept="application/json,.json"
+                        aria-label="Choose exclusions file"
+                        className="sr-only"
+                        onChange={handleExclusionFile}
+                        ref={importInputRef}
+                        tabIndex={-1}
+                        type="file"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            {(exclusionState.warning || favoriteState.warning) && (
-              <p className="mb-3 text-xs text-destructive" role="status">
-                {exclusionState.warning ?? favoriteState.warning}
-              </p>
-            )}
+              {(exclusionState.warning || favoriteState.warning) && (
+                <p className="mb-3 text-xs text-destructive" role="status">
+                  {exclusionState.warning ?? favoriteState.warning}
+                </p>
+              )}
 
-            {visibleResults.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {visibleResults.map((item) => {
-                  const isExcluded = excludedPrefabs.has(item.prefab)
-                  const isFavorite = favoritePrefabs.has(item.prefab)
-                  const isInActiveKit = activeKit?.itemGoals.some(
-                    (goal) => goal.prefab === item.prefab
-                  )
-                  const directRequirements = dataAccess
-                    ? calculateImmediateItemRequirements(
-                        { prefab: item.prefab },
-                        dataAccess,
-                      ).requirements
-                    : []
+              {visibleResults.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-1">
+                  {visibleResults.map((item) => {
+                    const isExcluded = excludedPrefabs.has(item.prefab)
+                    const isFavorite = favoritePrefabs.has(item.prefab)
+                    const isInActiveKit = activeKit?.itemGoals.some(
+                      (goal) => goal.prefab === item.prefab
+                    )
+                    const directRequirements = dataAccess
+                      ? calculateImmediateItemRequirements(
+                          { prefab: item.prefab },
+                          dataAccess
+                        ).requirements
+                      : []
 
-                  return (
-                    <Card
-                      className="h-full rounded-lg shadow-sm"
-                      key={item.prefab}
-                    >
-                      <CardHeader className="p-3">
-                        <div className="flex items-center gap-3">
-                          <ItemIcon prefab={item.prefab} size="xl" />
-                          <div className="min-w-0 flex-1">
-                            <CardTitle className="line-clamp-2 text-base break-words">
-                              {humanizePrefab(item.prefab)}
-                            </CardTitle>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                              <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
-                                {item.itemType ?? "Unknown type"}
-                              </span>
-                              {manageExclusions && isExcluded && (
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                                  Excluded
+                    return (
+                      <Card
+                        className="h-full rounded-lg shadow-sm"
+                        key={item.prefab}
+                      >
+                        <CardHeader className="p-3">
+                          <div className="flex items-center gap-3">
+                            <ItemIcon prefab={item.prefab} size="xl" />
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="line-clamp-2 text-base break-words">
+                                {humanizePrefab(item.prefab)}
+                              </CardTitle>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+                                  {item.itemType ?? "Unknown type"}
                                 </span>
+                                {manageExclusions && isExcluded && (
+                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                    Excluded
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <Button
+                                aria-label={`${isFavorite ? "Remove" : "Add"} ${humanizePrefab(item.prefab)} ${isFavorite ? "from" : "to"} favorites`}
+                                aria-pressed={isFavorite}
+                                className={
+                                  isFavorite
+                                    ? "size-9 text-amber-600 hover:text-amber-700 dark:text-amber-300"
+                                    : "size-9 text-muted-foreground"
+                                }
+                                onClick={() => toggleFavorite(item.prefab)}
+                                size="icon-sm"
+                                title={
+                                  isFavorite
+                                    ? "Remove from favorites"
+                                    : "Add to favorites"
+                                }
+                                type="button"
+                                variant="ghost"
+                              >
+                                {isFavorite ? (
+                                  <RiStarFill aria-hidden="true" />
+                                ) : (
+                                  <RiStarLine aria-hidden="true" />
+                                )}
+                              </Button>
+                              {activeKit && (
+                                <Button
+                                  aria-pressed={isInActiveKit}
+                                  className="h-10 shrink-0 px-3 sm:px-4"
+                                  disabled={isInActiveKit}
+                                  onClick={() =>
+                                    addGoalToActiveKit(item.prefab)
+                                  }
+                                  size="sm"
+                                  variant={
+                                    isInActiveKit ? "secondary" : "default"
+                                  }
+                                >
+                                  {!isInActiveKit && (
+                                    <RiAddLine aria-hidden="true" />
+                                  )}
+                                  {isInActiveKit ? "In kit" : "Add to kit"}
+                                </Button>
                               )}
                             </div>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <Button
-                              aria-label={`${isFavorite ? "Remove" : "Add"} ${humanizePrefab(item.prefab)} ${isFavorite ? "from" : "to"} favorites`}
-                              aria-pressed={isFavorite}
-                              className={
-                                isFavorite
-                                  ? "size-9 text-amber-600 hover:text-amber-700 dark:text-amber-300"
-                                  : "size-9 text-muted-foreground"
-                              }
-                              onClick={() => toggleFavorite(item.prefab)}
-                              size="icon-sm"
-                              title={
-                                isFavorite
-                                  ? "Remove from favorites"
-                                  : "Add to favorites"
-                              }
-                              type="button"
-                              variant="ghost"
-                            >
-                              {isFavorite ? (
-                                <RiStarFill aria-hidden="true" />
-                              ) : (
-                                <RiStarLine aria-hidden="true" />
+                        </CardHeader>
+                        {((item.maxQuality !== undefined &&
+                          item.maxQuality > 1) ||
+                          directRequirements.length > 0) && (
+                          <CardContent className="px-4 pt-0 pb-3">
+                            {item.maxQuality !== undefined &&
+                              item.maxQuality > 1 && (
+                                <Table className="text-xs text-muted-foreground">
+                                  <TableBody>
+                                    <TableRow>
+                                      <TableHead
+                                        className="w-28 px-1 py-1 text-xs text-muted-foreground"
+                                        scope="row"
+                                      >
+                                        Max quality
+                                      </TableHead>
+                                      <TableCell className="px-1 py-1 text-right text-xs">
+                                        {item.maxQuality}
+                                      </TableCell>
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
                               )}
+                            {directRequirements.length > 0 && (
+                              <ImmediateRecipeCosts
+                                className="mt-2 border-t border-border/60 pt-2"
+                                requirements={directRequirements}
+                              />
+                            )}
+                          </CardContent>
+                        )}
+                        {manageExclusions && (
+                          <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pt-0 pb-4">
+                            <Button
+                              aria-pressed={isExcluded}
+                              onClick={() => togglePrefabExclusion(item.prefab)}
+                              size="sm"
+                              variant={isExcluded ? "secondary" : "outline"}
+                            >
+                              {isExcluded ? (
+                                <RiCheckLine aria-hidden="true" />
+                              ) : (
+                                <RiCloseLine aria-hidden="true" />
+                              )}
+                              {isExcluded ? "Restore" : "Exclude"}
                             </Button>
-                            {activeKit && (
-                              <Button
-                                aria-pressed={isInActiveKit}
-                                className="h-10 shrink-0 px-3 sm:px-4"
-                                disabled={isInActiveKit}
-                                onClick={() => addGoalToActiveKit(item.prefab)}
-                                size="sm"
-                                variant={isInActiveKit ? "secondary" : "default"}
-                              >
-                                {!isInActiveKit && (
-                                  <RiAddLine aria-hidden="true" />
-                                )}
-                                {isInActiveKit ? "In kit" : "Add to kit"}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      {((item.maxQuality !== undefined && item.maxQuality > 1) ||
-                        directRequirements.length > 0) && (
-                        <CardContent className="px-4 pt-0 pb-3">
-                          {item.maxQuality !== undefined && item.maxQuality > 1 && (
-                            <Table className="text-xs text-muted-foreground">
-                              <TableBody>
-                                <TableRow>
-                                  <TableHead
-                                    className="w-28 px-1 py-1 text-xs text-muted-foreground"
-                                    scope="row"
-                                  >
-                                    Max quality
-                                  </TableHead>
-                                  <TableCell className="px-1 py-1 text-right text-xs">
-                                    {item.maxQuality}
-                                  </TableCell>
-                                </TableRow>
-                              </TableBody>
-                            </Table>
-                          )}
-                          {directRequirements.length > 0 && (
-                            <ImmediateRecipeCosts
-                              className="mt-2 border-t border-border/60 pt-2"
-                              requirements={directRequirements}
-                            />
-                          )}
-                        </CardContent>
-                      )}
-                      {manageExclusions && (
-                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pt-0 pb-4">
-                          <Button
-                            aria-pressed={isExcluded}
-                            onClick={() => togglePrefabExclusion(item.prefab)}
-                            size="sm"
-                            variant={isExcluded ? "secondary" : "outline"}
-                          >
-                            {isExcluded ? (
-                              <RiCheckLine aria-hidden="true" />
-                            ) : (
-                              <RiCloseLine aria-hidden="true" />
-                            )}
-                            {isExcluded ? "Restore" : "Exclude"}
-                          </Button>
-                        </CardFooter>
-                      )}
-                    </Card>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="py-12 text-center text-sm text-muted-foreground">
-                No items match this search.
-              </p>
-            )}
-          </section>
-        )}
+                          </CardFooter>
+                        )}
+                      </Card>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  No items match this search.
+                </p>
+              )}
+            </section>
+          )}
+        </div>
         {showScrollToTop && (
           <Button
             aria-label="Scroll to top"
-            className="fixed bottom-4 left-4 z-50 size-12 rounded-full border border-orange-700 bg-orange-600 text-white shadow-lg hover:bg-orange-700 dark:border-orange-300 dark:bg-orange-400 dark:text-orange-950 dark:hover:bg-orange-300 sm:bottom-6 sm:left-6"
+            className="fixed bottom-4 left-4 z-50 size-12 rounded-full border border-orange-700 bg-orange-600 text-white shadow-lg hover:bg-orange-700 sm:bottom-6 sm:left-6 dark:border-orange-300 dark:bg-orange-400 dark:text-orange-950 dark:hover:bg-orange-300"
             onClick={() =>
               window.scrollTo({ top: 0, behavior: getScrollBehavior() })
             }
