@@ -153,7 +153,6 @@ export function CalculationResults({
   hideUpgraderItems,
 }: CalculationResultsProps) {
   const [activeTab, setActiveTab] = useState<"quick" | "advanced">("quick")
-  const [quickView, setQuickView] = useState<"direct" | "full">("full")
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total"
@@ -206,6 +205,41 @@ export function CalculationResults({
 
   return (
     <section className="mt-5 border-t border-border/70 pt-4">
+      <section className="mb-4 border-b border-border/70 pb-4">
+        <h2 className="text-sm font-semibold">Stations needed</h2>
+        {quickStationRequirements.length > 0 ? (
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {quickStationRequirements.map((group) => (
+              <li
+                className="flex min-w-0 items-center justify-between gap-3 border border-border/70 px-3 py-2"
+                key={group.stationPrefab}
+              >
+                <span className="min-w-0 font-medium break-words">
+                  {humanizePrefab(group.stationPrefab.replace(/^piece_/i, ""))}
+                </span>
+                {group.stationLevel !== undefined && group.stationLevel > 1 && (
+                  <span className="shrink-0 text-lg font-bold text-amber-700 tabular-nums dark:text-amber-300">
+                    LVL {group.stationLevel}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {unresolvedStationRequirements.length > 0
+              ? "Station requirements need review."
+              : "No stations needed."}
+          </p>
+        )}
+        {unresolvedStationRequirements.length > 0 &&
+          quickStationRequirements.length > 0 && (
+            <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
+              Some station requirements could not be resolved; see the advanced
+              breakdown.
+            </p>
+          )}
+      </section>
       <div
         aria-label="Calculation views"
         className="inline-flex rounded-lg bg-muted p-1"
@@ -240,62 +274,30 @@ export function CalculationResults({
           role="tabpanel"
           tabIndex={0}
         >
-          <div
-            aria-label="Quick cost view"
-            className="inline-flex rounded-lg bg-muted p-1"
-            role="group"
-          >
-            {(["direct", "full"] as const).map((view) => (
-              <Button
-                aria-pressed={quickView === view}
-                key={view}
-                onClick={() => setQuickView(view)}
-                size="sm"
-                variant={quickView === view ? "secondary" : "ghost"}
-              >
-                {view === "direct" ? "Direct" : "Full"}
-              </Button>
-            ))}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-medium">
+              {showCombinedCosts ? "Combined costs" : "Separate costs"}
+            </h3>
+            <Button
+              aria-pressed={showCombinedCosts}
+              onClick={() =>
+                setShowCombinedCosts((showCombined) => !showCombined)
+              }
+              size="sm"
+              variant="outline"
+            >
+              {showCombinedCosts ? "Show separately" : "Show combined"}
+            </Button>
           </div>
-          {quickView === "direct" ? (
+          {showCombinedCosts ? (
             <CostTable
-              costs={directRequirements.map(({ prefab, totalAmount }) => ({
-                prefab,
-                amount: totalAmount,
-              }))}
-              title="Direct ingredients"
+              title="Kit and station resources"
+              costs={combinedCosts}
             />
           ) : (
             <>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-medium">
-                  {showCombinedCosts ? "Combined costs" : "Separate costs"}
-                </h3>
-                <Button
-                  aria-pressed={showCombinedCosts}
-                  onClick={() =>
-                    setShowCombinedCosts((showCombined) => !showCombined)
-                  }
-                  size="sm"
-                  variant="outline"
-                >
-                  {showCombinedCosts ? "Show separately" : "Show combined"}
-                </Button>
-              </div>
-              {showCombinedCosts ? (
-                <CostTable
-                  title="Kit and station resources"
-                  costs={combinedCosts}
-                />
-              ) : (
-                <>
-                  <CostTable title="Kit resources" costs={kitResourceCosts} />
-                  <CostTable
-                    title="Station resources"
-                    costs={stationResources}
-                  />
-                </>
-              )}
+              <CostTable title="Kit resources" costs={kitResourceCosts} />
+              <CostTable title="Station resources" costs={stationResources} />
             </>
           )}
           <p className="mt-3 text-sm text-muted-foreground" role="status">
@@ -309,44 +311,6 @@ export function CalculationResults({
               Totals may be incomplete.
             </p>
           )}
-          <section className="mt-5 border-t border-border/70 pt-4">
-            <h3 className="text-sm font-medium">Stations needed</h3>
-            {quickStationRequirements.length > 0 ? (
-              <ul className="mt-2 divide-y divide-border/70 border-y border-border/70">
-                {quickStationRequirements.map((group) => (
-                  <li
-                    className="flex items-center justify-between gap-4 py-2.5"
-                    key={group.stationPrefab}
-                  >
-                    <span className="min-w-0 font-medium break-words">
-                      {humanizePrefab(
-                        group.stationPrefab.replace(/^piece_/i, "")
-                      )}
-                    </span>
-                    {group.stationLevel !== undefined &&
-                      group.stationLevel > 1 && (
-                        <span
-                          aria-label={`Level ${group.stationLevel}`}
-                          className="shrink-0 text-2xl leading-none font-bold text-amber-700 tabular-nums dark:text-amber-300"
-                        >
-                          {group.stationLevel}
-                        </span>
-                      )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                No station requirements were resolved.
-              </p>
-            )}
-            {unresolvedStationRequirements.length > 0 && (
-              <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
-                Some station requirements could not be resolved; see the
-                advanced breakdown.
-              </p>
-            )}
-          </section>
         </div>
       ) : (
         <div

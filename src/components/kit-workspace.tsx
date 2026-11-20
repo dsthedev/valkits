@@ -6,6 +6,7 @@ import {
   RiDeleteBinLine,
   RiEditLine,
   RiMore2Line,
+  RiSubtractLine,
 } from "@remixicon/react"
 import { CalculationResults } from "@/components/calculation-results"
 import { ItemIcon } from "@/components/item-icon"
@@ -22,8 +23,6 @@ import {
 import {
   createKit,
   createKitId,
-  createExampleKit,
-  exampleKitOptions,
   MAX_KIT_IMPORT_LENGTH,
   parseKitExport,
   serializeKitExport,
@@ -80,6 +79,80 @@ function parseGoalInput(
   return parsed
 }
 
+function GoalStepper({
+  itemName,
+  label,
+  value,
+  maximum,
+  maxLabel,
+  tone,
+  onValueChange,
+}: {
+  itemName: string
+  label: string
+  value: number
+  maximum?: number
+  maxLabel: number
+  tone: "quantity" | "quality"
+  onValueChange(value: number | null): void
+}) {
+  const toneClass =
+    tone === "quantity"
+      ? "border-amber-400/70 bg-amber-100/70 text-amber-950 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100"
+      : "border-border bg-muted/70 text-muted-foreground"
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="min-w-8 text-[10px] font-semibold tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <div
+        aria-label={`${label} of ${itemName}`}
+        className={`inline-flex h-9 items-center gap-0.5 border px-0.5 ${toneClass}`}
+        role="group"
+      >
+        <Button
+          aria-label={`Decrease ${label.toLowerCase()} of ${itemName}`}
+          className="rounded-sm"
+          disabled={value <= 1}
+          onClick={() => onValueChange(value - 1)}
+          size="icon-xs"
+          type="button"
+          variant="ghost"
+        >
+          <RiSubtractLine aria-hidden="true" />
+        </Button>
+        <Input
+          aria-label={`${label} of ${itemName}`}
+          className="goal-number-input h-8 w-12 rounded-none border-0 bg-transparent px-0 text-center text-lg font-bold tabular-nums shadow-none focus-visible:ring-0"
+          max={maximum}
+          min={1}
+          onChange={(event) => {
+            const parsed = parseGoalInput(event.target.value, maximum)
+            if (parsed !== undefined) onValueChange(parsed)
+          }}
+          type="number"
+          value={value}
+        />
+        <span className="pr-1 text-sm font-semibold tabular-nums opacity-70">
+          /{maxLabel}
+        </span>
+        <Button
+          aria-label={`Increase ${label.toLowerCase()} of ${itemName}`}
+          className="rounded-sm"
+          disabled={maximum !== undefined && value >= maximum}
+          onClick={() => onValueChange(value + 1)}
+          size="icon-xs"
+          type="button"
+          variant="ghost"
+        >
+          <RiAddLine aria-hidden="true" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export function KitWorkspace({
   collection,
   warning,
@@ -114,9 +187,6 @@ export function KitWorkspace({
   const [pendingImportedKit, setPendingImportedKit] = useState<Kit | null>(null)
   const [kitFileError, setKitFileError] = useState<string | null>(null)
   const [kitFileMessage, setKitFileMessage] = useState<string | null>(null)
-  const [selectedExampleKitId, setSelectedExampleKitId] = useState(
-    exampleKitOptions[0]?.id ?? ""
-  )
   const kitImportInputRef = useRef<HTMLInputElement>(null)
   const liveCalculation =
     activeKit && calculationKit && calculationData
@@ -232,14 +302,6 @@ export function KitWorkspace({
     setKitFileError(null)
   }
 
-  function addSelectedExampleKit() {
-    if (!selectedExampleKitId) return
-    const exampleKit = createExampleKit(selectedExampleKitId)
-    onCreateKit(exampleKit)
-    setKitFileMessage(`Added "${exampleKit.name}" to your kits.`)
-    setKitFileError(null)
-  }
-
   return (
     <section
       aria-label="Kit workspace"
@@ -250,9 +312,95 @@ export function KitWorkspace({
           <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
             {activeKit?.biome ?? "KIT PLANNER"}
           </p>
-          <h1 className="mt-1 text-3xl font-semibold break-words sm:text-4xl">
-            {activeKit?.name ?? "Plan your next expedition"}
-          </h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-semibold break-words sm:text-4xl">
+              {activeKit?.name ?? "Plan your next expedition"}
+            </h1>
+            {activeKit && (
+              <details className="relative">
+                <summary
+                  aria-label="Kit options"
+                  className="inline-flex h-8 cursor-pointer list-none items-center gap-1 rounded-md px-2 text-muted-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
+                  title="Kit options"
+                >
+                  <RiMore2Line aria-hidden="true" />
+                  <span className="text-xs">Kit options</span>
+                </summary>
+                <div className="absolute top-full left-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
+                  {collection.kits.length > 1 && (
+                    <>
+                      <p className="px-2 py-1 text-xs text-muted-foreground">
+                        Switch kit
+                      </p>
+                      {collection.kits.map((kit) => (
+                        <button
+                          aria-current={
+                            kit.id === activeKit.id ? "true" : undefined
+                          }
+                          className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                          key={kit.id}
+                          onClick={(event) => {
+                            onSelectKit(kit.id)
+                            event.currentTarget
+                              .closest("details")
+                              ?.removeAttribute("open")
+                          }}
+                          type="button"
+                        >
+                          <span className="min-w-0 truncate">
+                            {kit.name} · {kit.biome}
+                          </span>
+                          {kit.id === activeKit.id && (
+                            <RiCheckLine aria-hidden="true" />
+                          )}
+                        </button>
+                      ))}
+                      <div className="my-1 border-t border-border" />
+                    </>
+                  )}
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                    onClick={(event) => {
+                      openForm("edit")
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                    type="button"
+                  >
+                    <RiEditLine aria-hidden="true" />
+                    Edit kit
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                    onClick={(event) => {
+                      exportActiveKit()
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                    type="button"
+                  >
+                    Export kit
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                    onClick={(event) => {
+                      setConfirmDelete(true)
+                      setFormMode(null)
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                    type="button"
+                  >
+                    <RiDeleteBinLine aria-hidden="true" />
+                    Delete kit
+                  </button>
+                </div>
+              </details>
+            )}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {activeKit
               ? `${visibleGoals.length} item goals`
@@ -266,122 +414,20 @@ export function KitWorkspace({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {activeKit && (
-            <details className="relative">
-              <summary
-                aria-label="Kit options"
-                className="grid size-9 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
-                title="Kit options"
-              >
-                <RiMore2Line aria-hidden="true" />
-              </summary>
-              <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-                {collection.kits.length > 1 && (
-                  <>
-                    <p className="px-2 py-1 text-xs text-muted-foreground">
-                      Switch kit
-                    </p>
-                    {collection.kits.map((kit) => (
-                      <button
-                        aria-current={
-                          kit.id === activeKit.id ? "true" : undefined
-                        }
-                        className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                        key={kit.id}
-                        onClick={(event) => {
-                          onSelectKit(kit.id)
-                          event.currentTarget
-                            .closest("details")
-                            ?.removeAttribute("open")
-                        }}
-                        type="button"
-                      >
-                        <span className="min-w-0 truncate">
-                          {kit.name} · {kit.biome}
-                        </span>
-                        {kit.id === activeKit.id && (
-                          <RiCheckLine aria-hidden="true" />
-                        )}
-                      </button>
-                    ))}
-                    <div className="my-1 border-t border-border" />
-                  </>
-                )}
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                  onClick={(event) => {
-                    openForm("edit")
-                    event.currentTarget
-                      .closest("details")
-                      ?.removeAttribute("open")
-                  }}
-                  type="button"
-                >
-                  <RiEditLine aria-hidden="true" />
-                  Edit kit
-                </button>
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                  onClick={(event) => {
-                    exportActiveKit()
-                    event.currentTarget
-                      .closest("details")
-                      ?.removeAttribute("open")
-                  }}
-                  type="button"
-                >
-                  Export kit
-                </button>
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
-                  onClick={(event) => {
-                    setConfirmDelete(true)
-                    setFormMode(null)
-                    event.currentTarget
-                      .closest("details")
-                      ?.removeAttribute("open")
-                  }}
-                  type="button"
-                >
-                  <RiDeleteBinLine aria-hidden="true" />
-                  Delete kit
-                </button>
-              </div>
-            </details>
-          )}
-          <Button onClick={() => openForm("create")} variant="outline">
+          <Button
+            className="font-semibold shadow-sm"
+            onClick={() => openForm("create")}
+            size="lg"
+          >
             <RiAddLine aria-hidden="true" />
             New kit
           </Button>
           <Button
             onClick={() => kitImportInputRef.current?.click()}
+            size="sm"
             variant="outline"
           >
             Import kit
-          </Button>
-          <Select
-            onValueChange={(value) => {
-              if (value) setSelectedExampleKitId(value)
-            }}
-            value={selectedExampleKitId}
-          >
-            <SelectTrigger aria-label="Choose a prebuilt kit">
-              <SelectValue placeholder="Choose an example kit" />
-            </SelectTrigger>
-            <SelectContent>
-              {exampleKitOptions.map((example) => (
-                <SelectItem key={example.id} value={example.id}>
-                  {example.name} · {example.biome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            disabled={!selectedExampleKitId}
-            onClick={addSelectedExampleKit}
-            variant="secondary"
-          >
-            Add example
           </Button>
         </div>
       </div>
@@ -525,7 +571,7 @@ export function KitWorkspace({
               </span>
             </div>
             {visibleGoals.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3">
                 {visibleGoals.map((goal) => {
                   const item = getItem(goal.prefab)
                   const capabilities = item
@@ -534,12 +580,19 @@ export function KitWorkspace({
                   return (
                     <Card className="rounded-lg shadow-sm" key={goal.prefab}>
                       <CardContent className="flex items-center gap-2.5 p-2.5">
-                        <ItemIcon prefab={goal.prefab} size="md" />
+                        <ItemIcon prefab={goal.prefab} size="xl" />
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <CardTitle className="text-sm leading-tight break-words">
-                              {humanizePrefab(item?.prefab ?? goal.prefab)}
-                            </CardTitle>
+                          <div className="flex items-start gap-2">
+                            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                              <CardTitle className="text-sm leading-tight break-words">
+                                {humanizePrefab(item?.prefab ?? goal.prefab)}
+                              </CardTitle>
+                              {item?.itemType && (
+                                <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
+                                  {item.itemType}
+                                </span>
+                              )}
+                            </div>
                             <Button
                               aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
                               onClick={() => onRemoveGoal(goal.prefab)}
@@ -551,11 +604,6 @@ export function KitWorkspace({
                             </Button>
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            {item?.itemType && (
-                              <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
-                                {item.itemType}
-                              </span>
-                            )}
                             {excludedPrefabs.has(goal.prefab) && (
                               <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
                                 Excluded
@@ -567,63 +615,29 @@ export function KitWorkspace({
                               </span>
                             )}
                             {capabilities.quantity && (
-                              <label
-                                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                                title="Quantity"
-                              >
-                                Qty
-                                <Input
-                                  aria-label={`Quantity of ${goal.prefab}`}
-                                  className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
-                                  min={1}
-                                  onChange={(event) => {
-                                    const value = parseGoalInput(
-                                      event.target.value
-                                    )
-                                    if (value !== undefined)
-                                      onUpdateGoal(goal.prefab, {
-                                        quantity: value,
-                                      })
-                                  }}
-                                  type="number"
-                                  value={goal.quantity ?? 1}
-                                />
-                                {item?.maxStackSize &&
-                                  item.maxStackSize > 1 && (
-                                    <span className="tabular-nums">
-                                      /{item.maxStackSize}
-                                    </span>
-                                  )}
-                              </label>
+                              <GoalStepper
+                                itemName={goal.prefab}
+                                label="Qty"
+                                maxLabel={item?.maxStackSize ?? 1}
+                                onValueChange={(quantity) =>
+                                  onUpdateGoal(goal.prefab, { quantity })
+                                }
+                                tone="quantity"
+                                value={goal.quantity ?? 1}
+                              />
                             )}
                             {capabilities.maxQuality !== null && (
-                              <label
-                                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                                title="Target quality"
-                              >
-                                LVL
-                                <Input
-                                  aria-label={`Target quality of ${goal.prefab}`}
-                                  className="h-7 w-12 border-input px-1 text-center text-sm font-medium tabular-nums"
-                                  max={capabilities.maxQuality}
-                                  min={1}
-                                  onChange={(event) => {
-                                    const value = parseGoalInput(
-                                      event.target.value,
-                                      capabilities.maxQuality ?? undefined
-                                    )
-                                    if (value !== undefined)
-                                      onUpdateGoal(goal.prefab, {
-                                        targetQuality: value,
-                                      })
-                                  }}
-                                  type="number"
-                                  value={goal.targetQuality ?? 1}
-                                />
-                                <span className="tabular-nums">
-                                  /{capabilities.maxQuality}
-                                </span>
-                              </label>
+                              <GoalStepper
+                                itemName={goal.prefab}
+                                label="LVL"
+                                maxLabel={capabilities.maxQuality}
+                                maximum={capabilities.maxQuality}
+                                onValueChange={(targetQuality) =>
+                                  onUpdateGoal(goal.prefab, { targetQuality })
+                                }
+                                tone="quality"
+                                value={goal.targetQuality ?? 1}
+                              />
                             )}
                           </div>
                         </div>

@@ -24,6 +24,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ItemIcon } from "@/components/item-icon"
 import {
   Table,
@@ -36,6 +43,8 @@ import { KitWorkspace } from "@/components/kit-workspace"
 import {
   addItemGoal,
   addKitToCollection,
+  createExampleKit,
+  exampleKitOptions,
   loadKitCollection,
   removeItemGoal,
   removeKitFromCollection,
@@ -80,7 +89,7 @@ const ITEMS_PER_PAGE = 75
 function readBrowserExclusions() {
   try {
     return loadExclusionSettings(
-      typeof window === "undefined" ? undefined : window.localStorage,
+      typeof window === "undefined" ? undefined : window.localStorage
     )
   } catch {
     return loadExclusionSettings(undefined)
@@ -104,9 +113,7 @@ function readBrowserUpgraderItemPreference() {
 }
 
 function humanizePrefab(prefab: string): string {
-  return prefab
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
+  return prefab.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ")
 }
 
 export function App() {
@@ -115,15 +122,20 @@ export function App() {
   })
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [query, setQuery] = useState("")
+  const [quickStartExampleId, setQuickStartExampleId] = useState(
+    exampleKitOptions[0]?.id ?? ""
+  )
   const [resultPage, setResultPage] = useState(0)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
-    readBrowserUpgraderItemPreference,
+    readBrowserUpgraderItemPreference
   )
   const hideUpgraderItems = upgraderItemPreference.hideUpgraderItems
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
   const [kitState, setKitState] = useState(readBrowserKits)
   const [manageExclusions, setManageExclusions] = useState(false)
-  const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(null)
+  const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(
+    null
+  )
   const [importMessage, setImportMessage] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -133,24 +145,24 @@ export function App() {
       catalogState.status === "ready"
         ? createWackyDbDataAccess(catalogState.catalog, { hideUpgraderItems })
         : undefined,
-    [catalogState, hideUpgraderItems],
+    [catalogState, hideUpgraderItems]
   )
   const searchedItems = useMemo(
     () => dataAccess?.searchItems(deferredQuery) ?? [],
-    [dataAccess, deferredQuery],
+    [dataAccess, deferredQuery]
   )
   const results = useMemo(
     () =>
       filterExcludedItems(
         searchedItems,
         exclusionState.settings,
-        manageExclusions,
+        manageExclusions
       ),
-    [searchedItems, exclusionState.settings, manageExclusions],
+    [searchedItems, exclusionState.settings, manageExclusions]
   )
   const excludedPrefabs = useMemo(
     () => new Set(exclusionState.settings.excludedPrefabs),
-    [exclusionState.settings.excludedPrefabs],
+    [exclusionState.settings.excludedPrefabs]
   )
 
   useEffect(() => {
@@ -186,21 +198,21 @@ export function App() {
   const currentPage = Math.min(resultPage, pageCount - 1)
   const visibleResults = results.slice(
     currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE,
+    (currentPage + 1) * ITEMS_PER_PAGE
   )
   const firstVisibleResult =
     results.length === 0 ? 0 : currentPage * ITEMS_PER_PAGE + 1
   const lastVisibleResult = Math.min(
     (currentPage + 1) * ITEMS_PER_PAGE,
-    results.length,
+    results.length
   )
   const activeKit = kitState.collection.kits.find(
-    (kit) => kit.id === kitState.collection.activeKitId,
+    (kit) => kit.id === kitState.collection.activeKitId
   )
   const unknownImportedCount =
     catalogState.status === "ready" && pendingImport
       ? pendingImport.excludedPrefabs.filter(
-          (prefab) => !dataAccess?.getItem(prefab),
+          (prefab) => !dataAccess?.getItem(prefab)
         ).length
       : 0
 
@@ -246,10 +258,7 @@ export function App() {
   function addGoalToActiveKit(prefab: string) {
     if (!activeKit) return
     persistKits(
-      updateKitInCollection(
-        kitState.collection,
-        addItemGoal(activeKit, prefab),
-      ),
+      updateKitInCollection(kitState.collection, addItemGoal(activeKit, prefab))
     )
   }
 
@@ -258,8 +267,8 @@ export function App() {
     persistKits(
       updateKitInCollection(
         kitState.collection,
-        removeItemGoal(activeKit, prefab),
-      ),
+        removeItemGoal(activeKit, prefab)
+      )
     )
   }
 
@@ -268,8 +277,8 @@ export function App() {
     persistKits(
       updateKitInCollection(
         kitState.collection,
-        updateItemGoal(activeKit, prefab, updates),
-      ),
+        updateItemGoal(activeKit, prefab, updates)
+      )
     )
   }
 
@@ -286,7 +295,7 @@ export function App() {
     const settings = setPrefabExcluded(
       exclusionState.settings,
       prefab,
-      !excludedPrefabs.has(prefab),
+      !excludedPrefabs.has(prefab)
     )
     persistExclusions(settings)
   }
@@ -334,7 +343,7 @@ export function App() {
     try {
       const file = new Blob(
         [serializeExclusionExport(exclusionState.settings)],
-        { type: "application/json" },
+        { type: "application/json" }
       )
       const objectUrl = URL.createObjectURL(file)
       const downloadLink = document.createElement("a")
@@ -355,7 +364,7 @@ export function App() {
     setImportMessage(
       saved
         ? "Exclusion list replaced."
-        : "List applied for this session, but could not be saved.",
+        : "List applied for this session, but could not be saved."
     )
   }
 
@@ -363,7 +372,11 @@ export function App() {
     <div className="min-h-svh bg-background text-foreground">
       <header className="border-b border-border/80">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <a className="flex items-center gap-3" href={import.meta.env.BASE_URL} aria-label="Valkits home">
+          <a
+            className="flex items-center gap-3"
+            href={import.meta.env.BASE_URL}
+            aria-label="Valkits home"
+          >
             <span className="grid size-9 place-items-center rounded-lg bg-emerald-800 text-sm font-bold text-white dark:bg-emerald-300 dark:text-emerald-950">
               V
             </span>
@@ -371,6 +384,51 @@ export function App() {
           </a>
           {catalogState.status === "ready" && (
             <div className="flex flex-wrap items-center justify-end gap-3">
+              <details className="relative">
+                <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted [&::-webkit-details-marker]:hidden">
+                  <RiAddLine aria-hidden="true" />
+                  Quick start
+                </summary>
+                <div className="absolute top-full right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    Start from an example kit
+                  </label>
+                  <Select
+                    onValueChange={(value) => {
+                      if (value) setQuickStartExampleId(value)
+                    }}
+                    value={quickStartExampleId}
+                  >
+                    <SelectTrigger
+                      aria-label="Choose an example kit"
+                      className="w-full"
+                    >
+                      <SelectValue placeholder="Choose an example kit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {exampleKitOptions.map((example) => (
+                        <SelectItem key={example.id} value={example.id}>
+                          {example.name} · {example.biome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    className="mt-2 w-full"
+                    disabled={!quickStartExampleId}
+                    onClick={(event) => {
+                      addNewKit(createExampleKit(quickStartExampleId))
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                    size="sm"
+                    variant="secondary"
+                  >
+                    Add example kit
+                  </Button>
+                </div>
+              </details>
               <Button
                 aria-pressed={hideUpgraderItems}
                 onClick={toggleUpgraderItemVisibility}
@@ -391,8 +449,10 @@ export function App() {
               )}
               <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground sm:text-sm">
                 <span>
-                  {(dataAccess?.searchItems("").length ??
-                    catalogState.catalog.items.length).toLocaleString()}{" "}
+                  {(
+                    dataAccess?.searchItems("").length ??
+                    catalogState.catalog.items.length
+                  ).toLocaleString()}{" "}
                   items
                 </span>
                 <span aria-hidden="true" className="h-3 w-px bg-border" />
@@ -405,7 +465,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
+      <main className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
         <KitWorkspace
           collection={kitState.collection}
           excludedPrefabs={excludedPrefabs}
@@ -444,7 +504,7 @@ export function App() {
               />
               <div className="min-w-0">
                 <h2 className="font-medium">Catalog unavailable</h2>
-                <p className="mt-1 break-words text-sm text-muted-foreground">
+                <p className="mt-1 text-sm break-words text-muted-foreground">
                   {catalogState.message}
                 </p>
               </div>
@@ -459,11 +519,15 @@ export function App() {
           <section aria-label="Item search results" className="mt-5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p aria-live="polite" className="text-sm text-muted-foreground">
-                {results.length.toLocaleString()} {manageExclusions ? "items" : "available items"}
+                {results.length.toLocaleString()}{" "}
+                {manageExclusions ? "items" : "available items"}
               </p>
               <div className="flex items-center gap-2">
                 {exclusionState.warning && (
-                  <span className="hidden text-xs text-destructive sm:inline" role="status">
+                  <span
+                    className="hidden text-xs text-destructive sm:inline"
+                    role="status"
+                  >
                     {exclusionState.warning}
                   </span>
                 )}
@@ -475,21 +539,26 @@ export function App() {
                   >
                     <RiMore2Line aria-hidden="true" />
                   </summary>
-                  <div className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
+                  <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
                     <p className="px-2 py-1 text-xs text-muted-foreground">
-                      Excluded items · {exclusionState.settings.excludedPrefabs.length}
+                      Excluded items ·{" "}
+                      {exclusionState.settings.excludedPrefabs.length}
                     </p>
                     <button
                       aria-pressed={manageExclusions}
                       className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                       onClick={(event) => {
                         setExclusionManager(!manageExclusions)
-                        event.currentTarget.closest("details")?.removeAttribute("open")
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open")
                       }}
                       type="button"
                     >
                       Manage exclusions
-                      <span aria-hidden="true">{manageExclusions ? "On" : "Off"}</span>
+                      <span aria-hidden="true">
+                        {manageExclusions ? "On" : "Off"}
+                      </span>
                     </button>
                     {manageExclusions && (
                       <>
@@ -498,7 +567,9 @@ export function App() {
                           className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                           onClick={(event) => {
                             exportExclusions()
-                            event.currentTarget.closest("details")?.removeAttribute("open")
+                            event.currentTarget
+                              .closest("details")
+                              ?.removeAttribute("open")
                           }}
                           type="button"
                         >
@@ -507,7 +578,9 @@ export function App() {
                         <button
                           className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                           onClick={(event) => {
-                            event.currentTarget.closest("details")?.removeAttribute("open")
+                            event.currentTarget
+                              .closest("details")
+                              ?.removeAttribute("open")
                             importInputRef.current?.click()
                           }}
                           type="button"
@@ -544,11 +617,13 @@ export function App() {
               <div className="mt-4 flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-medium">
-                    Replace the current list with {pendingImport.excludedPrefabs.length} exclusions?
+                    Replace the current list with{" "}
+                    {pendingImport.excludedPrefabs.length} exclusions?
                   </p>
                   {unknownImportedCount > 0 && (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {unknownImportedCount} prefab IDs are not in this catalog and will be kept.
+                      {unknownImportedCount} prefab IDs are not in this catalog
+                      and will be kept.
                     </p>
                   )}
                 </div>
@@ -564,9 +639,7 @@ export function App() {
               </div>
             )}
 
-            <div
-              className="mb-4 flex flex-wrap items-center justify-between gap-2"
-            >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div className="w-full max-w-xl">
                 <label className="sr-only" htmlFor="item-search">
                   Search items
@@ -625,7 +698,7 @@ export function App() {
                     >
                       Previous
                     </Button>
-                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    <span className="text-xs whitespace-nowrap text-muted-foreground">
                       Page {currentPage + 1} of {pageCount}
                     </span>
                     <Button
@@ -647,16 +720,19 @@ export function App() {
                 {visibleResults.map((item) => {
                   const isExcluded = excludedPrefabs.has(item.prefab)
                   const isInActiveKit = activeKit?.itemGoals.some(
-                    (goal) => goal.prefab === item.prefab,
+                    (goal) => goal.prefab === item.prefab
                   )
 
                   return (
-                    <Card className="h-full rounded-lg shadow-sm" key={item.prefab}>
+                    <Card
+                      className="h-full rounded-lg shadow-sm"
+                      key={item.prefab}
+                    >
                       <CardHeader className="p-3">
                         <div className="flex items-center gap-3">
                           <ItemIcon prefab={item.prefab} size="xl" />
                           <div className="min-w-0 flex-1">
-                            <CardTitle className="line-clamp-2 break-words text-base">
+                            <CardTitle className="line-clamp-2 text-base break-words">
                               {humanizePrefab(item.prefab)}
                             </CardTitle>
                             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -678,26 +754,35 @@ export function App() {
                               onClick={() => addGoalToActiveKit(item.prefab)}
                               variant={isInActiveKit ? "secondary" : "default"}
                             >
-                              {!isInActiveKit && <RiAddLine aria-hidden="true" />}
+                              {!isInActiveKit && (
+                                <RiAddLine aria-hidden="true" />
+                              )}
                               {isInActiveKit ? "In kit" : "Add to kit"}
                             </Button>
                           )}
                         </div>
                       </CardHeader>
                       {item.maxQuality !== undefined && item.maxQuality > 1 && (
-                        <CardContent className="px-4 pb-3 pt-0">
+                        <CardContent className="px-4 pt-0 pb-3">
                           <Table className="text-xs text-muted-foreground">
                             <TableBody>
                               <TableRow>
-                                <TableHead className="w-28 px-1 py-1 text-xs text-muted-foreground" scope="row">Max quality</TableHead>
-                                <TableCell className="px-1 py-1 text-right text-xs">{item.maxQuality}</TableCell>
+                                <TableHead
+                                  className="w-28 px-1 py-1 text-xs text-muted-foreground"
+                                  scope="row"
+                                >
+                                  Max quality
+                                </TableHead>
+                                <TableCell className="px-1 py-1 text-right text-xs">
+                                  {item.maxQuality}
+                                </TableCell>
                               </TableRow>
                             </TableBody>
                           </Table>
                         </CardContent>
                       )}
                       {manageExclusions && (
-                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pb-4 pt-0">
+                        <CardFooter className="mt-auto flex flex-wrap justify-end gap-2 px-4 pt-0 pb-4">
                           <Button
                             aria-pressed={isExcluded}
                             onClick={() => togglePrefabExclusion(item.prefab)}
