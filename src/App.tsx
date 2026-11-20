@@ -752,7 +752,7 @@ export function App() {
           {catalogState.status === "ready" && (
             <section
               aria-label="Item search results"
-              className="mt-5 min-w-0 2xl:mt-0"
+              className="mt-5 min-w-0 2xl:sticky 2xl:top-4 2xl:mt-0 2xl:max-h-[calc(100vh-2rem)] 2xl:overflow-y-auto 2xl:overscroll-contain"
               ref={itemListRef}
             >
               {importError && (
