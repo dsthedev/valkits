@@ -550,18 +550,36 @@ export function App() {
   }
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <header className="border-b border-border/80">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <div
+      className="min-h-svh bg-background text-white"
+      style={{
+        backgroundImage: `linear-gradient(rgb(0 0 0 / 95%), rgb(0 0 0 / 85%)), url("${import.meta.env.BASE_URL}valkitlogo.png")`,
+        backgroundAttachment: "fixed",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+      }}
+    >
+      <header
+        className="relative isolate border-b border-white/15 text-white"
+        style={{
+          backgroundImage: `url("${import.meta.env.BASE_URL}valkitlogo.png")`,
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+      >
+        <div aria-hidden="true" className="absolute inset-0 bg-black/75" />
+        <div className="relative z-10 mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <a
             className="flex items-center gap-3"
             href={import.meta.env.BASE_URL}
             aria-label="Valkits home"
           >
-            <span className="grid size-9 place-items-center rounded-lg bg-emerald-800 text-sm font-bold text-white dark:bg-emerald-300 dark:text-emerald-950">
-              V
-            </span>
-            <span className="text-base font-semibold">Valkits</span>
+            <img
+              alt=""
+              className="size-10 rounded-lg object-cover ring-1 ring-white/25"
+              src={`${import.meta.env.BASE_URL}valkitlogo.png`}
+            />
+            <span className="text-base font-semibold text-white">Valkits</span>
           </a>
           {catalogState.status === "ready" && (
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -675,7 +693,7 @@ export function App() {
                   {upgraderItemPreference.warning}
                 </span>
               )}
-              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground sm:text-sm">
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-white/75 sm:text-sm">
                 <span>
                   {(
                     dataAccess?.searchItems("").length ??
@@ -683,7 +701,7 @@ export function App() {
                   ).toLocaleString()}{" "}
                   items
                 </span>
-                <span aria-hidden="true" className="h-3 w-px bg-border" />
+                <span aria-hidden="true" className="h-3 w-px bg-white/35" />
                 <span>
                   {catalogState.catalog.recipes.length.toLocaleString()} recipes
                 </span>
