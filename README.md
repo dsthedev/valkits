@@ -4,6 +4,8 @@ Valkits is a local-first Valheim kit planner. Create a kit for a biome or
 progression milestone, add items and target quantities or quality levels, and
 calculate the resources and crafting-station requirements needed for the kit.
 
+![Valkits kit planner showing item goals, stations, and resource costs](valkitsscreenshot.png)
+
 The app runs entirely in your browser. Kits, preferences, and the latest
 calculation for each kit are stored in that browser's local storage; they are
 not uploaded or synchronized between browsers or devices. Use the kit

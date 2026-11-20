@@ -14,6 +14,7 @@ import {
   RiLoader4Line,
   RiMore2Line,
   RiSearchLine,
+  RiArrowUpLine,
 } from "@remixicon/react"
 import type { ExampleKitOption } from "@/data/kits"
 import { ImmediateRecipeCosts } from "@/components/immediate-recipe-costs"
@@ -150,6 +151,8 @@ export function App() {
   const [importMessage, setImportMessage] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
+  const itemListRef = useRef<HTMLElement>(null)
+  const [showScrollToTop, setShowScrollToTop] = useState(false)
   const deferredQuery = useDeferredValue(query)
   const dataAccess = useMemo(
     () =>
@@ -228,6 +231,37 @@ export function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    function updateScrollToTopVisibility() {
+      const itemListTop = itemListRef.current?.getBoundingClientRect().top
+      setShowScrollToTop(itemListTop !== undefined && itemListTop <= 0)
+    }
+
+    updateScrollToTopVisibility()
+    window.addEventListener("scroll", updateScrollToTopVisibility, {
+      passive: true,
+    })
+    window.addEventListener("resize", updateScrollToTopVisibility)
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollToTopVisibility)
+      window.removeEventListener("resize", updateScrollToTopVisibility)
+    }
+  }, [catalogState.status])
+
+  function getScrollBehavior(): ScrollBehavior {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth"
+  }
+
+  function scrollToItemList() {
+    itemListRef.current?.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: "start",
+    })
+  }
 
   const pageCount = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE))
   const currentPage = Math.min(resultPage, pageCount - 1)
@@ -542,6 +576,7 @@ export function App() {
           onCreateKit={addNewKit}
           onDeleteKit={deleteKit}
           onRemoveGoal={removeGoalFromActiveKit}
+          onScrollToItemList={scrollToItemList}
           onSelectKit={selectActiveKit}
           onUpdateGoal={updateGoalInActiveKit}
           onUpdateKit={updateExistingKit}
@@ -583,7 +618,11 @@ export function App() {
         )}
 
         {catalogState.status === "ready" && (
-          <section aria-label="Item search results" className="mt-5">
+          <section
+            aria-label="Item search results"
+            className="mt-5"
+            ref={itemListRef}
+          >
             <div className="mb-3 flex items-center justify-between gap-3">
               <p aria-live="polite" className="text-sm text-muted-foreground">
                 {results.length.toLocaleString()}{" "}
@@ -890,6 +929,20 @@ export function App() {
               </p>
             )}
           </section>
+        )}
+        {showScrollToTop && (
+          <Button
+            aria-label="Scroll to top"
+            className="fixed bottom-4 left-4 z-50 size-12 rounded-full border border-orange-700 bg-orange-600 text-white shadow-lg hover:bg-orange-700 dark:border-orange-300 dark:bg-orange-400 dark:text-orange-950 dark:hover:bg-orange-300 sm:bottom-6 sm:left-6"
+            onClick={() =>
+              window.scrollTo({ top: 0, behavior: getScrollBehavior() })
+            }
+            size="icon-lg"
+            title="Scroll to top"
+            type="button"
+          >
+            <RiArrowUpLine aria-hidden="true" />
+          </Button>
         )}
       </main>
     </div>

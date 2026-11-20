@@ -58,6 +58,7 @@ interface KitWorkspaceProps {
         Pick<StationResourceDataAccess, "getStationUpgrades">)
     | null
   getItem(prefab: string): GameItem | undefined
+  onScrollToItemList(): void
   onCreateKit(kit: Kit): void
   onSelectKit(kitId: string): void
   onUpdateKit(kit: Kit): void
@@ -162,6 +163,7 @@ export function KitWorkspace({
   hideUpgraderItems,
   calculationData,
   getItem,
+  onScrollToItemList,
   onCreateKit,
   onSelectKit,
   onUpdateKit,
@@ -564,8 +566,8 @@ export function KitWorkspace({
       )}
 
       {activeKit && (
-        <div className="mt-5 grid gap-6 border-t border-border/70 pt-4 md:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
-          <div className="min-w-0">
+        <div className="mt-5 grid gap-6 border-t border-border/70 pt-4 md:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] md:items-start">
+          <div className="min-w-0 md:sticky md:top-4 md:self-start">
             <div className="mb-2 flex items-center justify-between gap-3">
               <h2 className="font-medium">Item goals</h2>
               <span className="text-sm text-muted-foreground">
@@ -669,8 +671,19 @@ export function KitWorkspace({
                   : "No item goals"}
               </p>
             )}
+            <div className="mt-4 flex justify-center border-t border-border/60 pt-4">
+              <Button
+                className="w-full max-w-sm border-orange-700 bg-orange-600 font-semibold text-white shadow-sm hover:bg-orange-700 dark:border-orange-300 dark:bg-orange-400 dark:text-orange-950 dark:hover:bg-orange-300"
+                onClick={onScrollToItemList}
+                size="lg"
+                type="button"
+              >
+                <RiAddLine aria-hidden="true" />
+                Add items
+              </Button>
+            </div>
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 md:sticky md:top-4 md:self-start">
             {calculationData === null && (
               <p className="mt-4 text-sm text-muted-foreground" role="status">
                 Live costs will appear when item data is ready.
