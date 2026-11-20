@@ -76,7 +76,7 @@ function exampleDataUrl(fileName: string): string {
 
 async function fetchExampleJson(
   fileName: string,
-  fetcher: typeof fetch,
+  fetcher: typeof fetch
 ): Promise<unknown> {
   const response = await fetcher(exampleDataUrl(fileName))
   if (!response.ok) {
@@ -86,10 +86,10 @@ async function fetchExampleJson(
 }
 
 export async function loadExampleKitOptions(
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = fetch
 ): Promise<ExampleKitOption[]> {
   const catalog = exampleKitCatalogSchema.safeParse(
-    await fetchExampleJson("catalog.json", fetcher),
+    await fetchExampleJson("catalog.json", fetcher)
   )
   if (!catalog.success) {
     throw new Error("Example kit catalog is invalid.")
@@ -108,8 +108,7 @@ export interface KitLoadResult {
 }
 
 export type KitSaveResult =
-  | { success: true }
-  | { success: false; message: string }
+  { success: true } | { success: false; message: string }
 
 export interface ItemGoalUpdates {
   quantity?: number | null
@@ -118,7 +117,7 @@ export interface ItemGoalUpdates {
 
 export function createKitCollection(
   kits: readonly Kit[] = [],
-  activeKitId: string | null = null,
+  activeKitId: string | null = null
 ): KitCollection {
   return kitCollectionSchema.parse({ version: 1, activeKitId, kits })
 }
@@ -138,7 +137,7 @@ export function createKitId(): string {
 
 export async function createExampleKit(
   exampleId: string,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = fetch
 ): Promise<Kit> {
   const validId = exampleKitOptionSchema.shape.id.safeParse(exampleId)
   if (!validId.success) {
@@ -161,8 +160,7 @@ export async function createExampleKit(
 }
 
 export type KitImportResult =
-  | { success: true; kit: Kit }
-  | { success: false; message: string }
+  { success: true; kit: Kit } | { success: false; message: string }
 
 export function parseKitExport(text: string): KitImportResult {
   if (text.length > MAX_KIT_IMPORT_LENGTH) {
@@ -190,17 +188,17 @@ export function serializeKitExport(kit: Kit): string {
 
 export function addKitToCollection(
   collection: KitCollection,
-  kit: Kit,
+  kit: Kit
 ): KitCollection {
   return createKitCollection(
     [...collection.kits, kit],
-    collection.activeKitId ?? kit.id,
+    collection.activeKitId ?? kit.id
   )
 }
 
 export function addExampleKitsToCollection(
   collection: KitCollection,
-  exampleKits: readonly Kit[],
+  exampleKits: readonly Kit[]
 ): KitCollection {
   const contentKey = (kit: Kit) =>
     `${kit.name}\0${kit.biome}\0${JSON.stringify(kit.itemGoals)}`
@@ -214,38 +212,32 @@ export function addExampleKitsToCollection(
 
   return createKitCollection(
     [...collection.kits, ...additions],
-    collection.activeKitId ?? additions[0]?.id ?? null,
+    collection.activeKitId ?? additions[0]?.id ?? null
   )
 }
 
 export function selectKit(
   collection: KitCollection,
-  kitId: string | null,
+  kitId: string | null
 ): KitCollection {
   return createKitCollection(collection.kits, kitId)
 }
 
 export function updateKitInCollection(
   collection: KitCollection,
-  updatedKit: Kit,
+  updatedKit: Kit
 ): KitCollection {
   if (!collection.kits.some((kit) => kit.id === updatedKit.id)) {
     return collection
   }
 
   return createKitCollection(
-    collection.kits.map((kit) =>
-      kit.id === updatedKit.id ? updatedKit : kit,
-    ),
-    collection.activeKitId,
+    collection.kits.map((kit) => (kit.id === updatedKit.id ? updatedKit : kit)),
+    collection.activeKitId
   )
 }
 
-export function updateKitDetails(
-  kit: Kit,
-  name: string,
-  biome: Biome,
-): Kit {
+export function updateKitDetails(kit: Kit, name: string, biome: Biome): Kit {
   return kitSchema.parse({ ...kit, name, biome })
 }
 
@@ -267,11 +259,11 @@ export function removeItemGoal(kit: Kit, prefab: string): Kit {
 
 export function reorderItemGoals(
   kit: Kit,
-  orderedPrefabs: readonly string[],
+  orderedPrefabs: readonly string[]
 ): Kit {
   const orderedSet = new Set(orderedPrefabs)
   const goalsByPrefab = new Map(
-    kit.itemGoals.map((goal) => [goal.prefab, goal] as const),
+    kit.itemGoals.map((goal) => [goal.prefab, goal] as const)
   )
   if (
     orderedSet.size !== orderedPrefabs.length ||
@@ -292,7 +284,7 @@ export function reorderItemGoals(
 export function updateItemGoal(
   kit: Kit,
   prefab: string,
-  updates: ItemGoalUpdates,
+  updates: ItemGoalUpdates
 ): Kit {
   const goalIndex = kit.itemGoals.findIndex((goal) => goal.prefab === prefab)
   if (goalIndex < 0) return kit
@@ -314,7 +306,7 @@ export function updateItemGoal(
 
 export function removeKitFromCollection(
   collection: KitCollection,
-  kitId: string,
+  kitId: string
 ): KitCollection {
   const kits = collection.kits.filter((kit) => kit.id !== kitId)
   const activeKitId =
@@ -351,14 +343,15 @@ export function loadKitCollection(storage?: KitStorage): KitLoadResult {
   } catch {
     return {
       collection: createKitCollection(),
-      warning: "Saved kits could not be read; using an empty collection for now.",
+      warning:
+        "Saved kits could not be read; using an empty collection for now.",
     }
   }
 }
 
 export function saveKitCollection(
   storage: KitStorage | undefined,
-  collection: KitCollection,
+  collection: KitCollection
 ): KitSaveResult {
   if (!storage) {
     return {

@@ -44,8 +44,8 @@ function readPublicExample(fileName: string): unknown {
   return JSON.parse(
     readFileSync(
       new URL(`../../public/data/examples/${fileName}`, import.meta.url),
-      "utf8",
-    ),
+      "utf8"
+    )
   )
 }
 
@@ -63,7 +63,7 @@ describe("kit collection", () => {
     const starterKit = createKit("kit-1", "Starter", "Meadows")
     const collection = selectKit(
       addKitToCollection(createKitCollection(), starterKit),
-      starterKit.id,
+      starterKit.id
     )
 
     expect(collection.activeKitId).toBe("kit-1")
@@ -129,10 +129,8 @@ describe("kit collection", () => {
     expect(first.id).not.toBe(second.id)
     expect(ashlandsKit.name).toBe("Ashlands Max Set")
     await expect(
-      createExampleKit("not-an-example", async () => jsonResponse({}, false)),
-    ).rejects.toThrow(
-      'Unknown example kit "not-an-example".',
-    )
+      createExampleKit("not-an-example", async () => jsonResponse({}, false))
+    ).rejects.toThrow('Unknown example kit "not-an-example".')
   })
 
   it("recovers safely from malformed saved collections", () => {
@@ -156,24 +154,24 @@ describe("kit collection", () => {
   it("reorders visible goals while preserving hidden goal slots", () => {
     const kit = createKit("kit-1", "Starter", "Meadows")
     const withGoals = addItemGoal(
-      addItemGoal(
-        addItemGoal(addItemGoal(kit, "Acorn"), "HiddenGoal"),
-        "Wood",
-      ),
-      "Stone",
+      addItemGoal(addItemGoal(addItemGoal(kit, "Acorn"), "HiddenGoal"), "Wood"),
+      "Stone"
     )
 
     expect(
       reorderItemGoals(withGoals, ["Stone", "Wood", "Acorn"]).itemGoals.map(
-        (goal) => goal.prefab,
-      ),
+        (goal) => goal.prefab
+      )
     ).toEqual(["Stone", "HiddenGoal", "Wood", "Acorn"])
     expect(reorderItemGoals(withGoals, ["Unknown"])).toBe(withGoals)
     expect(reorderItemGoals(withGoals, ["Wood", "Wood"])).toBe(withGoals)
   })
 
   it("updates and clears optional quantity and quality goals", () => {
-    const kit = addItemGoal(createKit("kit-1", "Bronze", "Black Forest"), "BowFineWood")
+    const kit = addItemGoal(
+      createKit("kit-1", "Bronze", "Black Forest"),
+      "BowFineWood"
+    )
     const updated = updateItemGoal(kit, "BowFineWood", {
       quantity: 2,
       targetQuality: 3,
@@ -205,7 +203,7 @@ describe("kit collection", () => {
   it("adds only example kits that do not already match existing content", () => {
     const existing = addItemGoal(
       createKit("existing-id", "Meadows Min Set", "Meadows"),
-      "ArmorRagsChest",
+      "ArmorRagsChest"
     )
     const collection = addKitToCollection(createKitCollection(), existing)
     const repeatedExample = {
@@ -230,8 +228,11 @@ describe("kit collection", () => {
     const firstKit = createKit("kit-1", "Starter", "Meadows")
     const secondKit = createKit("kit-2", "Swamp", "Swamp")
     const collection = selectKit(
-      addKitToCollection(addKitToCollection(createKitCollection(), firstKit), secondKit),
-      firstKit.id,
+      addKitToCollection(
+        addKitToCollection(createKitCollection(), firstKit),
+        secondKit
+      ),
+      firstKit.id
     )
 
     const remaining = removeKitFromCollection(collection, firstKit.id)

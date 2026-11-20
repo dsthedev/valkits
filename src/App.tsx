@@ -152,7 +152,9 @@ export function App() {
   const [quickStartExampleId, setQuickStartExampleId] = useState("")
   const [addingExampleKit, setAddingExampleKit] = useState(false)
   const [exampleKitError, setExampleKitError] = useState<string | null>(null)
-  const [exampleKitMessage, setExampleKitMessage] = useState<string | null>(null)
+  const [exampleKitMessage, setExampleKitMessage] = useState<string | null>(
+    null
+  )
   const [resultPage, setResultPage] = useState(0)
   const [favoritesFirst, setFavoritesFirst] = useState(false)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
@@ -385,11 +387,11 @@ export function App() {
     setExampleKitMessage(null)
     try {
       const importedKits = await Promise.all(
-        exampleKitState.options.map((example) => createExampleKit(example.id)),
+        exampleKitState.options.map((example) => createExampleKit(example.id))
       )
       const updatedCollection = addExampleKitsToCollection(
         kitState.collection,
-        importedKits,
+        importedKits
       )
       const addedCount =
         updatedCollection.kits.length - kitState.collection.kits.length
@@ -397,7 +399,7 @@ export function App() {
       setExampleKitMessage(
         addedCount > 0
           ? `Imported ${addedCount} example kit${addedCount === 1 ? "" : "s"}.`
-          : "All example kits are already in your collection.",
+          : "All example kits are already in your collection."
       )
       button.closest("details")?.removeAttribute("open")
     } catch {
