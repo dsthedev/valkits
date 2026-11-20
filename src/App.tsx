@@ -8,6 +8,8 @@ import {
 } from "react"
 import {
   RiAddLine,
+  RiArrowLeftLine,
+  RiArrowRightLine,
   RiCheckLine,
   RiCloseLine,
   RiErrorWarningLine,
@@ -15,6 +17,8 @@ import {
   RiMore2Line,
   RiSearchLine,
   RiArrowUpLine,
+  RiStarFill,
+  RiStarLine,
 } from "@remixicon/react"
 import type { ExampleKitOption } from "@/data/kits"
 import { ImmediateRecipeCosts } from "@/components/immediate-recipe-costs"
@@ -43,6 +47,11 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { KitWorkspace } from "@/components/kit-workspace"
+import {
+  loadFavoritePrefabs,
+  prioritizeFavorites,
+  saveFavoritePrefabs,
+} from "@/data/favorites"
 import {
   addItemGoal,
   addKitToCollection,
@@ -122,6 +131,10 @@ function readBrowserUpgraderItemPreference() {
   return loadUpgraderItemPreference(getBrowserStorage())
 }
 
+function readBrowserFavorites() {
+  return loadFavoritePrefabs(getBrowserStorage())
+}
+
 function humanizePrefab(prefab: string): string {
   return prefab.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ")
 }
@@ -139,11 +152,13 @@ export function App() {
   const [addingExampleKit, setAddingExampleKit] = useState(false)
   const [exampleKitError, setExampleKitError] = useState<string | null>(null)
   const [resultPage, setResultPage] = useState(0)
+  const [favoritesFirst, setFavoritesFirst] = useState(false)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
     readBrowserUpgraderItemPreference
   )
   const hideUpgraderItems = upgraderItemPreference.hideUpgraderItems
   const [exclusionState, setExclusionState] = useState(readBrowserExclusions)
+  const [favoriteState, setFavoriteState] = useState(readBrowserFavorites)
   const [kitState, setKitState] = useState(readBrowserKits)
   const [manageExclusions, setManageExclusions] = useState(false)
   const [pendingImport, setPendingImport] = useState<ExclusionSettings | null>(
@@ -167,17 +182,34 @@ export function App() {
     [dataAccess, deferredQuery]
   )
   const results = useMemo(
-    () =>
-      filterExcludedItems(
+    () => {
+      const filteredItems = filterExcludedItems(
         searchedItems,
         exclusionState.settings,
         manageExclusions
-      ),
-    [searchedItems, exclusionState.settings, manageExclusions]
+      )
+      return favoritesFirst
+        ? prioritizeFavorites(
+            filteredItems,
+            new Set(favoriteState.prefabs),
+          )
+        : filteredItems
+    },
+    [
+      searchedItems,
+      exclusionState.settings,
+      manageExclusions,
+      favoritesFirst,
+      favoriteState.prefabs,
+    ]
   )
   const excludedPrefabs = useMemo(
     () => new Set(exclusionState.settings.excludedPrefabs),
     [exclusionState.settings.excludedPrefabs]
+  )
+  const favoritePrefabs = useMemo(
+    () => new Set(favoriteState.prefabs),
+    [favoriteState.prefabs]
   )
 
   useEffect(() => {
@@ -298,6 +330,25 @@ export function App() {
       warning: saved.success ? null : saved.message,
     })
     return saved.success
+  }
+
+  function toggleFavorite(prefab: string) {
+    const nextFavorites = new Set(favoriteState.prefabs)
+    if (nextFavorites.has(prefab)) nextFavorites.delete(prefab)
+    else nextFavorites.add(prefab)
+
+    const prefabs = [...nextFavorites]
+    const saved = saveFavoritePrefabs(getBrowserStorage(), prefabs)
+    setFavoriteState({
+      prefabs,
+      warning: saved.success ? null : saved.message,
+    })
+    setResultPage(0)
+  }
+
+  function toggleFavoritesFirst() {
+    setFavoritesFirst((enabled) => !enabled)
+    setResultPage(0)
   }
 
   function persistKits(collection: KitCollection) {
@@ -635,92 +686,6 @@ export function App() {
             className="mt-5"
             ref={itemListRef}
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p aria-live="polite" className="text-sm text-muted-foreground">
-                {results.length.toLocaleString()}{" "}
-                {manageExclusions ? "items" : "available items"}
-              </p>
-              <div className="flex items-center gap-2">
-                {exclusionState.warning && (
-                  <span
-                    className="hidden text-xs text-destructive sm:inline"
-                    role="status"
-                  >
-                    {exclusionState.warning}
-                  </span>
-                )}
-                <details className="relative">
-                  <summary
-                    aria-label="Item filters and exclusions"
-                    className="grid size-9 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
-                    title="Item filters and exclusions"
-                  >
-                    <RiMore2Line aria-hidden="true" />
-                  </summary>
-                  <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-                    <p className="px-2 py-1 text-xs text-muted-foreground">
-                      Excluded items ·{" "}
-                      {exclusionState.settings.excludedPrefabs.length}
-                    </p>
-                    <button
-                      aria-pressed={manageExclusions}
-                      className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                      onClick={(event) => {
-                        setExclusionManager(!manageExclusions)
-                        event.currentTarget
-                          .closest("details")
-                          ?.removeAttribute("open")
-                      }}
-                      type="button"
-                    >
-                      Manage exclusions
-                      <span aria-hidden="true">
-                        {manageExclusions ? "On" : "Off"}
-                      </span>
-                    </button>
-                    {manageExclusions && (
-                      <>
-                        <div className="my-1 border-t border-border" />
-                        <button
-                          className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                          onClick={(event) => {
-                            exportExclusions()
-                            event.currentTarget
-                              .closest("details")
-                              ?.removeAttribute("open")
-                          }}
-                          type="button"
-                        >
-                          Export exclusions
-                        </button>
-                        <button
-                          className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                          onClick={(event) => {
-                            event.currentTarget
-                              .closest("details")
-                              ?.removeAttribute("open")
-                            importInputRef.current?.click()
-                          }}
-                          type="button"
-                        >
-                          Import exclusions
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </details>
-                <input
-                  accept="application/json,.json"
-                  aria-label="Choose exclusions file"
-                  className="sr-only"
-                  onChange={handleExclusionFile}
-                  ref={importInputRef}
-                  tabIndex={-1}
-                  type="file"
-                />
-              </div>
-            </div>
-
             {importError && (
               <p className="mt-3 text-sm text-destructive" role="alert">
                 {importError}
@@ -757,86 +722,193 @@ export function App() {
               </div>
             )}
 
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div className="w-full max-w-xl">
-                <label className="sr-only" htmlFor="item-search">
-                  Search items
-                </label>
-                <div className="flex h-11 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15">
-                  <RiSearchLine
-                    aria-hidden="true"
-                    className="size-5 shrink-0 text-muted-foreground"
-                  />
-                  <Input
-                    autoComplete="off"
-                    className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
-                    id="item-search"
-                    onChange={(event) => {
-                      setQuery(event.target.value)
-                      setResultPage(0)
-                    }}
-                    placeholder="Search items"
-                    spellCheck={false}
-                    value={query}
-                  />
-                  {query && (
-                    <Button
-                      aria-label="Clear search"
-                      onClick={() => {
-                        setQuery("")
+            <div className="sticky top-0 z-30 -mx-4 mb-4 border-y border-border/70 bg-background/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
+              <div className="grid gap-2 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <div className="order-1 flex min-w-0 items-center gap-2 sm:order-none sm:flex-1">
+                  <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-lg border border-input bg-card px-3 shadow-sm transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-700/15 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/15 sm:max-w-xl">
+                    <RiSearchLine
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-muted-foreground"
+                    />
+                    <label className="sr-only" htmlFor="item-search">
+                      Search items
+                    </label>
+                    <Input
+                      autoComplete="off"
+                      className="h-full rounded-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 md:text-sm"
+                      id="item-search"
+                      onChange={(event) => {
+                        setQuery(event.target.value)
                         setResultPage(0)
                       }}
-                      size="icon-sm"
-                      title="Clear search"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <RiCloseLine aria-hidden="true" />
-                    </Button>
-                  )}
+                      placeholder="Search items"
+                      spellCheck={false}
+                      value={query}
+                    />
+                    {query && (
+                      <Button
+                        aria-label="Clear search"
+                        onClick={() => {
+                          setQuery("")
+                          setResultPage(0)
+                        }}
+                        size="icon-sm"
+                        title="Clear search"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <RiCloseLine aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
+                  <Button
+                    aria-label="Show favorites first"
+                    aria-pressed={favoritesFirst}
+                    className="h-11 shrink-0 px-3"
+                    onClick={toggleFavoritesFirst}
+                    size="sm"
+                    title="Show favorites first"
+                    type="button"
+                    variant={favoritesFirst ? "secondary" : "outline"}
+                  >
+                    <RiStarFill
+                      aria-hidden="true"
+                      className={
+                        favoritesFirst ? "text-amber-500" : "text-muted-foreground"
+                      }
+                    />
+                    <span className="hidden lg:inline">Favorites first</span>
+                  </Button>
+                </div>
+                <div className="order-2 flex min-w-0 items-center justify-between gap-2 sm:order-none sm:justify-end">
+                  <p
+                    aria-label={`Showing ${firstVisibleResult} to ${lastVisibleResult} of ${results.length} ${manageExclusions ? "items" : "available items"}`}
+                    aria-live="polite"
+                    className="shrink-0 text-xs whitespace-nowrap text-muted-foreground sm:text-sm"
+                  >
+                    {firstVisibleResult.toLocaleString()}–
+                    {lastVisibleResult.toLocaleString()} /{" "}
+                    {results.length.toLocaleString()}
+                  </p>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {pageCount > 1 && (
+                      <nav
+                        aria-label="Item result pages"
+                        className="flex items-center gap-1"
+                      >
+                        <Button
+                          aria-label="Previous page"
+                          className="size-8"
+                          disabled={currentPage === 0}
+                          onClick={() => setResultPage(currentPage - 1)}
+                          size="icon-sm"
+                          title="Previous page"
+                          type="button"
+                          variant="outline"
+                        >
+                          <RiArrowLeftLine aria-hidden="true" />
+                        </Button>
+                        <span className="min-w-10 text-center text-xs tabular-nums text-muted-foreground">
+                          {currentPage + 1} / {pageCount}
+                        </span>
+                        <Button
+                          aria-label="Next page"
+                          className="size-8"
+                          disabled={currentPage === pageCount - 1}
+                          onClick={() => setResultPage(currentPage + 1)}
+                          size="icon-sm"
+                          title="Next page"
+                          type="button"
+                          variant="outline"
+                        >
+                          <RiArrowRightLine aria-hidden="true" />
+                        </Button>
+                      </nav>
+                    )}
+                    <details className="relative">
+                      <summary
+                        aria-label="Item filters and exclusions"
+                        className="grid size-8 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted [&::-webkit-details-marker]:hidden"
+                        title="Item filters and exclusions"
+                      >
+                        <RiMore2Line aria-hidden="true" />
+                      </summary>
+                      <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
+                        <p className="px-2 py-1 text-xs text-muted-foreground">
+                          Excluded items ·{" "}
+                          {exclusionState.settings.excludedPrefabs.length}
+                        </p>
+                        <button
+                          aria-pressed={manageExclusions}
+                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                          onClick={(event) => {
+                            setExclusionManager(!manageExclusions)
+                            event.currentTarget
+                              .closest("details")
+                              ?.removeAttribute("open")
+                          }}
+                          type="button"
+                        >
+                          Manage exclusions
+                          <span aria-hidden="true">
+                            {manageExclusions ? "On" : "Off"}
+                          </span>
+                        </button>
+                        {manageExclusions && (
+                          <>
+                            <div className="my-1 border-t border-border" />
+                            <button
+                              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                              onClick={(event) => {
+                                exportExclusions()
+                                event.currentTarget
+                                  .closest("details")
+                                  ?.removeAttribute("open")
+                              }}
+                              type="button"
+                            >
+                              Export exclusions
+                            </button>
+                            <button
+                              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                              onClick={(event) => {
+                                event.currentTarget
+                                  .closest("details")
+                                  ?.removeAttribute("open")
+                                importInputRef.current?.click()
+                              }}
+                              type="button"
+                            >
+                              Import exclusions
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </details>
+                    <input
+                      accept="application/json,.json"
+                      aria-label="Choose exclusions file"
+                      className="sr-only"
+                      onChange={handleExclusionFile}
+                      ref={importInputRef}
+                      tabIndex={-1}
+                      type="file"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <p aria-live="polite" className="text-sm text-muted-foreground">
-                  Showing {firstVisibleResult.toLocaleString()}–
-                  {lastVisibleResult.toLocaleString()} of{" "}
-                  {results.length.toLocaleString()}
-                </p>
-                {pageCount > 1 && (
-                  <nav
-                    aria-label="Item result pages"
-                    className="flex items-center gap-2"
-                  >
-                    <Button
-                      disabled={currentPage === 0}
-                      onClick={() => setResultPage(currentPage - 1)}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-xs whitespace-nowrap text-muted-foreground">
-                      Page {currentPage + 1} of {pageCount}
-                    </span>
-                    <Button
-                      disabled={currentPage === pageCount - 1}
-                      onClick={() => setResultPage(currentPage + 1)}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      Next
-                    </Button>
-                  </nav>
-                )}
-              </div>
             </div>
+            {(exclusionState.warning || favoriteState.warning) && (
+              <p className="mb-3 text-xs text-destructive" role="status">
+                {exclusionState.warning ?? favoriteState.warning}
+              </p>
+            )}
 
             {visibleResults.length > 0 ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleResults.map((item) => {
                   const isExcluded = excludedPrefabs.has(item.prefab)
+                  const isFavorite = favoritePrefabs.has(item.prefab)
                   const isInActiveKit = activeKit?.itemGoals.some(
                     (goal) => goal.prefab === item.prefab
                   )
@@ -870,20 +942,47 @@ export function App() {
                               )}
                             </div>
                           </div>
-                          {activeKit && (
+                          <div className="flex shrink-0 items-center gap-1">
                             <Button
-                              aria-pressed={isInActiveKit}
-                              className="h-10 shrink-0 px-4"
-                              disabled={isInActiveKit}
-                              onClick={() => addGoalToActiveKit(item.prefab)}
-                              variant={isInActiveKit ? "secondary" : "default"}
+                              aria-label={`${isFavorite ? "Remove" : "Add"} ${humanizePrefab(item.prefab)} ${isFavorite ? "from" : "to"} favorites`}
+                              aria-pressed={isFavorite}
+                              className={
+                                isFavorite
+                                  ? "size-9 text-amber-600 hover:text-amber-700 dark:text-amber-300"
+                                  : "size-9 text-muted-foreground"
+                              }
+                              onClick={() => toggleFavorite(item.prefab)}
+                              size="icon-sm"
+                              title={
+                                isFavorite
+                                  ? "Remove from favorites"
+                                  : "Add to favorites"
+                              }
+                              type="button"
+                              variant="ghost"
                             >
-                              {!isInActiveKit && (
-                                <RiAddLine aria-hidden="true" />
+                              {isFavorite ? (
+                                <RiStarFill aria-hidden="true" />
+                              ) : (
+                                <RiStarLine aria-hidden="true" />
                               )}
-                              {isInActiveKit ? "In kit" : "Add to kit"}
                             </Button>
-                          )}
+                            {activeKit && (
+                              <Button
+                                aria-pressed={isInActiveKit}
+                                className="h-10 shrink-0 px-3 sm:px-4"
+                                disabled={isInActiveKit}
+                                onClick={() => addGoalToActiveKit(item.prefab)}
+                                size="sm"
+                                variant={isInActiveKit ? "secondary" : "default"}
+                              >
+                                {!isInActiveKit && (
+                                  <RiAddLine aria-hidden="true" />
+                                )}
+                                {isInActiveKit ? "In kit" : "Add to kit"}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                       {((item.maxQuality !== undefined && item.maxQuality > 1) ||
