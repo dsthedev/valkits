@@ -553,7 +553,7 @@ export function App() {
     <div
       className="min-h-svh bg-background text-white"
       style={{
-        backgroundImage: `linear-gradient(rgb(0 0 0 / 95%), rgb(0 0 0 / 85%)), url("${import.meta.env.BASE_URL}valkitlogo.png")`,
+        backgroundImage: `linear-gradient(rgb(0 0 0 / 95%), rgb(0 0 0 / 90%)), url("${import.meta.env.BASE_URL}valkitlogo.png")`,
         backgroundAttachment: "fixed",
         backgroundPosition: "center",
         backgroundSize: "cover",
@@ -561,11 +561,11 @@ export function App() {
     >
       <header
         className="relative isolate border-b border-white/15 text-white"
-        style={{
-          backgroundImage: `url("${import.meta.env.BASE_URL}valkitlogo.png")`,
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-        }}
+        // style={{
+        //   backgroundImage: `url("${import.meta.env.BASE_URL}valkitlogo.png")`,
+        //   backgroundPosition: "center",
+        //   backgroundSize: "cover",
+        // }}
       >
         <div aria-hidden="true" className="absolute inset-0 bg-black/75" />
         <div className="relative z-10 mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
