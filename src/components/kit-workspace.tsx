@@ -355,7 +355,7 @@ export function KitWorkspace({
         activeKit.itemGoals.flatMap((goal) => {
           const item = getItem(goal.prefab)
           return item ? [item] : []
-        }),
+        })
       )
     : null
 
@@ -817,20 +817,23 @@ export function KitWorkspace({
                                         )}
                                         {item?.foodStats?.durationSeconds !==
                                           undefined &&
-                                          item.foodStats.durationSeconds > 0 && (
+                                          item.foodStats.durationSeconds >
+                                            0 && (
                                             <span
-                                              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-100/70 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-amber-950 dark:bg-amber-300/10 dark:text-amber-100"
+                                              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-100/70 px-1.5 py-0.5 text-[10px] font-medium text-amber-950 tabular-nums dark:bg-amber-300/10 dark:text-amber-100"
                                               title={
-                                                item.foodStats.durationSeconds ===
+                                                item.foodStats
+                                                  .durationSeconds ===
                                                 longestFoodDurationSeconds
                                                   ? "Longest food duration in this kit"
                                                   : "Food duration"
                                               }
                                             >
                                               {formatFoodDuration(
-                                                item.foodStats.durationSeconds,
+                                                item.foodStats.durationSeconds
                                               )}
-                                              {item.foodStats.durationSeconds ===
+                                              {item.foodStats
+                                                .durationSeconds ===
                                                 longestFoodDurationSeconds && (
                                                 <RiStarFill
                                                   aria-hidden="true"
@@ -936,12 +939,15 @@ export function KitWorkspace({
                 Live costs will appear when item data is ready.
               </p>
             )}
-            {liveCalculation &&
+            {calculationData &&
+              liveCalculation &&
               liveStationRequirements &&
               liveStationResources && (
                 <CalculationResults
                   calculation={liveCalculation}
                   getItem={getItem}
+                  getStationPiece={calculationData.getStationPiece}
+                  getStationUpgrades={calculationData.getStationUpgrades}
                   hideUpgraderItems={hideUpgraderItems}
                   stationRequirements={liveStationRequirements}
                   stationResourceCalculation={liveStationResources}
