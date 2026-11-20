@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { readFileSync } from "node:fs"
 import {
   KIT_STORAGE_KEY,
   MAX_KIT_IMPORT_LENGTH,
@@ -8,7 +9,7 @@ import {
   createKitId,
   createExampleKit,
   createKitCollection,
-  exampleKitOptions,
+  loadExampleKitOptions,
   loadKitCollection,
   parseKitExport,
   removeItemGoal,
@@ -35,6 +36,23 @@ class MemoryStorage implements KitStorage {
   setItem(key: string, value: string): void {
     this.values.set(key, value)
   }
+}
+
+function readPublicExample(fileName: string): unknown {
+  return JSON.parse(
+    readFileSync(
+      new URL(`../../public/data/examples/${fileName}`, import.meta.url),
+      "utf8",
+    ),
+  )
+}
+
+function jsonResponse(data: unknown, ok = true): Response {
+  return {
+    ok,
+    status: ok ? 200 : 404,
+    json: async () => data,
+  } as Response
 }
 
 describe("kit collection", () => {
@@ -73,10 +91,28 @@ describe("kit collection", () => {
     })
   })
 
-  it("provides fresh kits from the checked-in example exports", () => {
-    const first = createExampleKit("meadows-starter")
-    const second = createExampleKit("meadows-starter")
-    const trollKit = createExampleKit("troll-stuff")
+  it("loads example options from the public catalog", async () => {
+    const fetcher: typeof fetch = async () =>
+      jsonResponse(readPublicExample("catalog.json"))
+
+    await expect(loadExampleKitOptions(fetcher)).resolves.toEqual([
+      { id: "meadows-starter", name: "Meadows Starter", biome: "Meadows" },
+      { id: "troll-stuff", name: "troll stuff", biome: "Meadows" },
+    ])
+  })
+
+  it("fetches example exports and creates fresh kits", async () => {
+    const fetcher: typeof fetch = async (input) =>
+      jsonResponse(
+        readPublicExample(
+          String(input).endsWith("troll-stuff.json")
+            ? "troll-stuff.json"
+            : "meadows-starter.json",
+        ),
+      )
+    const first = await createExampleKit("meadows-starter", fetcher)
+    const second = await createExampleKit("meadows-starter", fetcher)
+    const trollKit = await createExampleKit("troll-stuff", fetcher)
 
     expect(first).toMatchObject({
       name: "Meadows Starter",
@@ -85,8 +121,9 @@ describe("kit collection", () => {
     expect(first.itemGoals.length).toBeGreaterThan(0)
     expect(first.id).not.toBe(second.id)
     expect(trollKit.name).toBe("troll stuff")
-    expect(exampleKitOptions).toHaveLength(2)
-    expect(() => createExampleKit("not-an-example")).toThrow(
+    await expect(
+      createExampleKit("not-an-example", async () => jsonResponse({}, false)),
+    ).rejects.toThrow(
       'Unknown example kit "not-an-example".',
     )
   })

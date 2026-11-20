@@ -1,6 +1,4 @@
 import { z } from "zod"
-import meadowsStarterExport from "./examples/meadows-starter.json"
-import trollStuffExport from "./examples/troll-stuff.json"
 import {
   biomeSchema,
   kitSchema,
@@ -57,17 +55,47 @@ export interface ExampleKitOption {
   biome: Biome
 }
 
-const exampleKitTemplates = [
-  { id: "meadows-starter", data: meadowsStarterExport },
-  { id: "troll-stuff", data: trollStuffExport },
-].map(({ id, data }) => ({ id, kit: kitExportSchema.parse(data).kit }))
+const exampleKitOptionSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    name: z.string().trim().min(1),
+    biome: biomeSchema,
+  })
+  .strict()
 
-export const exampleKitOptions: readonly ExampleKitOption[] =
-  exampleKitTemplates.map(({ id, kit }) => ({
-    id,
-    name: kit.name,
-    biome: kit.biome,
-  }))
+const exampleKitCatalogSchema = z
+  .object({
+    version: z.literal(1),
+    examples: z.array(exampleKitOptionSchema),
+  })
+  .strict()
+
+function exampleDataUrl(fileName: string): string {
+  return `${import.meta.env.BASE_URL}data/examples/${fileName}`
+}
+
+async function fetchExampleJson(
+  fileName: string,
+  fetcher: typeof fetch,
+): Promise<unknown> {
+  const response = await fetcher(exampleDataUrl(fileName))
+  if (!response.ok) {
+    throw new Error(`Unable to load example kit data (${response.status}).`)
+  }
+  return response.json()
+}
+
+export async function loadExampleKitOptions(
+  fetcher: typeof fetch = fetch,
+): Promise<ExampleKitOption[]> {
+  const catalog = exampleKitCatalogSchema.safeParse(
+    await fetchExampleJson("catalog.json", fetcher),
+  )
+  if (!catalog.success) {
+    throw new Error("Example kit catalog is invalid.")
+  }
+  return catalog.data.examples
+}
 
 export interface KitStorage {
   getItem(key: string): string | null
@@ -108,13 +136,28 @@ export function createKitId(): string {
   return `kit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
-export function createExampleKit(exampleId: string): Kit {
-  const example = exampleKitTemplates.find(({ id }) => id === exampleId)
-  if (!example) {
+export async function createExampleKit(
+  exampleId: string,
+  fetcher: typeof fetch = fetch,
+): Promise<Kit> {
+  const validId = exampleKitOptionSchema.shape.id.safeParse(exampleId)
+  if (!validId.success) {
     throw new Error(`Unknown example kit "${exampleId}".`)
   }
 
-  return kitSchema.parse({ ...example.kit, id: createKitId() })
+  let exportedKit: unknown
+  try {
+    exportedKit = await fetchExampleJson(`${validId.data}.json`, fetcher)
+  } catch {
+    throw new Error(`Unknown example kit "${exampleId}".`)
+  }
+
+  const parsed = kitExportSchema.safeParse(exportedKit)
+  if (!parsed.success) {
+    throw new Error("Example kit data is invalid.")
+  }
+
+  return kitSchema.parse({ ...parsed.data.kit, id: createKitId() })
 }
 
 export type KitImportResult =

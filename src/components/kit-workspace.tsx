@@ -665,6 +665,7 @@ export function KitWorkspace({
               liveStationResources && (
                 <CalculationResults
                   calculation={liveCalculation}
+                  getItem={getItem}
                   hideUpgraderItems={hideUpgraderItems}
                   stationRequirements={liveStationRequirements}
                   stationResourceCalculation={liveStationResources}

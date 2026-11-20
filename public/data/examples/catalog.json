@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "examples": [
+    { "id": "meadows-starter", "name": "Meadows Starter", "biome": "Meadows" },
+    { "id": "troll-stuff", "name": "troll stuff", "biome": "Meadows" }
+  ]
+}

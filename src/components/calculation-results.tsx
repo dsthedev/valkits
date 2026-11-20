@@ -1,4 +1,9 @@
 import { useState } from "react"
+import {
+  RiArrowDownLine,
+  RiArrowUpDownLine,
+  RiArrowUpLine,
+} from "@remixicon/react"
 import { ItemIcon } from "@/components/item-icon"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +17,12 @@ import {
 import type { UnresolvedReason } from "@/domain/resource-calculation"
 import type { KitResourceCalculation } from "@/domain/resource-calculation"
 import {
+  getResourceCategory,
+  resourceCategories,
+  type ResourceCategory,
+} from "@/domain/resource-category"
+import type { GameItem } from "@/domain/schema"
+import {
   groupStationRequirements,
   type KitStationRequirementCalculation,
   type StationRequirementReason,
@@ -24,11 +35,19 @@ interface CalculationResultsProps {
   stationRequirements: KitStationRequirementCalculation
   stationResourceCalculation: StationResourceCalculation
   hideUpgraderItems: boolean
+  getItem(prefab: string): GameItem | undefined
 }
 
 interface CostRow {
   prefab: string
   amount: number
+}
+
+type SortColumn = "resource" | "amount"
+type SortDirection = "ascending" | "descending"
+interface CostSort {
+  column: SortColumn
+  direction: SortDirection
 }
 
 const resourceReasonLabels: Record<UnresolvedReason, string> = {
@@ -101,13 +120,117 @@ function combineCosts(
     .sort((left, right) => left.prefab.localeCompare(right.prefab))
 }
 
+function groupCostsByCategory(
+  costs: readonly CostRow[],
+  getItem: (prefab: string) => GameItem | undefined,
+): Array<{ category: ResourceCategory; costs: CostRow[] }> {
+  const grouped = new Map<ResourceCategory, CostRow[]>()
+  for (const cost of costs) {
+    const category = getResourceCategory(getItem(cost.prefab)?.itemType)
+    const categoryCosts = grouped.get(category) ?? []
+    categoryCosts.push(cost)
+    grouped.set(category, categoryCosts)
+  }
+
+  return resourceCategories.flatMap((category) => {
+    const categoryCosts = grouped.get(category)
+    return categoryCosts ? [{ category, costs: categoryCosts }] : []
+  })
+}
+
+function sortCosts(costs: readonly CostRow[], sort: CostSort | null): CostRow[] {
+  if (!sort) return [...costs]
+
+  const direction = sort.direction === "ascending" ? 1 : -1
+  return [...costs].sort((left, right) => {
+    const comparison =
+      sort.column === "resource"
+        ? humanizePrefab(left.prefab).localeCompare(humanizePrefab(right.prefab))
+        : left.amount - right.amount
+    return comparison * direction || left.prefab.localeCompare(right.prefab)
+  })
+}
+
 function CostTable({
   title,
   costs,
+  groupByType,
+  getItem,
 }: {
   title: string
   costs: readonly CostRow[]
+  groupByType: boolean
+  getItem(prefab: string): GameItem | undefined
 }) {
+  const [sort, setSort] = useState<CostSort | null>(null)
+  const sortedCosts = sortCosts(costs, sort)
+  const groupedCosts = groupByType
+    ? groupCostsByCategory(sortedCosts, getItem)
+    : null
+
+  function cycleSort(column: SortColumn) {
+    setSort((current) => {
+      if (current?.column !== column) {
+        return { column, direction: "ascending" }
+      }
+      if (current.direction === "ascending") {
+        return { column, direction: "descending" }
+      }
+      return null
+    })
+  }
+
+  function renderSortHeader(column: SortColumn, label: string) {
+    const direction = sort?.column === column ? sort.direction : null
+    const nextDirection =
+      direction === "ascending"
+        ? "descending"
+        : direction === "descending"
+          ? "unsorted"
+          : "ascending"
+    const Icon =
+      direction === "ascending"
+        ? RiArrowUpLine
+        : direction === "descending"
+          ? RiArrowDownLine
+          : RiArrowUpDownLine
+
+    return (
+      <TableHead
+        aria-sort={direction ?? "none"}
+        className={column === "resource" ? "pl-0" : "pr-0 text-right"}
+        key={column}
+      >
+        <Button
+          aria-label={`Sort by ${label}; currently ${direction ?? "unsorted"}. Click to sort ${nextDirection}.`}
+          className="h-8 px-2"
+          onClick={() => cycleSort(column)}
+          size="sm"
+          variant="ghost"
+        >
+          {label}
+          <Icon aria-hidden="true" className="size-4" />
+        </Button>
+      </TableHead>
+    )
+  }
+
+  function renderCostRow(cost: CostRow) {
+    return (
+      <TableRow key={cost.prefab}>
+        <TableCell className="min-w-0 pl-0">
+          <span className="flex min-w-0 items-center gap-2">
+            <ItemIcon prefab={cost.prefab} size="sm" />
+            <span className="break-words">{humanizePrefab(cost.prefab)}</span>
+          </span>
+        </TableCell>
+        <TableCell className="pr-0 text-right font-medium tabular-nums">
+          {cost.amount.toLocaleString()}
+        </TableCell>
+      </TableRow>
+    )
+  }
+
   return (
     <section className="mt-5 first:mt-0">
       <h3 className="font-medium">{title}</h3>
@@ -115,26 +238,24 @@ function CostTable({
         <Table className="mt-2">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-0">Resource</TableHead>
-              <TableHead className="pr-0 text-right">Amount</TableHead>
+              {renderSortHeader("resource", "Resource")}
+              {renderSortHeader("amount", "Amount")}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {costs.map((cost) => (
-              <TableRow key={cost.prefab}>
-                <TableCell className="min-w-0 pl-0">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <ItemIcon prefab={cost.prefab} size="sm" />
-                    <span className="break-words">
-                      {humanizePrefab(cost.prefab)}
-                    </span>
-                  </span>
-                </TableCell>
-                <TableCell className="pr-0 text-right font-medium tabular-nums">
-                  {cost.amount.toLocaleString()}
-                </TableCell>
-              </TableRow>
-            ))}
+            {groupedCosts
+              ? groupedCosts.flatMap(({ category, costs: categoryCosts }) => [
+                  <TableRow key={`category:${category}`}>
+                    <TableCell
+                      className="bg-muted/40 py-2 text-xs font-semibold text-muted-foreground"
+                      colSpan={2}
+                    >
+                      {category}
+                    </TableCell>
+                  </TableRow>,
+                  ...categoryCosts.map(renderCostRow),
+                ])
+              : sortedCosts.map(renderCostRow)}
           </TableBody>
         </Table>
       ) : (
@@ -151,9 +272,11 @@ export function CalculationResults({
   stationRequirements,
   stationResourceCalculation,
   hideUpgraderItems,
+  getItem,
 }: CalculationResultsProps) {
   const [activeTab, setActiveTab] = useState<"quick" | "advanced">("quick")
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
+  const [groupByType, setGroupByType] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total"
   )
@@ -278,26 +401,48 @@ export function CalculationResults({
             <h3 className="font-medium">
               {showCombinedCosts ? "Combined costs" : "Separate costs"}
             </h3>
-            <Button
-              aria-pressed={showCombinedCosts}
-              onClick={() =>
-                setShowCombinedCosts((showCombined) => !showCombined)
-              }
-              size="sm"
-              variant="outline"
-            >
-              {showCombinedCosts ? "Show separately" : "Show combined"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                aria-pressed={groupByType}
+                onClick={() => setGroupByType((grouped) => !grouped)}
+                size="sm"
+                variant="outline"
+              >
+                {groupByType ? "Show flat list" : "Group by type"}
+              </Button>
+              <Button
+                aria-pressed={showCombinedCosts}
+                onClick={() =>
+                  setShowCombinedCosts((showCombined) => !showCombined)
+                }
+                size="sm"
+                variant="outline"
+              >
+                {showCombinedCosts ? "Show separately" : "Show combined"}
+              </Button>
+            </div>
           </div>
           {showCombinedCosts ? (
             <CostTable
               title="Kit and station resources"
               costs={combinedCosts}
+              getItem={getItem}
+              groupByType={groupByType}
             />
           ) : (
             <>
-              <CostTable title="Kit resources" costs={kitResourceCosts} />
-              <CostTable title="Station resources" costs={stationResources} />
+              <CostTable
+                title="Kit resources"
+                costs={kitResourceCosts}
+                getItem={getItem}
+                groupByType={groupByType}
+              />
+              <CostTable
+                title="Station resources"
+                costs={stationResources}
+                getItem={getItem}
+                groupByType={groupByType}
+              />
             </>
           )}
           <p className="mt-3 text-sm text-muted-foreground" role="status">

@@ -15,6 +15,7 @@ import {
   RiMore2Line,
   RiSearchLine,
 } from "@remixicon/react"
+import type { ExampleKitOption } from "@/data/kits"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -44,7 +45,7 @@ import {
   addItemGoal,
   addKitToCollection,
   createExampleKit,
-  exampleKitOptions,
+  loadExampleKitOptions,
   loadKitCollection,
   removeItemGoal,
   removeKitFromCollection,
@@ -84,6 +85,11 @@ type CatalogState =
       catalog: WackyDbCatalog
     }
 
+type ExampleKitState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; options: ExampleKitOption[] }
+
 const ITEMS_PER_PAGE = 75
 
 function readBrowserExclusions() {
@@ -120,11 +126,14 @@ export function App() {
   const [catalogState, setCatalogState] = useState<CatalogState>({
     status: "loading",
   })
+  const [exampleKitState, setExampleKitState] = useState<ExampleKitState>({
+    status: "loading",
+  })
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [query, setQuery] = useState("")
-  const [quickStartExampleId, setQuickStartExampleId] = useState(
-    exampleKitOptions[0]?.id ?? ""
-  )
+  const [quickStartExampleId, setQuickStartExampleId] = useState("")
+  const [addingExampleKit, setAddingExampleKit] = useState(false)
+  const [exampleKitError, setExampleKitError] = useState<string | null>(null)
   const [resultPage, setResultPage] = useState(0)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
     readBrowserUpgraderItemPreference
@@ -194,6 +203,30 @@ export function App() {
     }
   }, [loadAttempt])
 
+  useEffect(() => {
+    let active = true
+
+    loadExampleKitOptions()
+      .then((options) => {
+        if (active) {
+          setExampleKitState({ status: "ready", options })
+          setQuickStartExampleId((current) => current || options[0]?.id || "")
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setExampleKitState({
+            status: "error",
+            message: "Example kits could not be loaded.",
+          })
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
   const pageCount = Math.max(1, Math.ceil(results.length / ITEMS_PER_PAGE))
   const currentPage = Math.min(resultPage, pageCount - 1)
   const visibleResults = results.slice(
@@ -241,6 +274,22 @@ export function App() {
   function addNewKit(kit: Kit) {
     const withKit = addKitToCollection(kitState.collection, kit)
     persistKits(selectKit(withKit, kit.id))
+  }
+
+  async function addExampleKit(button: HTMLButtonElement) {
+    if (!quickStartExampleId || addingExampleKit) return
+
+    setAddingExampleKit(true)
+    setExampleKitError(null)
+    try {
+      const kit = await createExampleKit(quickStartExampleId)
+      addNewKit(kit)
+      button.closest("details")?.removeAttribute("open")
+    } catch {
+      setExampleKitError("This example kit could not be loaded.")
+    } finally {
+      setAddingExampleKit(false)
+    }
   }
 
   function selectActiveKit(kitId: string) {
@@ -394,6 +443,7 @@ export function App() {
                     Start from an example kit
                   </label>
                   <Select
+                    disabled={exampleKitState.status !== "ready"}
                     onValueChange={(value) => {
                       if (value) setQuickStartExampleId(value)
                     }}
@@ -406,26 +456,41 @@ export function App() {
                       <SelectValue placeholder="Choose an example kit" />
                     </SelectTrigger>
                     <SelectContent>
-                      {exampleKitOptions.map((example) => (
-                        <SelectItem key={example.id} value={example.id}>
-                          {example.name} · {example.biome}
-                        </SelectItem>
-                      ))}
+                      {exampleKitState.status === "ready" &&
+                        exampleKitState.options.map((example) => (
+                          <SelectItem key={example.id} value={example.id}>
+                            {example.name} · {example.biome}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
+                  {exampleKitState.status === "loading" && (
+                    <p className="mt-2 text-xs text-muted-foreground" role="status">
+                      Loading examples…
+                    </p>
+                  )}
+                  {exampleKitState.status === "error" && (
+                    <p className="mt-2 text-xs text-destructive" role="alert">
+                      {exampleKitState.message}
+                    </p>
+                  )}
+                  {exampleKitError && (
+                    <p className="mt-2 text-xs text-destructive" role="alert">
+                      {exampleKitError}
+                    </p>
+                  )}
                   <Button
                     className="mt-2 w-full"
-                    disabled={!quickStartExampleId}
-                    onClick={(event) => {
-                      addNewKit(createExampleKit(quickStartExampleId))
-                      event.currentTarget
-                        .closest("details")
-                        ?.removeAttribute("open")
-                    }}
+                    disabled={
+                      !quickStartExampleId ||
+                      exampleKitState.status !== "ready" ||
+                      addingExampleKit
+                    }
+                    onClick={(event) => void addExampleKit(event.currentTarget)}
                     size="sm"
                     variant="secondary"
                   >
-                    Add example kit
+                    {addingExampleKit ? "Loading kit…" : "Add example kit"}
                   </Button>
                 </div>
               </details>
