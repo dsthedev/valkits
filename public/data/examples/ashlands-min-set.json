@@ -4,6 +4,7 @@
     "id": "example-ashlands-min-set",
     "name": "Ashlands Min Set",
     "biome": "Ashlands",
+    "description": "The old armor is still serviceable, which is another way to say the Ashlands are already expensive. Bring mead and avoid standing near anything on fire.",
     "itemGoals": [
       { "prefab": "HelmetCarapace" },
       { "prefab": "ArmorCarapaceChest" },

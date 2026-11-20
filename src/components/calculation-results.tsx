@@ -373,6 +373,10 @@ export function CalculationResults({
     )
     .map(({ prefab, amount }) => ({ prefab, amount }))
   const combinedCosts = combineCosts(kitResourceCosts, stationResources)
+  const totalResourceAmount = combinedCosts.reduce(
+    (total, cost) => total + cost.amount,
+    0
+  )
   const unresolvedResources = calculation.unresolved.filter(
     (issue) => !hideUpgraderItems || !isUpgraderItemPrefab(issue.prefab)
   )
@@ -493,9 +497,14 @@ export function CalculationResults({
         </section>
         <div className="mt-4">
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-medium">
-              {showCombinedCosts ? "Combined costs" : "Separate costs"}
-            </h3>
+            <div>
+              <h3 className="font-medium">
+                {showCombinedCosts ? "Combined costs" : "Separate costs"}
+              </h3>
+              <p className="text-[11px] text-muted-foreground">
+                {totalResourceAmount.toLocaleString()} total items!
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 aria-pressed={groupByType}

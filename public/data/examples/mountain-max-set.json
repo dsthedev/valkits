@@ -4,6 +4,7 @@
     "id": "example-mountain-max-set",
     "name": "Mountain Max Set",
     "biome": "Mountain",
+    "description": "Wolf fur, silver, and enough quality upgrades to make the drakes take notes. The food plan is mostly a strategic use of onions.",
     "itemGoals": [
       { "prefab": "HelmetDrake", "targetQuality": 3 },
       { "prefab": "ArmorWolfChest", "targetQuality": 3 },

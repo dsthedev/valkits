@@ -4,6 +4,7 @@
     "id": "example-swamp-max-set",
     "name": "Swamp Max Set",
     "biome": "Swamp",
+    "description": "Fully upgraded iron for the mud, plus root armor because the swamp likes irony. Bring enough mead to forget the smell.",
     "itemGoals": [
       { "prefab": "HelmetIron", "targetQuality": 3 },
       { "prefab": "ArmorRootChest", "targetQuality": 3 },

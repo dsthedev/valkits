@@ -4,6 +4,7 @@
     "id": "example-mountain-min-set",
     "name": "Mountain Min Set",
     "biome": "Mountain",
+    "description": "The cape is warm; the frost-resist mead is warmer on the inside. Please do not challenge the mountain to a staring contest.",
     "itemGoals": [
       { "prefab": "HelmetIron" },
       { "prefab": "ArmorRootChest" },

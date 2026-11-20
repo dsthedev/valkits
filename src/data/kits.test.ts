@@ -6,6 +6,7 @@ import {
   addItemGoal,
   addExampleKitsToCollection,
   addKitToCollection,
+  clearKitCollection,
   createKit,
   createKitId,
   createExampleKit,
@@ -20,6 +21,7 @@ import {
   serializeKitExport,
   selectKit,
   updateKitInCollection,
+  updateKitDetails,
   updateItemGoal,
   type KitStorage,
 } from "./kits"
@@ -58,6 +60,14 @@ function jsonResponse(data: unknown, ok = true): Response {
 }
 
 describe("kit collection", () => {
+  it("clears every kit and the active-kit reference", () => {
+    expect(clearKitCollection()).toEqual({
+      version: 1,
+      activeKitId: null,
+      kits: [],
+    })
+  })
+
   it("creates, selects, and persists kits with an active-kit reference", () => {
     const storage = new MemoryStorage()
     const starterKit = createKit("kit-1", "Starter", "Meadows")
@@ -79,7 +89,12 @@ describe("kit collection", () => {
   })
 
   it("round-trips an exported kit and rejects unsupported imports", () => {
-    const kit = createKit("kit-1", "Starter", "Meadows")
+    const kit = createKit(
+      "kit-1",
+      "Starter",
+      "Meadows",
+      "First line\nSecond line"
+    )
     const imported = parseKitExport(serializeKitExport(kit))
 
     expect(imported).toEqual({ success: true, kit })
@@ -198,6 +213,31 @@ describe("kit collection", () => {
 
     expect(updatedCollection.activeKitId).toBe("kit-1")
     expect(updatedCollection.kits[0]?.name).toBe("Meadows Start")
+  })
+
+  it("preserves multiline kit descriptions and supports clearing them", () => {
+    const starterKit = createKit(
+      "kit-1",
+      "Starter",
+      "Meadows",
+      "First line\nSecond line"
+    )
+    const updatedKit = updateKitDetails(
+      starterKit,
+      "Starter Plus",
+      "Meadows",
+      "A new note\nwith a second line"
+    )
+    const clearedKit = updateKitDetails(
+      updatedKit,
+      updatedKit.name,
+      updatedKit.biome,
+      ""
+    )
+
+    expect(starterKit.description).toBe("First line\nSecond line")
+    expect(updatedKit.description).toBe("A new note\nwith a second line")
+    expect(clearedKit.description).toBeUndefined()
   })
 
   it("adds only example kits that do not already match existing content", () => {

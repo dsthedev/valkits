@@ -93,6 +93,7 @@ interface KitWorkspaceProps {
   onSelectKit(kitId: string): void
   onUpdateKit(kit: Kit): void
   onDeleteKit(kitId: string): void
+  onDeleteAllKits(): void
   onRemoveGoal(prefab: string): void
   onReorderGoals(orderedPrefabs: readonly string[]): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
@@ -305,6 +306,7 @@ export function KitWorkspace({
   onSelectKit,
   onUpdateKit,
   onDeleteKit,
+  onDeleteAllKits,
   onRemoveGoal,
   onReorderGoals,
   onUpdateGoal,
@@ -323,9 +325,11 @@ export function KitWorkspace({
     : null
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null)
   const [nameDraft, setNameDraft] = useState("")
+  const [descriptionDraft, setDescriptionDraft] = useState("")
   const [biomeDraft, setBiomeDraft] = useState<Biome>("Meadows")
   const [formError, setFormError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [pendingImportedKit, setPendingImportedKit] = useState<Kit | null>(null)
   const [kitFileError, setKitFileError] = useState<string | null>(null)
   const [kitFileMessage, setKitFileMessage] = useState<string | null>(null)
@@ -363,11 +367,14 @@ export function KitWorkspace({
     setFormMode(mode)
     setFormError(null)
     setConfirmDelete(false)
+    setConfirmDeleteAll(false)
     if (mode === "edit" && activeKit) {
       setNameDraft(activeKit.name)
+      setDescriptionDraft(activeKit.description ?? "")
       setBiomeDraft(activeKit.biome)
     } else {
       setNameDraft("")
+      setDescriptionDraft("")
       setBiomeDraft("Meadows")
     }
   }
@@ -381,10 +388,11 @@ export function KitWorkspace({
     }
 
     try {
+      const description = descriptionDraft.trim()
       if (formMode === "edit" && activeKit) {
-        onUpdateKit(updateKitDetails(activeKit, name, biomeDraft))
+        onUpdateKit(updateKitDetails(activeKit, name, biomeDraft, description))
       } else {
-        onCreateKit(createKit(createKitId(), name, biomeDraft))
+        onCreateKit(createKit(createKitId(), name, biomeDraft, description))
       }
       setFormMode(null)
       setFormError(null)
@@ -396,6 +404,13 @@ export function KitWorkspace({
   function deleteActiveKit() {
     if (!activeKit) return
     onDeleteKit(activeKit.id)
+    setConfirmDelete(false)
+    setFormMode(null)
+  }
+
+  function deleteEveryKit() {
+    onDeleteAllKits()
+    setConfirmDeleteAll(false)
     setConfirmDelete(false)
     setFormMode(null)
   }
@@ -564,10 +579,31 @@ export function KitWorkspace({
                     <RiDeleteBinLine aria-hidden="true" />
                     Delete kit
                   </button>
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                    onClick={(event) => {
+                      setConfirmDeleteAll(true)
+                      setConfirmDelete(false)
+                      setFormMode(null)
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                    type="button"
+                  >
+                    <RiDeleteBinLine aria-hidden="true" />
+                    Delete all kits
+                  </button>
                 </div>
               </details>
             )}
           </div>
+          {activeKit?.description?.trim() && (
+            <p className="mt-2 max-w-3xl text-sm whitespace-pre-wrap text-muted-foreground">
+              {activeKit.description}
+            </p>
+          )}
           <p className="mt-1 text-sm text-muted-foreground">
             {activeKit
               ? `${visibleGoals.length} item goals`
@@ -638,7 +674,7 @@ export function KitWorkspace({
 
       {formMode && (
         <form
-          className="mt-5 grid gap-4 border-t border-border/70 pt-5 sm:grid-cols-[minmax(0,1fr)_14rem_auto] sm:items-end"
+          className="mt-5 grid gap-4 border-t border-border/70 pt-5 sm:grid-cols-[minmax(0,1fr)_14rem] sm:items-end"
           onSubmit={submitForm}
         >
           <div>
@@ -688,7 +724,23 @@ export function KitWorkspace({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="sm:col-span-full">
+            <label
+              className="mb-1.5 block text-sm font-medium"
+              htmlFor="kit-description"
+            >
+              Description
+            </label>
+            <textarea
+              className="min-h-24 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+              id="kit-description"
+              maxLength={2000}
+              onChange={(event) => setDescriptionDraft(event.target.value)}
+              placeholder="A note about the kit's purpose or contents"
+              value={descriptionDraft}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 sm:col-span-full sm:justify-end">
             <Button type="submit">
               {formMode === "create" ? "Create kit" : "Save changes"}
             </Button>
@@ -723,6 +775,29 @@ export function KitWorkspace({
             </Button>
             <Button onClick={() => setConfirmDelete(false)} variant="outline">
               Keep kit
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteAll && (
+        <div
+          className="mt-5 flex flex-col gap-3 border-l-2 border-destructive bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+          role="alert"
+        >
+          <p>
+            Delete all {collection.kits.length} kits and their item goals? This
+            cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Button onClick={deleteEveryKit} variant="destructive">
+              Delete all kits
+            </Button>
+            <Button
+              onClick={() => setConfirmDeleteAll(false)}
+              variant="outline"
+            >
+              Keep kits
             </Button>
           </div>
         </div>

@@ -4,6 +4,7 @@
     "id": "example-meadows-min-set",
     "name": "Meadows Min Set",
     "biome": "Meadows",
+    "description": "Fashion is optional, but basic coverage and a club are not. The boar is cooked, which is the closest this kit gets to a plan.",
     "itemGoals": [
       { "prefab": "ArmorRagsChest" },
       { "prefab": "ArmorRagsLegs" },

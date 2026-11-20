@@ -4,6 +4,7 @@
     "id": "example-plains-max-set",
     "name": "Plains Max Set",
     "biome": "Plains",
+    "description": "Padded armor and a full set of sharp opinions. Bread is included so the lox do not think this is personal.",
     "itemGoals": [
       { "prefab": "HelmetPadded", "targetQuality": 3 },
       { "prefab": "ArmorPaddedCuirass", "targetQuality": 3 },

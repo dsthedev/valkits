@@ -4,6 +4,7 @@
     "id": "example-ashlands-max-set",
     "name": "Ashlands Max Set",
     "biome": "Ashlands",
+    "description": "Flametal, sharp edges, and a bomb with a reassuringly geological name. If the battlefield is still standing, try again.",
     "itemGoals": [
       { "prefab": "HelmetFlametal", "targetQuality": 3 },
       { "prefab": "ArmorFlametalChest", "targetQuality": 3 },

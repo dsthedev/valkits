@@ -4,6 +4,7 @@
     "id": "example-black-forest-min-set",
     "name": "Black Forest Min Set",
     "biome": "Black Forest",
+    "description": "The trolls donated the outfit, though they dispute the word donated. Fire arrows handle the rest of the introductions.",
     "itemGoals": [
       { "prefab": "HelmetTrollLeather" },
       { "prefab": "ArmorTrollLeatherChest" },

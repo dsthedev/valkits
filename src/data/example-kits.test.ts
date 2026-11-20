@@ -15,7 +15,9 @@ function readPublicJson(path: string): unknown {
 
 describe("progression example kits", () => {
   it("includes a Min Set and Max Set for every requested biome", () => {
-    const catalog = readPublicJson("../../public/data/examples/catalog.json") as {
+    const catalog = readPublicJson(
+      "../../public/data/examples/catalog.json"
+    ) as {
       examples: ExampleOption[]
     }
     const expectedBiomes = [
@@ -45,30 +47,35 @@ describe("progression example kits", () => {
 
   it("uses known prefabs and valid quality targets in every example", () => {
     const examples = readPublicJson(
-      "../../public/data/examples/catalog.json",
+      "../../public/data/examples/catalog.json"
     ) as { examples: ExampleOption[] }
     const itemCatalog = readPublicJson(
-      "../../public/data/wackydb/catalog.json",
+      "../../public/data/wackydb/catalog.json"
     ) as { items: GameItem[] }
     const itemsByPrefab = new Map(
-      itemCatalog.items.map((item) => [item.prefab, item]),
+      itemCatalog.items.map((item) => [item.prefab, item])
     )
 
     for (const example of examples.examples) {
       const exported = readPublicJson(
-        `../../public/data/examples/${example.id}.json`,
+        `../../public/data/examples/${example.id}.json`
       ) as { kit: unknown }
       const kit = kitSchema.parse(exported.kit)
 
       expect(kit.name).toBe(example.name)
       expect(kit.biome).toBe(example.biome)
+      expect(kit.description).toBeTruthy()
+      const sentenceCount =
+        kit.description?.match(/[.!?](?=\s|$)/g)?.length ?? 0
+      expect(sentenceCount).toBeGreaterThanOrEqual(2)
+      expect(sentenceCount).toBeLessThanOrEqual(3)
       for (const goal of kit.itemGoals) {
         const item = itemsByPrefab.get(goal.prefab)
         expect(item, `${example.id} references ${goal.prefab}`).toBeDefined()
         if (goal.targetQuality !== undefined) {
           expect(
             goal.targetQuality,
-            `${example.id} quality for ${goal.prefab}`,
+            `${example.id} quality for ${goal.prefab}`
           ).toBeLessThanOrEqual(item?.maxQuality ?? 1)
         }
       }

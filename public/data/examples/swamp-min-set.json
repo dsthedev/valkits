@@ -4,6 +4,7 @@
     "id": "example-swamp-min-set",
     "name": "Swamp Min Set",
     "biome": "Swamp",
+    "description": "A root shirt, two maces, and one very specific fear of poison. Queens Jam is here because courage needs a snack.",
     "itemGoals": [
       { "prefab": "HelmetBronze" },
       { "prefab": "ArmorRootChest" },

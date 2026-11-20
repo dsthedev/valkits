@@ -4,6 +4,7 @@
     "id": "example-black-forest-max-set",
     "name": "Black Forest Max Set",
     "biome": "Black Forest",
+    "description": "Bronze from helmet to buckler, with a Troll cape for tasteful contrast. The meads are for when the forest files a complaint.",
     "itemGoals": [
       { "prefab": "HelmetBronze", "targetQuality": 3 },
       { "prefab": "ArmorBronzeChest", "targetQuality": 3 },

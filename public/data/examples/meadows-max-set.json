@@ -4,6 +4,7 @@
     "id": "example-meadows-max-set",
     "name": "Meadows Max Set",
     "biome": "Meadows",
+    "description": "The local wildlife has been politely informed that quality three is non-negotiable. Honey is for morale, morale is for stamina, and nobody is checking the math.",
     "itemGoals": [
       { "prefab": "HelmetLeather", "targetQuality": 2 },
       { "prefab": "ArmorLeatherChest", "targetQuality": 2 },

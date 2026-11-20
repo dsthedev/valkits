@@ -122,8 +122,29 @@ export function createKitCollection(
   return kitCollectionSchema.parse({ version: 1, activeKitId, kits })
 }
 
-export function createKit(id: string, name: string, biome: Biome): Kit {
-  return kitSchema.parse({ id, name, biome, itemGoals: [] })
+export function clearKitCollection(): KitCollection {
+  return createKitCollection()
+}
+
+function normalizedKitDescription(description?: string): string | undefined {
+  const normalized = description?.trim()
+  return normalized ? normalized : undefined
+}
+
+export function createKit(
+  id: string,
+  name: string,
+  biome: Biome,
+  description?: string
+): Kit {
+  const normalizedDescription = normalizedKitDescription(description)
+  return kitSchema.parse({
+    id,
+    name,
+    biome,
+    ...(normalizedDescription ? { description: normalizedDescription } : {}),
+    itemGoals: [],
+  })
 }
 
 export function createKitId(): string {
@@ -237,8 +258,17 @@ export function updateKitInCollection(
   )
 }
 
-export function updateKitDetails(kit: Kit, name: string, biome: Biome): Kit {
-  return kitSchema.parse({ ...kit, name, biome })
+export function updateKitDetails(
+  kit: Kit,
+  name: string,
+  biome: Biome,
+  description = kit.description
+): Kit {
+  const nextKit = { ...kit, name, biome }
+  const normalizedDescription = normalizedKitDescription(description)
+  if (normalizedDescription) nextKit.description = normalizedDescription
+  else delete nextKit.description
+  return kitSchema.parse(nextKit)
 }
 
 export function addItemGoal(kit: Kit, prefab: string): Kit {

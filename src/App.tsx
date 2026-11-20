@@ -56,6 +56,7 @@ import {
   addItemGoal,
   addExampleKitsToCollection,
   addKitToCollection,
+  clearKitCollection,
   createExampleKit,
   loadExampleKitOptions,
   loadKitCollection,
@@ -421,6 +422,10 @@ export function App() {
     persistKits(removeKitFromCollection(kitState.collection, kitId))
   }
 
+  function deleteAllKits() {
+    persistKits(clearKitCollection())
+  }
+
   function addGoalToActiveKit(prefab: string) {
     if (!activeKit) return
     persistKits(
@@ -699,6 +704,7 @@ export function App() {
               getItem={(prefab) => dataAccess?.getItem(prefab)}
               onCreateKit={addNewKit}
               onDeleteKit={deleteKit}
+              onDeleteAllKits={deleteAllKits}
               onReorderGoals={reorderGoalsInActiveKit}
               onRemoveGoal={removeGoalFromActiveKit}
               onScrollToItemList={scrollToItemList}

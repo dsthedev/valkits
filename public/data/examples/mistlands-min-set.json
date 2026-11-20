@@ -4,6 +4,7 @@
     "id": "example-mistlands-min-set",
     "name": "Mistlands Min Set",
     "biome": "Mistlands",
+    "description": "One demister, several sensible choices, and a cape that refuses to solve everything. Visibility improves; judgment is still on you.",
     "itemGoals": [
       { "prefab": "HelmetPadded" },
       { "prefab": "ArmorRootChest" },

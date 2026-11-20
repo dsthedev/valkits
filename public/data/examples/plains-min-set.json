@@ -4,6 +4,7 @@
     "id": "example-plains-min-set",
     "name": "Plains Min Set",
     "biome": "Plains",
+    "description": "This kit arrives in the Plains with gear from the last biome and suspicious confidence. The meads are doing a lot of the emotional support.",
     "itemGoals": [
       { "prefab": "HelmetDrake" },
       { "prefab": "ArmorWolfChest" },
