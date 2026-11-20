@@ -1024,6 +1024,8 @@ export function KitWorkspace({
                   getStationPiece={calculationData.getStationPiece}
                   getStationUpgrades={calculationData.getStationUpgrades}
                   hideUpgraderItems={hideUpgraderItems}
+                  kitId={activeKit?.id ?? ""}
+                  key={activeKit?.id ?? "no-active-kit"}
                   stationRequirements={liveStationRequirements}
                   stationResourceCalculation={liveStationResources}
                 />

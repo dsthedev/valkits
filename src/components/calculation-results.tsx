@@ -3,6 +3,7 @@ import {
   RiArrowDownLine,
   RiArrowUpDownLine,
   RiArrowUpLine,
+  RiCheckLine,
 } from "@remixicon/react"
 import { ItemIcon } from "@/components/item-icon"
 import {
@@ -42,8 +43,13 @@ import {
 } from "@/domain/station-requirements"
 import type { StationResourceCalculation } from "@/domain/station-resource-calculation"
 import { isUpgraderItemPrefab } from "@/domain/upgrader-items"
+import {
+  loadCollectedResources,
+  saveCollectedResources,
+} from "@/data/collected-resources"
 
 interface CalculationResultsProps {
+  kitId: string
   calculation: KitResourceCalculation
   stationRequirements: KitStationRequirementCalculation
   stationResourceCalculation: StationResourceCalculation
@@ -63,6 +69,14 @@ type SortDirection = "ascending" | "descending"
 interface CostSort {
   column: SortColumn
   direction: SortDirection
+}
+
+function getCollectedResourcesStorage() {
+  try {
+    return typeof window === "undefined" ? undefined : window.localStorage
+  } catch {
+    return undefined
+  }
 }
 
 const resourceReasonLabels: Record<UnresolvedReason, string> = {
@@ -87,22 +101,22 @@ const resourceReasonLabels: Record<UnresolvedReason, string> = {
 }
 
 const stationRequirementReasonLabels: Record<StationRequirementReason, string> =
-  {
-    "unknown-item": "Item not found in game data",
-    "no-recipe": "No recipe available in the imported data",
-    "disabled-recipe": "Recipe is disabled",
-    "upgrade-only-recipe": "Only upgrade recipes are available",
-    "ambiguous-recipe": "Multiple enabled craft recipes",
-    "ambiguous-processing-conversion": "Multiple processing conversions",
-    "ambiguous-acquisition-source":
-      "Both craft and processing sources are available",
-    "processing-cycle": "Processing conversion chain loops",
-    "unresolved-station": "Station reference could not be matched",
-    "missing-station-level": "Recipe does not specify a minimum level",
-    "invalid-target-quality":
-      "Target quality is outside the item's supported range",
-    "quality-upgrades-disabled": "Recipe does not allow quality upgrades",
-  }
+{
+  "unknown-item": "Item not found in game data",
+  "no-recipe": "No recipe available in the imported data",
+  "disabled-recipe": "Recipe is disabled",
+  "upgrade-only-recipe": "Only upgrade recipes are available",
+  "ambiguous-recipe": "Multiple enabled craft recipes",
+  "ambiguous-processing-conversion": "Multiple processing conversions",
+  "ambiguous-acquisition-source":
+    "Both craft and processing sources are available",
+  "processing-cycle": "Processing conversion chain loops",
+  "unresolved-station": "Station reference could not be matched",
+  "missing-station-level": "Recipe does not specify a minimum level",
+  "invalid-target-quality":
+    "Target quality is outside the item's supported range",
+  "quality-upgrades-disabled": "Recipe does not allow quality upgrades",
+}
 
 const stationResourceIssueLabels = {
   "missing-station-piece": "Station piece data is missing",
@@ -164,8 +178,8 @@ function sortCosts(
     const comparison =
       sort.column === "resource"
         ? humanizePrefab(left.prefab).localeCompare(
-            humanizePrefab(right.prefab)
-          )
+          humanizePrefab(right.prefab)
+        )
         : left.amount - right.amount
     return comparison * direction || left.prefab.localeCompare(right.prefab)
   })
@@ -233,10 +247,14 @@ function CostTable({
   costs,
   groupByType,
   getItem,
+  collectedPrefabs,
+  onToggleCollected,
 }: {
   costs: readonly CostRow[]
   groupByType: boolean
   getItem(prefab: string): GameItem | undefined
+  collectedPrefabs: ReadonlySet<string>
+  onToggleCollected(prefab: string): void
 }) {
   const [sort, setSort] = useState<CostSort | null>(null)
   const sortedCosts = sortCosts(costs, sort)
@@ -292,6 +310,7 @@ function CostTable({
   }
 
   function renderCostRow(cost: CostRow) {
+    const collected = collectedPrefabs.has(cost.prefab)
     return (
       <TableRow key={cost.prefab}>
         <TableCell className="min-w-0 pl-0">
@@ -300,8 +319,21 @@ function CostTable({
             <span className="break-words">{humanizePrefab(cost.prefab)}</span>
           </span>
         </TableCell>
-        <TableCell className="pr-0 text-right font-medium tabular-nums">
+        <TableCell className="pr-0 text-right text-base font-medium tabular-nums">
           {cost.amount.toLocaleString()}
+        </TableCell>
+        <TableCell className="w-24 pr-0 text-right">
+          <Button
+            aria-label={`${collected ? "Unmark" : "Mark"} ${humanizePrefab(cost.prefab)} ${collected ? "collected" : "as collected"}`}
+            aria-pressed={collected}
+            className="min-w-20"
+            onClick={() => onToggleCollected(cost.prefab)}
+            size="xs"
+            variant={collected ? "secondary" : "ghost"}
+          >
+            {collected && <RiCheckLine aria-hidden="true" />}
+            {collected ? "Collected" : "Collect"}
+          </Button>
         </TableCell>
       </TableRow>
     )
@@ -316,21 +348,22 @@ function CostTable({
             <TableRow>
               {renderSortHeader("resource", "Resource")}
               {renderSortHeader("amount", "Amount")}
+              <TableHead className="w-24 pr-0 text-right">Collected</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {groupedCosts
               ? groupedCosts.flatMap(({ category, costs: categoryCosts }) => [
-                  <TableRow key={`category:${category}`}>
-                    <TableCell
-                      className="bg-muted/40 py-2 text-xs font-semibold text-muted-foreground"
-                      colSpan={2}
-                    >
-                      {category}
-                    </TableCell>
-                  </TableRow>,
-                  ...categoryCosts.map(renderCostRow),
-                ])
+                <TableRow key={`category:${category}`}>
+                  <TableCell
+                    className="bg-muted/40 py-2 text-xs font-semibold text-muted-foreground"
+                    colSpan={3}
+                  >
+                    {category}
+                  </TableCell>
+                </TableRow>,
+                ...categoryCosts.map(renderCostRow),
+              ])
               : sortedCosts.map(renderCostRow)}
           </TableBody>
         </Table>
@@ -344,6 +377,7 @@ function CostTable({
 }
 
 export function CalculationResults({
+  kitId,
   calculation,
   stationRequirements,
   stationResourceCalculation,
@@ -360,6 +394,18 @@ export function CalculationResults({
   const [groupByType, setGroupByType] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total"
+  )
+  const [collectedPrefabs, setCollectedPrefabs] = useState(
+    () =>
+      new Set(
+        loadCollectedResources(getCollectedResourcesStorage()).prefabsByKit[
+          kitId
+        ] ?? []
+      )
+  )
+  const [collectionWarning, setCollectionWarning] = useState<string | null>(
+    () =>
+      loadCollectedResources(getCollectedResourcesStorage()).warning
   )
   const kitResourceCosts = calculation.leafRequirements
     .filter(
@@ -418,6 +464,36 @@ export function CalculationResults({
   function openSheet(sheet: "advanced" | "stations") {
     setActiveSheet(sheet)
     setSheetOpen(true)
+  }
+
+  function toggleCollected(prefab: string) {
+    const nextPrefabs = new Set(collectedPrefabs)
+    if (nextPrefabs.has(prefab)) nextPrefabs.delete(prefab)
+    else nextPrefabs.add(prefab)
+
+    const result = saveCollectedResources(
+      getCollectedResourcesStorage(),
+      kitId,
+      [...nextPrefabs]
+    )
+    if (!result.success) {
+      setCollectionWarning(result.message)
+      return
+    }
+
+    setCollectedPrefabs(nextPrefabs)
+    setCollectionWarning(null)
+  }
+
+  function clearCollected() {
+    const result = saveCollectedResources(getCollectedResourcesStorage(), kitId, [])
+    if (!result.success) {
+      setCollectionWarning(result.message)
+      return
+    }
+
+    setCollectedPrefabs(new Set())
+    setCollectionWarning(null)
   }
 
   function advancedBreakdownTrigger() {
@@ -524,27 +600,49 @@ export function CalculationResults({
               >
                 {showCombinedCosts ? "Show separately" : "Show combined"}
               </Button>
+              <Button
+                disabled={collectedPrefabs.size === 0}
+                onClick={clearCollected}
+                size="sm"
+                variant="outline"
+              >
+                Clear collected
+              </Button>
             </div>
           </div>
           {showCombinedCosts ? (
             <CostTable
+              collectedPrefabs={collectedPrefabs}
               costs={combinedCosts}
               getItem={getItem}
               groupByType={groupByType}
+              onToggleCollected={toggleCollected}
             />
           ) : (
             <>
               <CostTable
+                collectedPrefabs={collectedPrefabs}
                 costs={kitResourceCosts}
                 getItem={getItem}
                 groupByType={groupByType}
+                onToggleCollected={toggleCollected}
               />
               <CostTable
+                collectedPrefabs={collectedPrefabs}
                 costs={stationResources}
                 getItem={getItem}
                 groupByType={groupByType}
+                onToggleCollected={toggleCollected}
               />
             </>
+          )}
+          {collectionWarning && (
+            <p
+              className="mt-2 text-xs text-amber-800 dark:text-amber-200"
+              role="status"
+            >
+              {collectionWarning}
+            </p>
           )}
           <p className="mt-3 text-sm text-muted-foreground" role="status">
             {isComplete
@@ -554,10 +652,10 @@ export function CalculationResults({
           </p>
           {(unresolvedResources.length > 0 ||
             !stationResourceCalculation.isComplete) && (
-            <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-              Totals may be incomplete.
-            </p>
-          )}
+              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                Totals may be incomplete.
+              </p>
+            )}
         </div>
         <SheetContent
           className={
@@ -687,13 +785,13 @@ export function CalculationResults({
                                 {requirement.stationLevel !== undefined &&
                                   group.stationLevel !== undefined &&
                                   requirement.stationLevel <
-                                    group.stationLevel &&
+                                  group.stationLevel &&
                                   ` (level ${requirement.stationLevel})`}
                                 {requirement.targetQuality > 1 &&
                                   ` · Quality ${requirement.targetQuality}`}
                                 {requirement.status === "required" &&
                                   requirement.outputAmountPerInput !==
-                                    undefined &&
+                                  undefined &&
                                   ` · ${requirement.outputAmountPerInput} per base`}
                                 {requirement.status === "unresolved" &&
                                   ` · ${stationRequirementReasonLabels[requirement.reason]}`}
