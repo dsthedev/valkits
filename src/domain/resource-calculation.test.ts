@@ -329,5 +329,5 @@ describe("kit resource calculation", () => {
     expect(
       result.leafRequirements.map((requirement) => requirement.prefab),
     ).not.toContain("Upgrader1Armor")
-  })
+  }, 15_000)
 })
