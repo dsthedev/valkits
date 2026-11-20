@@ -23,6 +23,7 @@ export interface KitStatSummary {
   stamina: StatBreakdown
   eitr: StatBreakdown
   armor: StatBreakdown
+  armorItemCount: number
   shield: ShieldStatSummary | null
   ignoredFoodCount: number
 }
@@ -39,6 +40,14 @@ const ARMOR_ITEM_TYPES = new Set([
   "Shoulder",
   "Shield",
 ])
+const COUNTED_ARMOR_ITEM_TYPES = new Set([
+  "Head",
+  "Helmet",
+  "Chest",
+  "Legs",
+  "Shoulder",
+])
+const MAX_ARMOR_ITEMS = 3
 
 function breakdown(
   base: number,
@@ -90,6 +99,17 @@ export function calculateKitStats(kit: Kit, getItem: ItemLookup): KitStatSummary
     )
     return value === 0 ? [] : [{ prefab: goal.prefab, value }]
   })
+  const armorItemCount = Math.min(
+    MAX_ARMOR_ITEMS,
+    kit.itemGoals.filter((goal) => {
+      const item = getItem(goal.prefab)
+      return (
+        item?.armorStats !== undefined &&
+        item.itemType !== undefined &&
+        COUNTED_ARMOR_ITEM_TYPES.has(item.itemType)
+      )
+    }).length,
+  )
 
   const firstShieldGoal = kit.itemGoals.find(
     (goal) => getItem(goal.prefab)?.itemType === "Shield",
@@ -121,6 +141,7 @@ export function calculateKitStats(kit: Kit, getItem: ItemLookup): KitStatSummary
     stamina: statBreakdown("stamina", BASE_STATS.stamina),
     eitr: statBreakdown("eitr", BASE_STATS.eitr),
     armor: breakdown(0, armorContributions),
+    armorItemCount,
     shield,
     ignoredFoodCount: Math.max(0, foods.length - ACTIVE_FOOD_SLOTS),
   }

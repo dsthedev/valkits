@@ -711,42 +711,44 @@ export function CalculationResults({
               </div>
 
               {directRequirements.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="pl-0">Resource</TableHead>
-                      <TableHead className="w-20 pr-0 text-right">
-                        {costView === "total"
-                          ? "Total"
-                          : costView === "craft"
-                            ? "Craft"
-                            : "Quality"}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {directRequirements.map((requirement) => (
-                      <TableRow key={requirement.prefab}>
-                        <TableCell className="min-w-0 pl-0">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ItemIcon prefab={requirement.prefab} size="sm" />
-                            <span className="break-words">
-                              {humanizePrefab(requirement.prefab)}
-                            </span>
-                          </span>
-                        </TableCell>
-                        <TableCell className="pr-0 text-right font-medium tabular-nums">
-                          {(costView === "total"
-                            ? requirement.totalAmount
+                <div className="min-h-20 max-h-60 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="py-0 pl-0">Resource</TableHead>
+                        <TableHead className="w-20 py-0 pr-0 text-right">
+                          {costView === "total"
+                            ? "Total"
                             : costView === "craft"
-                              ? requirement.craftAmount
-                              : requirement.qualityAmount
-                          ).toLocaleString()}
-                        </TableCell>
+                              ? "Craft"
+                              : "Quality"}
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {directRequirements.map((requirement) => (
+                        <TableRow key={requirement.prefab}>
+                          <TableCell className="min-w-0 py-0 pl-0">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <ItemIcon prefab={requirement.prefab} size="sm" />
+                              <span className="break-words">
+                                {humanizePrefab(requirement.prefab)}
+                              </span>
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-0 pr-0 text-right font-medium tabular-nums">
+                            {(costView === "total"
+                              ? requirement.totalAmount
+                              : costView === "craft"
+                                ? requirement.craftAmount
+                                : requirement.qualityAmount
+                            ).toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
                   No direct ingredient totals are available.
@@ -763,9 +765,9 @@ export function CalculationResults({
                   separately.
                 </p>
                 {groupedStationRequirements.length > 0 ? (
-                  <ul className="mt-3 divide-y divide-border/70 border-y border-border/70">
+                  <ul className="mt-3 min-h-20 max-h-60 divide-y divide-border/70 overflow-y-auto border-y border-border/70">
                     {groupedStationRequirements.map((group) => (
-                      <li className="py-2.5" key={group.stationPrefab}>
+                      <li className="py-0" key={group.stationPrefab}>
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-medium">
                             {humanizePrefab(
@@ -841,33 +843,35 @@ export function CalculationResults({
                   required upgrade pieces, and their item recipe chains.
                 </p>
                 {stationResources.length > 0 ? (
-                  <Table className="mt-2">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="pl-0">Resource</TableHead>
-                        <TableHead className="pr-0 text-right">
-                          Amount
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stationResources.map((resource) => (
-                        <TableRow key={resource.prefab}>
-                          <TableCell className="min-w-0 pl-0">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <ItemIcon prefab={resource.prefab} size="sm" />
-                              <span className="break-words">
-                                {humanizePrefab(resource.prefab)}
-                              </span>
-                            </span>
-                          </TableCell>
-                          <TableCell className="pr-0 text-right font-medium tabular-nums">
-                            {resource.amount.toLocaleString()}
-                          </TableCell>
+                  <div className="mt-2 min-h-20 max-h-60 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="py-0 pl-0">Resource</TableHead>
+                          <TableHead className="py-0 pr-0 text-right">
+                            Amount
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {stationResources.map((resource) => (
+                          <TableRow key={resource.prefab}>
+                            <TableCell className="min-w-0 py-0 pl-0">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <ItemIcon prefab={resource.prefab} size="sm" />
+                                <span className="break-words">
+                                  {humanizePrefab(resource.prefab)}
+                                </span>
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-0 pr-0 text-right font-medium tabular-nums">
+                              {resource.amount.toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">
                     No station resource totals are available.

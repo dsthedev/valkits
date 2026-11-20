@@ -57,6 +57,7 @@ import {
   type ItemGoalUpdates,
   type KitCollection,
 } from "@/data/kits"
+import { getFoodCategory } from "@/domain/food-category"
 import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
 import { getLongestFoodDurationSeconds } from "@/domain/food-duration-highlight"
 import { calculateImmediateItemRequirements } from "@/domain/immediate-calculation"
@@ -845,7 +846,7 @@ export function KitWorkspace({
                 ? `Block ${liveStats.shield.blockPower} · Deflect ${liveStats.shield.deflectionForce}`
                 : undefined
             }
-            label="Armor"
+            label={`Armor (${liveStats.armorItemCount})`}
           />
         </div>
       )}
@@ -881,6 +882,19 @@ export function KitWorkspace({
                       const capabilities = item
                         ? getItemGoalCapabilities(item)
                         : { quantity: false, maxQuality: null }
+                      const foodCategory = item
+                        ? getFoodCategory(item)
+                        : undefined
+                      const foodCardClass =
+                        foodCategory === "health"
+                          ? "border-l-4 border-l-red-400 bg-[#443638] text-stone-100 dark:border-l-red-300/80 dark:bg-[#34282a]"
+                          : foodCategory === "stamina"
+                            ? "border-l-4 border-l-yellow-300 bg-[#444233] text-stone-100 dark:border-l-yellow-200/80 dark:bg-[#343323]"
+                            : foodCategory === "eitr"
+                              ? "border-l-4 border-l-purple-400 bg-[#433747] text-stone-100 dark:border-l-purple-300/80 dark:bg-[#332737]"
+                              : foodCategory === "mixed"
+                                ? "bg-white dark:bg-stone-700"
+                                : undefined
                       return (
                         <SortableGoal
                           id={goal.prefab}
@@ -888,7 +902,9 @@ export function KitWorkspace({
                           label={humanizePrefab(goal.prefab)}
                         >
                           {(dragHandle) => (
-                            <Card className="rounded-lg shadow-sm">
+                            <Card
+                              className={`rounded-lg shadow-sm ${foodCardClass ?? ""}`}
+                            >
                               <CardContent className="p-2.5">
                                 <div className="flex items-center gap-2.5">
                                   <ItemIcon prefab={goal.prefab} size="xl" />

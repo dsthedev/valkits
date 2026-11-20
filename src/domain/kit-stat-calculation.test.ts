@@ -14,6 +14,24 @@ const items: GameItem[] = [
     armorStats: { armor: 8, armorPerLevel: 2 },
   },
   {
+    prefab: "Helmet",
+    nameToken: "Helmet",
+    itemType: "Helmet",
+    armorStats: { armor: 5 },
+  },
+  {
+    prefab: "Legs",
+    nameToken: "Legs",
+    itemType: "Legs",
+    armorStats: { armor: 6 },
+  },
+  {
+    prefab: "Shoulder",
+    nameToken: "Shoulder",
+    itemType: "Shoulder",
+    armorStats: { armor: 1 },
+  },
+  {
     prefab: "Shield1",
     nameToken: "Shield1",
     itemType: "Shield",
@@ -87,5 +105,26 @@ describe("kit stat calculation", () => {
       deflectionForce: 25,
       timedBlockBonus: 1.5,
     })
+    expect(stats.armorItemCount).toBe(1)
+  })
+
+  it("counts only armor items and caps the displayed count at three", () => {
+    const armorKit: Kit = {
+      ...kit,
+      itemGoals: [
+        { prefab: "Chest" },
+        { prefab: "Helmet" },
+        { prefab: "Legs" },
+        { prefab: "Shoulder" },
+        { prefab: "Shield1" },
+      ],
+    }
+
+    const stats = calculateKitStats(
+      armorKit,
+      (prefab) => items.find((item) => item.prefab === prefab),
+    )
+
+    expect(stats.armorItemCount).toBe(3)
   })
 })
