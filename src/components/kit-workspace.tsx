@@ -1,10 +1,32 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react"
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react"
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
   RiAddLine,
-  RiArrowDownLine,
-  RiArrowUpLine,
   RiCheckLine,
   RiCloseLine,
+  RiMenuLine,
   RiDeleteBinLine,
   RiEditLine,
   RiMore2Line,
@@ -70,7 +92,7 @@ interface KitWorkspaceProps {
   onUpdateKit(kit: Kit): void
   onDeleteKit(kitId: string): void
   onRemoveGoal(prefab: string): void
-  onMoveGoal(prefab: string, direction: "up" | "down"): void
+  onReorderGoals(orderedPrefabs: readonly string[]): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
 }
 
@@ -87,6 +109,52 @@ function parseGoalInput(
   if (!Number.isSafeInteger(parsed) || parsed < 1) return undefined
   if (maximum !== undefined && parsed > maximum) return undefined
   return parsed
+}
+
+function SortableGoal({
+  id,
+  label,
+  children,
+}: {
+  id: string
+  label: string
+  children(dragHandle: ReactNode): ReactNode
+}) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id })
+  const dragHandle = (
+    <button
+      aria-label={`Drag to reorder ${label}`}
+      className="inline-flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-full text-muted-foreground hover:bg-muted active:cursor-grabbing"
+      ref={setActivatorNodeRef}
+      title="Drag to reorder"
+      type="button"
+      {...attributes}
+      {...listeners}
+    >
+      <RiMenuLine aria-hidden="true" />
+    </button>
+  )
+
+  return (
+    <div
+      className={isDragging ? "relative z-10 opacity-60" : undefined}
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      {children(dragHandle)}
+    </div>
+  )
 }
 
 function KitStatMetric({
@@ -106,10 +174,12 @@ function KitStatMetric({
         aria-label={`${label} breakdown`}
         className="flex cursor-help list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden"
       >
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
         <strong className="text-lg tabular-nums">{breakdown.total}</strong>
       </summary>
-      <div className="absolute top-full left-0 z-30 hidden w-64 max-w-[calc(100vw-2rem)] border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg group-hover:block group-focus-within:block group-open:block">
+      <div className="absolute top-full left-0 z-30 hidden w-64 max-w-[calc(100vw-2rem)] border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg group-open:block group-focus-within:block group-hover:block">
         <div className="flex justify-between gap-4">
           <span>Base</span>
           <span className="tabular-nums">{breakdown.base}</span>
@@ -229,7 +299,7 @@ export function KitWorkspace({
   onUpdateKit,
   onDeleteKit,
   onRemoveGoal,
-  onMoveGoal,
+  onReorderGoals,
   onUpdateGoal,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
@@ -253,6 +323,10 @@ export function KitWorkspace({
   const [kitFileError, setKitFileError] = useState<string | null>(null)
   const [kitFileMessage, setKitFileMessage] = useState<string | null>(null)
   const kitImportInputRef = useRef<HTMLInputElement>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
   const liveCalculation =
     activeKit && calculationKit && calculationData
       ? calculateKitResources(calculationKit, calculationData)
@@ -366,6 +440,18 @@ export function KitWorkspace({
     setPendingImportedKit(null)
     setKitFileMessage(`Added "${importedKit.name}" to your kits.`)
     setKitFileError(null)
+  }
+
+  function handleGoalDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const visiblePrefabs = visibleGoals.map((goal) => goal.prefab)
+    const activeIndex = visiblePrefabs.indexOf(String(active.id))
+    const overIndex = visiblePrefabs.indexOf(String(over.id))
+    if (activeIndex < 0 || overIndex < 0) return
+
+    onReorderGoals(arrayMove(visiblePrefabs, activeIndex, overIndex))
   }
 
   return (
@@ -669,128 +755,123 @@ export function KitWorkspace({
               </span>
             </div>
             {visibleGoals.length > 0 ? (
-              <div className="grid gap-3">
-                {visibleGoals.map((goal) => {
-                  const item = getItem(goal.prefab)
-                  const goalIndex = activeKit.itemGoals.findIndex(
-                    (itemGoal) => itemGoal.prefab === goal.prefab,
-                  )
-                  const directRequirements = calculationData
-                    ? calculateImmediateItemRequirements(
-                        goal,
-                        calculationData,
-                      ).requirements
-                    : []
-                  const capabilities = item
-                    ? getItemGoalCapabilities(item)
-                    : { quantity: false, maxQuality: null }
-                  return (
-                    <Card className="rounded-lg shadow-sm" key={goal.prefab}>
-                      <CardContent className="p-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <ItemIcon prefab={goal.prefab} size="xl" />
-                          <div className="min-w-0 flex-1">
-                          <div className="flex items-start gap-2">
-                            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-                              <CardTitle className="text-sm leading-tight break-words">
-                                {humanizePrefab(item?.prefab ?? goal.prefab)}
-                              </CardTitle>
-                              {item?.itemType && (
-                                <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
-                                  {item.itemType}
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              aria-label={`Move ${humanizePrefab(goal.prefab)}`}
-                              className="inline-flex shrink-0 items-center rounded-full border border-border p-0.5"
-                              role="group"
-                            >
-                              <Button
-                                aria-label={`Move ${humanizePrefab(goal.prefab)} up`}
-                                className="size-6 rounded-full"
-                                disabled={goalIndex <= 0}
-                                onClick={() => onMoveGoal(goal.prefab, "up")}
-                                size="icon-xs"
-                                title="Move up"
-                                type="button"
-                                variant="ghost"
-                              >
-                                <RiArrowUpLine aria-hidden="true" />
-                              </Button>
-                              <Button
-                                aria-label={`Move ${humanizePrefab(goal.prefab)} down`}
-                                className="size-6 rounded-full"
-                                disabled={goalIndex >= activeKit.itemGoals.length - 1}
-                                onClick={() => onMoveGoal(goal.prefab, "down")}
-                                size="icon-xs"
-                                title="Move down"
-                                type="button"
-                                variant="ghost"
-                              >
-                                <RiArrowDownLine aria-hidden="true" />
-                              </Button>
-                            </div>
-                            <Button
-                              aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
-                              onClick={() => onRemoveGoal(goal.prefab)}
-                              size="icon-sm"
-                              title="Remove from kit"
-                              variant="ghost"
-                            >
-                              <RiCloseLine aria-hidden="true" />
-                            </Button>
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            {excludedPrefabs.has(goal.prefab) && (
-                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
-                                Excluded
-                              </span>
-                            )}
-                            {!item && (
-                              <span className="text-xs text-muted-foreground">
-                                Not in current item data
-                              </span>
-                            )}
-                            {capabilities.quantity && (
-                              <GoalStepper
-                                itemName={goal.prefab}
-                                label="Qty"
-                                maxLabel={item?.maxStackSize ?? 1}
-                                onValueChange={(quantity) =>
-                                  onUpdateGoal(goal.prefab, { quantity })
-                                }
-                                tone="quantity"
-                                value={goal.quantity ?? 1}
-                              />
-                            )}
-                            {capabilities.maxQuality !== null && (
-                              <GoalStepper
-                                itemName={goal.prefab}
-                                label="LVL"
-                                maxLabel={capabilities.maxQuality}
-                                maximum={capabilities.maxQuality}
-                                onValueChange={(targetQuality) =>
-                                  onUpdateGoal(goal.prefab, { targetQuality })
-                                }
-                                tone="quality"
-                                value={goal.targetQuality ?? 1}
-                              />
-                            )}
-                          </div>
-                          </div>
-                        </div>
-                        {directRequirements.length > 0 && (
-                          <ImmediateRecipeCosts
-                            className="mt-2 border-t border-border/60 pt-2"
-                            requirements={directRequirements}
-                          />
-                        )}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
+              <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={handleGoalDragEnd}
+                sensors={sensors}
+              >
+                <SortableContext
+                  items={visibleGoals.map((goal) => goal.prefab)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="grid gap-3">
+                    {visibleGoals.map((goal) => {
+                      const item = getItem(goal.prefab)
+                      const directRequirements = calculationData
+                        ? calculateImmediateItemRequirements(
+                            goal,
+                            calculationData
+                          ).requirements
+                        : []
+                      const capabilities = item
+                        ? getItemGoalCapabilities(item)
+                        : { quantity: false, maxQuality: null }
+                      return (
+                        <SortableGoal
+                          id={goal.prefab}
+                          key={goal.prefab}
+                          label={humanizePrefab(goal.prefab)}
+                        >
+                          {(dragHandle) => (
+                            <Card className="rounded-lg shadow-sm">
+                              <CardContent className="p-2.5">
+                                <div className="flex items-center gap-2.5">
+                                  <ItemIcon prefab={goal.prefab} size="xl" />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-start gap-2">
+                                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                                        <CardTitle className="text-sm leading-tight break-words">
+                                          {humanizePrefab(
+                                            item?.prefab ?? goal.prefab
+                                          )}
+                                        </CardTitle>
+                                        {item?.itemType && (
+                                          <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
+                                            {item.itemType}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {dragHandle}
+                                      <Button
+                                        aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}
+                                        onClick={() =>
+                                          onRemoveGoal(goal.prefab)
+                                        }
+                                        size="icon-sm"
+                                        title="Remove from kit"
+                                        variant="ghost"
+                                      >
+                                        <RiCloseLine aria-hidden="true" />
+                                      </Button>
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      {excludedPrefabs.has(goal.prefab) && (
+                                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-300/15 dark:text-amber-200">
+                                          Excluded
+                                        </span>
+                                      )}
+                                      {!item && (
+                                        <span className="text-xs text-muted-foreground">
+                                          Not in current item data
+                                        </span>
+                                      )}
+                                      {capabilities.quantity && (
+                                        <GoalStepper
+                                          itemName={goal.prefab}
+                                          label="Qty"
+                                          maxLabel={item?.maxStackSize ?? 1}
+                                          onValueChange={(quantity) =>
+                                            onUpdateGoal(goal.prefab, {
+                                              quantity,
+                                            })
+                                          }
+                                          tone="quantity"
+                                          value={goal.quantity ?? 1}
+                                        />
+                                      )}
+                                      {capabilities.maxQuality !== null && (
+                                        <GoalStepper
+                                          itemName={goal.prefab}
+                                          label="LVL"
+                                          maxLabel={capabilities.maxQuality}
+                                          maximum={capabilities.maxQuality}
+                                          onValueChange={(targetQuality) =>
+                                            onUpdateGoal(goal.prefab, {
+                                              targetQuality,
+                                            })
+                                          }
+                                          tone="quality"
+                                          value={goal.targetQuality ?? 1}
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                {directRequirements.length > 0 && (
+                                  <ImmediateRecipeCosts
+                                    className="mt-2 border-t border-border/60 pt-2"
+                                    requirements={directRequirements}
+                                  />
+                                )}
+                              </CardContent>
+                            </Card>
+                          )}
+                        </SortableGoal>
+                      )
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
             ) : (
               <p className="border-t border-border/60 py-4 text-sm text-muted-foreground">
                 {hideUpgraderItems && activeKit.itemGoals.length > 0

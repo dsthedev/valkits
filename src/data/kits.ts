@@ -245,22 +245,27 @@ export function removeItemGoal(kit: Kit, prefab: string): Kit {
   })
 }
 
-export function moveItemGoal(
+export function reorderItemGoals(
   kit: Kit,
-  prefab: string,
-  direction: "up" | "down",
+  orderedPrefabs: readonly string[],
 ): Kit {
-  const goalIndex = kit.itemGoals.findIndex((goal) => goal.prefab === prefab)
-  const nextIndex = goalIndex + (direction === "up" ? -1 : 1)
-  if (goalIndex < 0 || nextIndex < 0 || nextIndex >= kit.itemGoals.length) {
+  const orderedSet = new Set(orderedPrefabs)
+  const goalsByPrefab = new Map(
+    kit.itemGoals.map((goal) => [goal.prefab, goal] as const),
+  )
+  if (
+    orderedSet.size !== orderedPrefabs.length ||
+    orderedPrefabs.some((prefab) => !goalsByPrefab.has(prefab))
+  ) {
     return kit
   }
 
-  const itemGoals = [...kit.itemGoals]
-  ;[itemGoals[goalIndex], itemGoals[nextIndex]] = [
-    itemGoals[nextIndex]!,
-    itemGoals[goalIndex]!,
-  ]
+  let orderedIndex = 0
+  const itemGoals = kit.itemGoals.map((goal) => {
+    if (!orderedSet.has(goal.prefab)) return goal
+    const reorderedGoal = goalsByPrefab.get(orderedPrefabs[orderedIndex++]!)
+    return reorderedGoal ?? goal
+  })
   return kitSchema.parse({ ...kit, itemGoals })
 }
 

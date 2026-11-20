@@ -49,8 +49,8 @@ import {
   createExampleKit,
   loadExampleKitOptions,
   loadKitCollection,
-  moveItemGoal,
   removeItemGoal,
+  reorderItemGoals,
   removeKitFromCollection,
   saveKitCollection,
   selectKit,
@@ -358,12 +358,12 @@ export function App() {
     )
   }
 
-  function moveGoalInActiveKit(prefab: string, direction: "up" | "down") {
+  function reorderGoalsInActiveKit(orderedPrefabs: readonly string[]) {
     if (!activeKit) return
     persistKits(
       updateKitInCollection(
         kitState.collection,
-        moveItemGoal(activeKit, prefab, direction),
+        reorderItemGoals(activeKit, orderedPrefabs),
       ),
     )
   }
@@ -586,7 +586,7 @@ export function App() {
           getItem={(prefab) => dataAccess?.getItem(prefab)}
           onCreateKit={addNewKit}
           onDeleteKit={deleteKit}
-          onMoveGoal={moveGoalInActiveKit}
+          onReorderGoals={reorderGoalsInActiveKit}
           onRemoveGoal={removeGoalFromActiveKit}
           onScrollToItemList={scrollToItemList}
           onSelectKit={selectActiveKit}

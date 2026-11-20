@@ -11,8 +11,8 @@ import {
   createKitCollection,
   loadExampleKitOptions,
   loadKitCollection,
-  moveItemGoal,
   parseKitExport,
+  reorderItemGoals,
   removeItemGoal,
   removeKitFromCollection,
   saveKitCollection,
@@ -147,18 +147,23 @@ describe("kit collection", () => {
     expect(removeItemGoal(withAcorn, "Acorn").itemGoals).toEqual([])
   })
 
-  it("moves item goals one position and leaves boundary moves unchanged", () => {
+  it("reorders visible goals while preserving hidden goal slots", () => {
     const kit = createKit("kit-1", "Starter", "Meadows")
-    const withGoals = addItemGoal(addItemGoal(addItemGoal(kit, "Acorn"), "Wood"), "Stone")
-
-    expect(moveItemGoal(withGoals, "Wood", "up").itemGoals.map((goal) => goal.prefab)).toEqual([
-      "Wood",
-      "Acorn",
+    const withGoals = addItemGoal(
+      addItemGoal(
+        addItemGoal(addItemGoal(kit, "Acorn"), "HiddenGoal"),
+        "Wood",
+      ),
       "Stone",
-    ])
-    expect(moveItemGoal(withGoals, "Acorn", "up")).toBe(withGoals)
-    expect(moveItemGoal(withGoals, "Stone", "down")).toBe(withGoals)
-    expect(moveItemGoal(withGoals, "Unknown", "up")).toBe(withGoals)
+    )
+
+    expect(
+      reorderItemGoals(withGoals, ["Stone", "Wood", "Acorn"]).itemGoals.map(
+        (goal) => goal.prefab,
+      ),
+    ).toEqual(["Stone", "HiddenGoal", "Wood", "Acorn"])
+    expect(reorderItemGoals(withGoals, ["Unknown"])).toBe(withGoals)
+    expect(reorderItemGoals(withGoals, ["Wood", "Wood"])).toBe(withGoals)
   })
 
   it("updates and clears optional quantity and quality goals", () => {

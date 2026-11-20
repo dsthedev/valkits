@@ -3,7 +3,7 @@
   "kit": {
     "id": "3859f7f2-577c-4a25-86d9-8b8a4fb6e318",
     "name": "troll stuff",
-    "biome": "Meadows",
+    "biome": "Black Forest",
     "itemGoals": [
       { "prefab": "ArmorTrollLeatherChest", "targetQuality": 2 },
       { "prefab": "ArmorTrollLeatherLegs", "targetQuality": 2 },
