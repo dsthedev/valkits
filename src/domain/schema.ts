@@ -93,6 +93,10 @@ export const gamePieceSchema = z.object({
   upgradeLevel: positiveIntegerSchema.optional(),
   buildRequirements: z.array(recipeRequirementSchema),
   processingConversions: z.array(gameProcessingConversionSchema).optional(),
+  containerSize: z.object({
+    Width: positiveIntegerSchema,
+    Height: positiveIntegerSchema,
+  }).optional(),
 })
 
 export const kitItemGoalSchema = z.object({

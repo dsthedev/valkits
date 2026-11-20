@@ -71,6 +71,7 @@ import {
   MAX_KIT_ITEM_QUANTITY,
   type Biome,
   type GameItem,
+  type GamePiece,
   type Kit,
 } from "@/domain/schema"
 import {
@@ -93,7 +94,9 @@ interface KitWorkspaceProps {
   hideUpgraderItems: boolean
   calculationData:
     | (StationRequirementDataAccess &
-        Pick<StationResourceDataAccess, "getStationUpgrades">)
+        Pick<StationResourceDataAccess, "getStationUpgrades"> & {
+          getPiece(prefab: string): GamePiece | undefined
+        })
     | null
   getItem(prefab: string): GameItem | undefined
   onScrollToItemList(): void
@@ -1060,6 +1063,7 @@ export function KitWorkspace({
                 <CalculationResults
                   calculation={liveCalculation}
                   getItem={getItem}
+                  getPiece={calculationData.getPiece}
                   getStationPiece={calculationData.getStationPiece}
                   getStationUpgrades={calculationData.getStationUpgrades}
                   hideUpgraderItems={hideUpgraderItems}

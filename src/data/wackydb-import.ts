@@ -395,6 +395,7 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
     upgradeLevel: isUpgrade ? verifiedUpgradeLevel : undefined,
     buildRequirements: requirements.data,
     processingConversions,
+    containerSize: optionalSourceValue(source.data.contData),
   })
 
   if (!piece.success) {

@@ -18,6 +18,20 @@ function getData<T>(result: ImportResult<T>): T {
 }
 
 describe("WackyDatabase YAML import", () => {
+  it("imports chest dimensions and direct construction materials", () => {
+    const chest = getData(
+      parsePieceYaml(
+        readSourceFile("../../public/data/wackydb/pieces/Piece_piece_chest.yml"),
+      ),
+    )
+
+    expect(chest.containerSize).toEqual({ Width: 6, Height: 4 })
+    expect(chest.buildRequirements).toMatchObject([
+      { prefab: "FineWood", amount: 10 },
+      { prefab: "Iron", amount: 2 },
+    ])
+  })
+
   it("normalizes an exported item using only kit-relevant fields", () => {
     const item = getData(
       parseItemYaml(

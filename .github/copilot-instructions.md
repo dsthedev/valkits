@@ -333,6 +333,9 @@ appropriate.
 -   Show direct kit ingredients and combined recursive kit/station totals
     in the quick reference; keep detailed station and unresolved information
     in the advanced breakdown.
+-   Estimate storage for combined resource totals using each item's stack size
+    and imported chest capacity, with direct chest build costs shown separately.
+    Default to wooden chests and identify incomplete estimates.
 -   Show unresolved requirements and calculation limitations clearly.
 -   Keep kit resources, station resources, and combined totals
     distinguishable.

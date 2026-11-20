@@ -88,6 +88,9 @@ repository's plan and settings.
   processing removal flags are not applied.
 - Unknown, ambiguous, or unsupported item sources and station costs remain
   visibly unresolved. A partial plan is not a complete gather checklist.
+- Storage estimates use resource stack sizes and imported chest capacities.
+  Chest construction costs are direct materials, separate from kit costs; the
+  estimate excludes finished kit items and may be incomplete with missing data.
 - Previous calculations are retained per kit and marked stale when relevant
   kit inputs or game data changes.
 - Clearing site data or using a different browser/device does not carry over

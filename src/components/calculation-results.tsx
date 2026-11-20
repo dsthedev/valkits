@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sheet"
 import type { UnresolvedReason } from "@/domain/resource-calculation"
 import type { KitResourceCalculation } from "@/domain/resource-calculation"
+import { estimateChestStorage } from "@/domain/chest-estimate"
 import {
   getResourceCategory,
   resourceCategories,
@@ -55,6 +56,7 @@ interface CalculationResultsProps {
   stationResourceCalculation: StationResourceCalculation
   hideUpgraderItems: boolean
   getItem(prefab: string): GameItem | undefined
+  getPiece(prefab: string): GamePiece | undefined
   getStationPiece(stationReference: string): GamePiece | undefined
   getStationUpgrades(stationPrefab: string): readonly GamePiece[]
 }
@@ -63,6 +65,16 @@ interface CostRow {
   prefab: string
   amount: number
 }
+
+const chestTypes = [
+  { prefab: "piece_chest_wood", label: "Wood chest" },
+  { prefab: "piece_chest", label: "Reinforced chest" },
+  { prefab: "piece_chest_blackmetal", label: "Black metal chest" },
+  { prefab: "piece_chest_grausten", label: "Grausten chest" },
+  { prefab: "piece_chest_private", label: "Personal chest" },
+  { prefab: "piece_chest_barrel", label: "Barrel" },
+  { prefab: "piece_chest_warderobe", label: "Wardrobe" },
+] as const
 
 type SortColumn = "resource" | "amount"
 type SortDirection = "ascending" | "descending"
@@ -390,6 +402,7 @@ export function CalculationResults({
   stationResourceCalculation,
   hideUpgraderItems,
   getItem,
+  getPiece,
   getStationPiece,
   getStationUpgrades,
 }: CalculationResultsProps) {
@@ -398,6 +411,7 @@ export function CalculationResults({
     "advanced"
   )
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
+  const [chestPrefab, setChestPrefab] = useState<string>("piece_chest_wood")
   const [groupByType, setGroupByType] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
     "total"
@@ -426,6 +440,7 @@ export function CalculationResults({
     )
     .map(({ prefab, amount }) => ({ prefab, amount }))
   const combinedCosts = combineCosts(kitResourceCosts, stationResources)
+  const chestEstimate = estimateChestStorage(combinedCosts, getPiece(chestPrefab), getItem)
   const totalResourceAmount = combinedCosts.reduce(
     (total, cost) => total + cost.amount,
     0
@@ -584,9 +599,41 @@ export function CalculationResults({
               <h3 className="font-medium">
                 {showCombinedCosts ? "Combined costs" : "Separate costs"}
               </h3>
-              <p className="text-[11px] text-muted-foreground">
-                {totalResourceAmount.toLocaleString()} total items!
-              </p>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+                <span className="text-sm font-medium text-foreground">
+                  {totalResourceAmount.toLocaleString()} items
+                </span>
+                <span>need</span>
+                {chestEstimate ? (
+                  <span className="text-3xl font-semibold text-amber-700 tabular-nums dark:text-amber-200">
+                    ~{chestEstimate.count.toLocaleString()}
+                  </span>
+                ) : <span>an unknown number of</span>}
+                <label className="sr-only" htmlFor="chest-type">Chest type</label>
+                <select
+                  className="max-w-full rounded border border-border bg-background px-1 py-0.5 text-xs text-foreground"
+                  id="chest-type"
+                  value={chestPrefab}
+                  onChange={(event) => setChestPrefab(event.target.value)}
+                >
+                  {chestTypes.map((chest) => (
+                    <option key={chest.prefab} value={chest.prefab}>
+                      {chest.label}{chestEstimate?.count === 1 ? "" : "s"}
+                    </option>
+                  ))}
+                </select>
+                <span>to store</span>
+              </div>
+              {chestEstimate && chestEstimate.count > 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Chest cost: {chestEstimate.costs.map((cost) => `${cost.amount.toLocaleString()} ${humanizePrefab(cost.prefab)}`).join(", ")}
+                </p>
+              )}
+              {(!chestEstimate || chestEstimate.missingStackSizes.length > 0 || !isComplete) && (
+                <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                  {!chestEstimate ? "Chest data unavailable." : chestEstimate.missingStackSizes.length > 0 ? "Storage estimate is incomplete: some stack sizes are unknown." : "Storage estimate may be incomplete because some costs are unresolved."}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
