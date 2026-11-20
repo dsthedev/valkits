@@ -149,6 +149,16 @@ multiple processing inputs remain unresolved until a source-selection
 workflow is added. Smelter fuel is counted as a direct resource requirement
 and is not expanded through alternate fuel-production paths.
 
+Cooking-station piece YAML can include `cookingStationData.cookConversion`
+records with `FromName`, `ToName`, `CookTime`, and `Remove`. The regular
+cooking station converts `RawMeat` to `CookedMeat`, while the iron cooking
+station converts `SerpentMeat` to `SerpentMeatCooked`. Some conversions are
+listed by both stations; when an otherwise identical conversion is listed
+by the regular and iron cooking stations, prefer the regular station.
+Cooking records do not specify output yield, so the importer currently uses
+one output per input provisionally. Preserve but do not apply `Remove` until
+its semantics are verified.
+
 Treat these observations as provisional source-format knowledge. Keep
 parsing isolated so it can be adjusted when more examples are inspected.
 
@@ -202,7 +212,9 @@ their behavior.
 When exactly one enabled craft recipe coexists with processing conversions,
 prefer the craft recipe. Multiple enabled craft recipes remain ambiguous;
 when no enabled craft recipe exists, multiple processing conversions remain
-ambiguous until a source-selection workflow is added.
+ambiguous unless an explicitly verified source preference applies. For an
+otherwise identical conversion listed by both cooking stations, prefer the
+regular cooking station.
 
 Do not silently classify an item with no recipe as a gatherable
 resource. Distinguish: - Known gatherable/resource item. - Known item

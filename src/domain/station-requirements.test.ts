@@ -270,6 +270,39 @@ describe("kit station requirement calculation", () => {
     ).toEqual(["fermenter", "piece_MeadCauldron"])
   }, 15_000)
 
+  it("uses the regular cooking station for cooked meat and the iron station for serpent meat", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const data = createWackyDbDataAccess(catalog)
+    const result = calculateKitStationRequirements(
+      kit([{ prefab: "CookedMeat" }, { prefab: "SerpentMeatCooked" }]),
+      data,
+    )
+
+    expect(result.itemRequirements).toEqual(
+      expect.arrayContaining([
+        {
+          itemPrefab: "CookedMeat",
+          targetQuality: 1,
+          stationReference: "piece_cookingstation",
+          stationPrefab: "piece_cookingstation",
+          outputAmountPerInput: 1,
+          status: "required",
+        },
+        {
+          itemPrefab: "SerpentMeatCooked",
+          targetQuality: 1,
+          stationReference: "piece_cookingstation_iron",
+          stationPrefab: "piece_cookingstation_iron",
+          outputAmountPerInput: 1,
+          status: "required",
+        },
+      ]),
+    )
+  }, 15_000)
+
   it("uses the cauldron spice rack for Black Soup's level-2 recipe", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),

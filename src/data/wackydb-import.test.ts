@@ -232,6 +232,36 @@ reqs: []
     })
   })
 
+  it("imports regular and iron cooking-station conversions", () => {
+    const regularCookingStation = getData(
+      parsePieceYaml(
+        readSourceFile(
+          "../../public/data/wackydb/pieces/Piece_piece_cookingstation.yml",
+        ),
+      ),
+    )
+    const ironCookingStation = getData(
+      parsePieceYaml(
+        readSourceFile(
+          "../../public/data/wackydb/pieces/Piece_piece_cookingstation_iron.yml",
+        ),
+      ),
+    )
+
+    expect(regularCookingStation.processingConversions).toContainEqual({
+      inputPrefab: "RawMeat",
+      resultPrefab: "CookedMeat",
+      outputAmount: 1,
+      removeInput: false,
+    })
+    expect(ironCookingStation.processingConversions).toContainEqual({
+      inputPrefab: "SerpentMeat",
+      resultPrefab: "SerpentMeatCooked",
+      outputAmount: 1,
+      removeInput: false,
+    })
+  })
+
   it("imports smelter conversions with their fuel requirement", () => {
     const piece = getData(
       parsePieceYaml(

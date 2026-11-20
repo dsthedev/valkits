@@ -223,6 +223,54 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
     : undefined
   const fermentationStation = source.data.fermStationData
   let processingConversions: GameProcessingConversion[] | undefined
+  const cookingStation = source.data.cookingStationData
+  if (cookingStation !== undefined && cookingStation !== null) {
+    if (typeof cookingStation !== "object" || Array.isArray(cookingStation)) {
+      return failure("cookingStationData: expected an object")
+    }
+
+    const rawConversions = (
+      cookingStation as Record<string, unknown>
+    ).cookConversion
+    if (rawConversions !== undefined && rawConversions !== null) {
+      if (!Array.isArray(rawConversions)) {
+        return failure("cookingStationData.cookConversion: expected a YAML list")
+      }
+
+      processingConversions ??= []
+      for (const [index, rawConversion] of rawConversions.entries()) {
+        if (
+          typeof rawConversion !== "object" ||
+          rawConversion === null ||
+          Array.isArray(rawConversion)
+        ) {
+          return failure(
+            `cookingStationData.cookConversion[${index}]: expected an object`,
+          )
+        }
+
+        const sourceConversion = rawConversion as Record<string, unknown>
+        const conversion = gameProcessingConversionSchema.safeParse({
+          inputPrefab: sourceConversion.FromName,
+          resultPrefab: sourceConversion.ToName,
+          outputAmount: 1,
+          removeInput: sourceConversion.Remove,
+        })
+        if (!conversion.success) {
+          return {
+            success: false,
+            errors: conversion.error.issues.map(
+              (issue) =>
+                `cookingStationData.cookConversion[${index}].${issue.path.join(".")}: ${issue.message}`,
+            ),
+          }
+        }
+
+        processingConversions.push(conversion.data)
+      }
+    }
+  }
+
   if (fermentationStation !== undefined && fermentationStation !== null) {
     if (
       typeof fermentationStation !== "object" ||
@@ -239,7 +287,7 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
         return failure("fermStationData.fermConversion: expected a YAML list")
       }
 
-      processingConversions = []
+      processingConversions ??= []
       for (const [index, rawConversion] of rawConversions.entries()) {
         if (
           typeof rawConversion !== "object" ||

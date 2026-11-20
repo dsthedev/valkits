@@ -24,4 +24,38 @@ describe("processing source selection", () => {
       ]),
     ).toBeUndefined()
   })
+
+  it("prefers the regular cooking station for conversions shared with the iron station", () => {
+    const regularConversion = {
+      inputPrefab: "RawMeat",
+      resultPrefab: "CookedMeat",
+      outputAmount: 1,
+      removeInput: false,
+      stationPrefab: "piece_cookingstation",
+    }
+    const ironConversion = {
+      ...regularConversion,
+      stationPrefab: "piece_cookingstation_iron",
+    }
+
+    expect(
+      selectProcessingConversion("CookedMeat", [
+        ironConversion,
+        regularConversion,
+      ]),
+    ).toEqual(regularConversion)
+  })
+
+  it("resolves identical conversion records for resource-only calculations", () => {
+    const conversion = {
+      inputPrefab: "RawMeat",
+      resultPrefab: "CookedMeat",
+      outputAmount: 1,
+      removeInput: false,
+    }
+
+    expect(
+      selectProcessingConversion("CookedMeat", [conversion, conversion]),
+    ).toEqual(conversion)
+  })
 })
