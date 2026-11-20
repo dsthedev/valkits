@@ -137,6 +137,7 @@ export function parseItemYaml(yamlText: string): ImportResult<GameItem> {
           health: optionalSourceValue(foodStats.m_foodHealth),
           stamina: optionalSourceValue(foodStats.m_foodStamina),
           eitr: optionalSourceValue(foodStats.m_FoodEitr),
+          durationSeconds: optionalSourceValue(foodStats.m_foodBurnTime),
         }
       : undefined,
     armorStats: armorStats

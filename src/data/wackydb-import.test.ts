@@ -47,7 +47,12 @@ describe("WackyDatabase YAML import", () => {
       ),
     )
 
-    expect(food.foodStats).toEqual({ health: 30, stamina: 10, eitr: 0 })
+    expect(food.foodStats).toEqual({
+      health: 30,
+      stamina: 10,
+      eitr: 0,
+      durationSeconds: 1200,
+    })
     expect(shield.shieldStats).toMatchObject({
       blockPower: 6,
       blockPowerPerLevel: 6,
@@ -55,6 +60,22 @@ describe("WackyDatabase YAML import", () => {
       deflectionForcePerLevel: 5,
       timedBlockBonus: 1.5,
     })
+  })
+
+  it("imports representative food durations in seconds", () => {
+    const raspberry = getData(
+      parseItemYaml(
+        readSourceFile("../../public/data/wackydb/items/Item_Raspberry.yml"),
+      ),
+    )
+    const sausages = getData(
+      parseItemYaml(
+        readSourceFile("../../public/data/wackydb/items/Item_Sausages.yml"),
+      ),
+    )
+
+    expect(raspberry.foodStats?.durationSeconds).toBe(600)
+    expect(sausages.foodStats?.durationSeconds).toBe(1500)
   })
 
 

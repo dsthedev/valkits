@@ -31,6 +31,7 @@ export const gameItemSchema = z.object({
       health: statValueSchema.optional(),
       stamina: statValueSchema.optional(),
       eitr: statValueSchema.optional(),
+      durationSeconds: statValueSchema.optional(),
     })
     .optional(),
   armorStats: z
