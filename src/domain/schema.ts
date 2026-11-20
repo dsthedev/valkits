@@ -17,6 +17,8 @@ const positiveIntegerSchema = z.number().int().positive()
 const nonNegativeIntegerSchema = z.number().int().nonnegative()
 const statValueSchema = z.number().finite().nonnegative()
 
+export const MAX_KIT_ITEM_QUANTITY = 999
+
 export const biomeSchema = z.enum(biomes)
 
 export const gameItemSchema = z.object({
@@ -95,7 +97,7 @@ export const gamePieceSchema = z.object({
 
 export const kitItemGoalSchema = z.object({
   prefab: identifierSchema,
-  quantity: positiveIntegerSchema.optional(),
+  quantity: positiveIntegerSchema.max(MAX_KIT_ITEM_QUANTITY).optional(),
   targetQuality: positiveIntegerSchema.optional(),
 })
 

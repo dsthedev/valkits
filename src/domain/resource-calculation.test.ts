@@ -63,6 +63,25 @@ function kit(itemGoals: Array<{ prefab: string; quantity?: number; targetQuality
 }
 
 describe("kit resource calculation", () => {
+  it("calculates quantities above an item's stack size up to 999", () => {
+    const result = calculateKitResources(
+      kit([{ prefab: "Arrow", quantity: 999 }]),
+      dataAccess(
+        [item("Arrow", "Ammo", 50), item("Wood")],
+        [
+          recipe("Arrow", [
+            { prefab: "Wood", amount: 8, amountPerLevel: 0, recover: false },
+          ], { outputAmount: 20 }),
+        ],
+      ),
+    )
+
+    expect(result.leafRequirements).toEqual([{ prefab: "Wood", amount: 400 }])
+    expect(result.unresolved).toEqual([
+      { prefab: "Wood", amount: 400, reason: "known-item-no-recipe" },
+    ])
+  })
+
   it("rounds crafts up to recipe output batches using base ingredient amounts", () => {
     const result = calculateKitResources(
       kit([{ prefab: "Arrow", quantity: 21 }]),

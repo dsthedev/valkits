@@ -3,6 +3,7 @@ import {
   gameItemSchema,
   gameRecipeSchema,
   kitSchema,
+  MAX_KIT_ITEM_QUANTITY,
   recipeRequirementSchema,
 } from "./schema"
 
@@ -77,6 +78,24 @@ describe("kit schema", () => {
     })
 
     expect(kit.itemGoals[0]?.targetQuality).toBe(3)
+  })
+
+  it("allows bulk item quantities up to 999", () => {
+    const bulkKit = kitSchema.safeParse({
+      id: "kit-bulk",
+      name: "Bulk kit",
+      biome: "Meadows",
+      itemGoals: [{ prefab: "Wood", quantity: MAX_KIT_ITEM_QUANTITY }],
+    })
+    const overLimitKit = kitSchema.safeParse({
+      id: "kit-too-large",
+      name: "Over limit",
+      biome: "Meadows",
+      itemGoals: [{ prefab: "Wood", quantity: MAX_KIT_ITEM_QUANTITY + 1 }],
+    })
+
+    expect(bulkKit.success).toBe(true)
+    expect(overLimitKit.success).toBe(false)
   })
 
   it("rejects unknown biomes and duplicate prefab goals", () => {

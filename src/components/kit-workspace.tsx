@@ -66,7 +66,13 @@ import {
   type StatBreakdown,
 } from "@/domain/kit-stat-calculation"
 import { calculateKitResources } from "@/domain/resource-calculation"
-import { biomes, type Biome, type GameItem, type Kit } from "@/domain/schema"
+import {
+  biomes,
+  MAX_KIT_ITEM_QUANTITY,
+  type Biome,
+  type GameItem,
+  type Kit,
+} from "@/domain/schema"
 import {
   calculateKitStationRequirements,
   type StationRequirementDataAccess,
@@ -284,8 +290,8 @@ function GoalStepper({
           type="text"
           value={value}
         />
-        <span className="pr-1 text-sm font-semibold tabular-nums opacity-70">
-          /{maxLabel}
+        <span className="pr-1 text-xs font-semibold tabular-nums opacity-70">
+          {tone === "quantity" ? `/${maxLabel}` : `/${maxLabel}`}
         </span>
         <Button
           aria-label={`Increase ${label.toLowerCase()} of ${itemName}`}
@@ -978,7 +984,7 @@ export function KitWorkspace({
                                           itemName={goal.prefab}
                                           label="Qty"
                                           maxLabel={item?.maxStackSize ?? 1}
-                                          maximum={item?.maxStackSize}
+                                          maximum={MAX_KIT_ITEM_QUANTITY}
                                           onValueChange={(quantity) =>
                                             onUpdateGoal(goal.prefab, {
                                               quantity,
