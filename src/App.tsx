@@ -17,6 +17,8 @@ import {
   RiMore2Line,
   RiSearchLine,
   RiArrowUpLine,
+  RiCodeLine,
+  RiHeartFill,
   RiStarFill,
   RiStarLine,
 } from "@remixicon/react"
@@ -551,7 +553,7 @@ export function App() {
 
   return (
     <div
-      className="min-h-svh bg-background text-white"
+      className="flex min-h-svh flex-col bg-background text-white"
       style={{
         backgroundImage: `linear-gradient(rgb(0 0 0 / 95%), rgb(0 0 0 / 90%)), url("${import.meta.env.BASE_URL}valkitlogo.png")`,
         backgroundAttachment: "fixed",
@@ -711,7 +713,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12 2xl:max-w-[1800px]">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-16 sm:px-6 sm:pt-12 2xl:max-w-[1800px]">
         <div className="2xl:grid 2xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)] 2xl:items-start 2xl:gap-6">
           <div className="min-w-0">
             <KitWorkspace
@@ -1154,6 +1156,33 @@ export function App() {
           </Button>
         )}
       </main>
+      <footer className="border-t border-white/10">
+        <div className="mx-auto max-w-3xl px-4 py-10 text-center sm:px-6 sm:py-12">
+          <h2 className="text-sm font-semibold tracking-wide text-white/80">
+            Why Valkits?
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/60 sm:text-base sm:leading-7">
+            Set out for one more stack of ore. Came home after a long,
+            portal-less trip—and discovered it was enough for almost half the
+            plan. Valkits helps you count the materials before you leave camp,
+            so a nomap adventure can stay an adventure, not a second mining
+            shift.
+          </p>
+          <a
+            aria-label="View Valkits on GitHub"
+            className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/75 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            href="https://github.com/dsthedev/valkits"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <RiCodeLine aria-hidden="true" className="size-4" />
+            <span aria-hidden="true">+</span>
+            <RiHeartFill aria-hidden="true" className="size-4 text-rose-400" />
+            <span aria-hidden="true">=</span>
+            <span>Valkits</span>
+          </a>
+        </div>
+      </footer>
     </div>
   )
 }
