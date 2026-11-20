@@ -34,6 +34,7 @@ import {
   RiStarFill,
 } from "@remixicon/react"
 import { CalculationResults } from "@/components/calculation-results"
+import { getGoalStepperValue } from "@/components/goal-stepper"
 import { ImmediateRecipeCosts } from "@/components/immediate-recipe-costs"
 import { ItemIcon } from "@/components/item-icon"
 import { Button } from "@/components/ui/button"
@@ -239,8 +240,8 @@ function GoalStepper({
 }) {
   const toneClass =
     tone === "quantity"
-      ? "border-amber-400/70 bg-amber-100/70 text-amber-950 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100"
-      : "border-border bg-muted/70 text-muted-foreground"
+      ? "border-stone-300 bg-stone-50 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+      : "border-amber-400/70 bg-amber-100/70 text-amber-950 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100"
 
   return (
     <div className="flex items-center gap-1.5">
@@ -256,9 +257,16 @@ function GoalStepper({
           aria-label={`Decrease ${label.toLowerCase()} of ${itemName}`}
           className="rounded-sm"
           disabled={value <= 1}
-          onClick={() => onValueChange(value - 1)}
+          onClick={(event) =>
+            onValueChange(
+              getGoalStepperValue(value, -1, event.shiftKey, tone, maximum),
+            )
+          }
           size="icon-xs"
           type="button"
+          title={
+            tone === "quantity" ? "Shift-click to decrease by 5" : undefined
+          }
           variant="ghost"
         >
           <RiSubtractLine aria-hidden="true" />
@@ -266,13 +274,13 @@ function GoalStepper({
         <Input
           aria-label={`${label} of ${itemName}`}
           className="goal-number-input h-8 w-12 rounded-none border-0 bg-transparent px-0 text-center text-lg font-bold tabular-nums shadow-none focus-visible:ring-0"
-          max={maximum}
-          min={1}
+          inputMode="numeric"
           onChange={(event) => {
             const parsed = parseGoalInput(event.target.value, maximum)
             if (parsed !== undefined) onValueChange(parsed)
           }}
-          type="number"
+          onClick={(event) => event.currentTarget.select()}
+          type="text"
           value={value}
         />
         <span className="pr-1 text-sm font-semibold tabular-nums opacity-70">
@@ -282,9 +290,16 @@ function GoalStepper({
           aria-label={`Increase ${label.toLowerCase()} of ${itemName}`}
           className="rounded-sm"
           disabled={maximum !== undefined && value >= maximum}
-          onClick={() => onValueChange(value + 1)}
+          onClick={(event) =>
+            onValueChange(
+              getGoalStepperValue(value, 1, event.shiftKey, tone, maximum),
+            )
+          }
           size="icon-xs"
           type="button"
+          title={
+            tone === "quantity" ? "Shift-click to increase by 5" : undefined
+          }
           variant="ghost"
         >
           <RiAddLine aria-hidden="true" />
@@ -947,6 +962,7 @@ export function KitWorkspace({
                                           itemName={goal.prefab}
                                           label="Qty"
                                           maxLabel={item?.maxStackSize ?? 1}
+                                          maximum={item?.maxStackSize}
                                           onValueChange={(quantity) =>
                                             onUpdateGoal(goal.prefab, {
                                               quantity,
