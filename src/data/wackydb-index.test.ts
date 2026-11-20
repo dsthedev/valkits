@@ -55,8 +55,8 @@ describe("WackyDatabase index", () => {
         .find((piece) => piece.prefab === "cauldron_ext1_spice")
         ?.upgradeLevel,
     ).toBe(2)
-    for (const [stationPrefab, upgrades] of Object.entries(stationUpgradePaths)) {
-      for (const upgrade of upgrades) {
+    for (const [stationPrefab, stationPath] of Object.entries(stationUpgradePaths)) {
+      for (const upgrade of stationPath.upgrades) {
         expect(dataAccess.getPiece(upgrade.prefab)).toMatchObject({
           prefab: upgrade.prefab,
           isUpgrade: true,

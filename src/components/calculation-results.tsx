@@ -20,7 +20,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import type { UnresolvedReason } from "@/domain/resource-calculation"
 import type { KitResourceCalculation } from "@/domain/resource-calculation"
@@ -30,6 +29,7 @@ import {
   type ResourceCategory,
 } from "@/domain/resource-category"
 import type { GameItem } from "@/domain/schema"
+import { stationUpgradePaths } from "@/domain/station-upgrade-paths"
 import {
   groupStationRequirements,
   type KitStationRequirementCalculation,
@@ -280,6 +280,10 @@ export function CalculationResults({
   hideUpgraderItems,
   getItem,
 }: CalculationResultsProps) {
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [activeSheet, setActiveSheet] = useState<"advanced" | "stations">(
+    "advanced",
+  )
   const [showCombinedCosts, setShowCombinedCosts] = useState(true)
   const [groupByType, setGroupByType] = useState(false)
   const [costView, setCostView] = useState<"total" | "craft" | "quality">(
@@ -335,27 +339,39 @@ export function CalculationResults({
     unresolvedStationRequirements.length > 0 &&
     quickStationRequirements.length > 0
 
+  function openSheet(sheet: "advanced" | "stations") {
+    setActiveSheet(sheet)
+    setSheetOpen(true)
+  }
+
   function advancedBreakdownTrigger() {
     return (
-      <SheetTrigger
-        render={
-          <Button
-            className="h-auto px-0 py-0 text-inherit underline decoration-dotted underline-offset-2"
-            size="sm"
-            variant="link"
-          >
-            Advanced breakdown
-          </Button>
-        }
-      />
+      <Button
+        className="h-auto px-0 py-0 text-inherit underline decoration-dotted underline-offset-2"
+        onClick={() => openSheet("advanced")}
+        size="sm"
+        variant="link"
+      >
+        Advanced breakdown
+      </Button>
     )
   }
 
   return (
-    <Sheet>
+    <Sheet open={sheetOpen} onOpenChange={(open) => setSheetOpen(open)}>
       <section className="mt-5 border-t border-border/70 pt-4">
       <section className="mb-4 border-b border-border/70 pb-4">
-        <h2 className="text-sm font-semibold">Stations needed</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Stations needed</h2>
+          <Button
+            className="h-auto px-0 py-0 text-muted-foreground underline decoration-dotted underline-offset-2"
+            onClick={() => openSheet("stations")}
+            size="sm"
+            variant="link"
+          >
+            Station breakdown
+          </Button>
+        </div>
         {quickStationRequirements.length > 0 ? (
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {quickStationRequirements.map((group) => (
@@ -448,17 +464,26 @@ export function CalculationResults({
           )}
       </div>
       <SheetContent
-        className="w-full sm:max-w-5xl"
-        side="right"
+        className={
+          activeSheet === "stations"
+            ? "w-full sm:max-w-md"
+            : "w-full sm:max-w-5xl"
+        }
+        side={activeSheet === "stations" ? "left" : "right"}
       >
         <SheetHeader>
-          <SheetTitle>Advanced breakdown</SheetTitle>
+          <SheetTitle>
+            {activeSheet === "stations" ? "Station breakdown" : "Advanced breakdown"}
+          </SheetTitle>
           <SheetDescription>
-            Detailed ingredients, station requirements, unresolved sources, and
-            calculation limitations.
+            {activeSheet === "stations"
+              ? "Station upgrade order and piece names."
+              : "Detailed ingredients, station requirements, unresolved sources, and calculation limitations."}
           </SheetDescription>
         </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto px-6 pb-6 ${activeSheet === "stations" ? "hidden" : ""}`}
+        >
           <div>
             <div
               className="mb-3 inline-flex rounded-lg bg-muted p-1"
@@ -712,6 +737,33 @@ export function CalculationResults({
               </ul>
             </section>
           </div>
+        </div>
+        <div
+          aria-label="Station upgrade paths"
+          className={`min-h-0 flex-1 overflow-y-auto px-6 pb-6 ${activeSheet === "stations" ? "" : "hidden"}`}
+        >
+          <ol className="divide-y divide-border/70 border-y border-border/70">
+            {Object.entries(stationUpgradePaths).map(
+              ([stationPrefab, stationPath]) => (
+                <li className="py-3" key={stationPrefab}>
+                  <h3 className="font-medium">{stationPath.name}</h3>
+                  <ol className="mt-2 ml-3 space-y-1 border-l border-border/70 pl-3">
+                    {stationPath.upgrades.map((upgrade) => (
+                      <li
+                        className="flex items-baseline gap-3"
+                        key={upgrade.prefab}
+                      >
+                        <span className="w-12 shrink-0 text-xs tabular-nums text-muted-foreground">
+                          Level {upgrade.level}
+                        </span>
+                        <span>{upgrade.name}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </li>
+              ),
+            )}
+          </ol>
         </div>
       </SheetContent>
       </section>
