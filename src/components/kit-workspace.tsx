@@ -1014,7 +1014,8 @@ export function KitWorkspace({
                 Live costs will appear when item data is ready.
               </p>
             )}
-            {calculationData &&
+            {activeKit &&
+              calculationData &&
               liveCalculation &&
               liveStationRequirements &&
               liveStationResources && (
@@ -1024,8 +1025,8 @@ export function KitWorkspace({
                   getStationPiece={calculationData.getStationPiece}
                   getStationUpgrades={calculationData.getStationUpgrades}
                   hideUpgraderItems={hideUpgraderItems}
-                  kitId={activeKit?.id ?? ""}
-                  key={activeKit?.id ?? "no-active-kit"}
+                  kitId={activeKit.id}
+                  key={activeKit.id}
                   stationRequirements={liveStationRequirements}
                   stationResourceCalculation={liveStationResources}
                 />
