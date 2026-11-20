@@ -312,7 +312,14 @@ function CostTable({
   function renderCostRow(cost: CostRow) {
     const collected = collectedPrefabs.has(cost.prefab)
     return (
-      <TableRow key={cost.prefab}>
+      <TableRow
+        className={
+          collected
+            ? "bg-green-500/10 hover:bg-green-500/15 dark:bg-green-400/10 dark:hover:bg-green-400/15"
+            : undefined
+        }
+        key={cost.prefab}
+      >
         <TableCell className="min-w-0 pl-0">
           <span className="flex min-w-0 items-center gap-2">
             <ItemIcon prefab={cost.prefab} size="sm" />
