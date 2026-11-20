@@ -137,6 +137,15 @@ the user confirms this means one base produces six potions. Import and
 preserve these conversion fields. Do not use `Remove` to calculate
 consumption until its semantics are separately verified.
 
+Smelter piece YAML can include `smelterData.smelterConversion` records
+with `FromName`, `ToName`, and `Remove`, plus a shared `fuelItem.name` and
+`fuelPerProduct`. The current `Piece_smelter.yml` maps both `CopperOre` and
+`CopperScrap` to `Copper`, and maps `TinOre` to `Tin`. These records do not
+specify output yield; the current importer assumes one output per input as
+a provisional rule. Verify that game behavior before treating the yield as
+authoritative. Preserve but do not apply `Remove` until its semantics are
+verified. Multiple processing inputs for one result remain unresolved.
+
 Treat these observations as provisional source-format knowledge. Keep
 parsing isolated so it can be adjusted when more examples are inspected.
 
@@ -187,6 +196,11 @@ recipes, multiple recipes, alternative-ingredient recipes, missing
 recipes, and processing recipes as the dataset investigation establishes
 their behavior.
 
+When exactly one enabled craft recipe coexists with processing conversions,
+prefer the craft recipe. Multiple enabled craft recipes remain ambiguous;
+when no enabled craft recipe exists, multiple processing conversions remain
+ambiguous until a source-selection workflow is added.
+
 Do not silently classify an item with no recipe as a gatherable
 resource. Distinguish: - Known gatherable/resource item. - Known item
 with a recipe. - Known item with no known recipe/source. - Unknown
@@ -207,9 +221,12 @@ recipe type.
 Keep station requirements separate from ordinary item-resource
 requirements.
 
-For each kit item, first report the station and minimum level stated on
-its selected craft recipe. Keep this per-item result separate from
-resource requirements and surface missing or ambiguous data. When the
+For each kit item, report the station and minimum level stated on its
+selected craft recipe, then recursively include stations needed by the
+recipe's ingredients and their processing paths. Raw ingredients with no
+known production source do not create station requirements. Keep this
+per-item result separate from resource requirements and surface missing
+or ambiguous data. When the
 item supports the requested quality and its recipe permits upgrades,
 calculate the required station level as the recipe minimum plus
 `targetQuality - 1`. Report invalid quality requests and disabled upgrades

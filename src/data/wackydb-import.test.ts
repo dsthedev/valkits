@@ -164,6 +164,31 @@ reqs: []
     })
   })
 
+  it("imports smelter conversions with their fuel requirement", () => {
+    const piece = getData(
+      parsePieceYaml(
+        readSourceFile("../../public/data/wackydb/pieces/Piece_smelter.yml"),
+      ),
+    )
+
+    expect(piece.processingConversions).toContainEqual({
+      inputPrefab: "CopperOre",
+      resultPrefab: "Copper",
+      outputAmount: 1,
+      removeInput: false,
+      fuelPrefab: "Coal",
+      fuelPerProduct: 2,
+    })
+    expect(piece.processingConversions).toContainEqual({
+      inputPrefab: "TinOre",
+      resultPrefab: "Tin",
+      outputAmount: 1,
+      removeInput: false,
+      fuelPrefab: "Coal",
+      fuelPerProduct: 2,
+    })
+  })
+
   it("leaves station upgrade levels unresolved for compound prefab suffixes", () => {
     const piece = getData(
       parsePieceYaml(

@@ -233,6 +233,63 @@ export function parsePieceYaml(yamlText: string): ImportResult<GamePiece> {
       }
     }
   }
+  const smelterData = source.data.smelterData
+  if (smelterData !== undefined && smelterData !== null) {
+    if (typeof smelterData !== "object" || Array.isArray(smelterData)) {
+      return failure("smelterData: expected an object")
+    }
+
+    const smelterRecord = smelterData as Record<string, unknown>
+    const rawConversions = smelterRecord.smelterConversion
+    if (rawConversions !== undefined && rawConversions !== null) {
+      if (!Array.isArray(rawConversions)) {
+        return failure("smelterData.smelterConversion: expected a YAML list")
+      }
+
+      const fuelItem = smelterRecord.fuelItem
+      const fuelPrefab =
+        typeof fuelItem === "object" &&
+        fuelItem !== null &&
+        !Array.isArray(fuelItem)
+          ? (fuelItem as Record<string, unknown>).name
+          : undefined
+      const fuelPerProduct = optionalSourceValue(smelterRecord.fuelPerProduct)
+      processingConversions ??= []
+
+      for (const [index, rawConversion] of rawConversions.entries()) {
+        if (
+          typeof rawConversion !== "object" ||
+          rawConversion === null ||
+          Array.isArray(rawConversion)
+        ) {
+          return failure(
+            `smelterData.smelterConversion[${index}]: expected an object`,
+          )
+        }
+
+        const sourceConversion = rawConversion as Record<string, unknown>
+        const conversion = gameProcessingConversionSchema.safeParse({
+          inputPrefab: sourceConversion.FromName,
+          resultPrefab: sourceConversion.ToName,
+          outputAmount: 1,
+          removeInput: sourceConversion.Remove,
+          fuelPrefab,
+          fuelPerProduct,
+        })
+        if (!conversion.success) {
+          return {
+            success: false,
+            errors: conversion.error.issues.map(
+              (issue) =>
+                `smelterData.smelterConversion[${index}].${issue.path.join(".")}: ${issue.message}`,
+            ),
+          }
+        }
+
+        processingConversions.push(conversion.data)
+      }
+    }
+  }
   const prefab = source.data.name
   const isUpgrade = source.data.isUpgrade === true
   const extensionOrder =

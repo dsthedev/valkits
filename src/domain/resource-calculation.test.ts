@@ -168,6 +168,58 @@ describe("kit resource calculation", () => {
     expect(result.isComplete).toBe(false)
   })
 
+  it("calculates processing fuel from the rounded output batch", () => {
+    const data = dataAccess([item("Processed"), item("Ore"), item("Coal")], [])
+    const conversions: GameProcessingConversion[] = [
+      {
+        inputPrefab: "Ore",
+        resultPrefab: "Processed",
+        outputAmount: 2,
+        removeInput: false,
+        fuelPrefab: "Coal",
+        fuelPerProduct: 3,
+      },
+    ]
+    const result = calculateKitResources(
+      kit([{ prefab: "Processed", quantity: 5 }]),
+      {
+        ...data,
+        getProcessingConversions: (prefab) =>
+          conversions.filter((conversion) => conversion.resultPrefab === prefab),
+      },
+    )
+
+    expect(result.leafRequirements).toEqual([
+      { prefab: "Coal", amount: 18 },
+      { prefab: "Ore", amount: 3 },
+    ])
+  })
+
+  it("uses the bronze recipe and preserves ambiguous copper processing", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const result = calculateKitResources(
+      kit([{ prefab: "ArmorBronzeChest" }]),
+      createWackyDbDataAccess(catalog),
+    )
+
+    expect(result.leafRequirements).toEqual(
+      expect.arrayContaining([{ prefab: "TinOre", amount: 5 }]),
+    )
+    expect(result.unresolved).toContainEqual({
+      prefab: "Copper",
+      amount: 10,
+      reason: "ambiguous-processing-conversion",
+    })
+    expect(result.unresolved).toContainEqual({
+      prefab: "Coal",
+      amount: 10,
+      reason: "ambiguous-processing-conversion",
+    })
+  }, 15_000)
+
   it("reports a known item without a recipe and an unknown prefab separately", () => {
     const result = calculateKitResources(
       kit([{ prefab: "KnownLeaf" }, { prefab: "MissingPrefab", quantity: 2 }]),

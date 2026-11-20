@@ -125,6 +125,7 @@ export function calculateKitStationRequirements(
     prefab: string,
     targetQuality: number,
     ancestors: ReadonlySet<string>,
+    isKitGoal: boolean,
   ): void {
     const base = { itemPrefab: prefab, targetQuality }
     if (ancestors.has(prefab)) {
@@ -137,6 +138,7 @@ export function calculateKitStationRequirements(
     }
     const item = data.getItem(prefab)
     if (!item) {
+      if (!isKitGoal) return
       itemRequirements.push({
         ...base,
         status: "unresolved",
@@ -152,7 +154,10 @@ export function calculateKitStationRequirements(
     )
     const conversions = data.getProcessingConversions(prefab)
 
-    if (craftRecipes.length > 1 || conversions.length > 1) {
+    if (
+      craftRecipes.length > 1 ||
+      (craftRecipes.length === 0 && conversions.length > 1)
+    ) {
       itemRequirements.push({
         ...base,
         status: "unresolved",
@@ -163,16 +168,8 @@ export function calculateKitStationRequirements(
       })
       return
     }
-    if (craftRecipes.length > 0 && conversions.length > 0) {
-      itemRequirements.push({
-        ...base,
-        status: "unresolved",
-        reason: "ambiguous-acquisition-source",
-      })
-      return
-    }
 
-    const conversion = conversions[0]
+    const conversion = craftRecipes.length === 0 ? conversions[0] : undefined
     if (conversion) {
       const stationPiece = data.getStationPiece(conversion.stationPrefab)
       if (!stationPiece) {
@@ -194,7 +191,10 @@ export function calculateKitStationRequirements(
       })
       const nextAncestors = new Set(ancestors)
       nextAncestors.add(prefab)
-      resolveItem(conversion.inputPrefab, 1, nextAncestors)
+      resolveItem(conversion.inputPrefab, 1, nextAncestors, false)
+      if (conversion.fuelPrefab) {
+        resolveItem(conversion.fuelPrefab, 1, nextAncestors, false)
+      }
       return
     }
 
@@ -205,17 +205,46 @@ export function calculateKitStationRequirements(
           : enabledRecipes.length === 0
             ? "disabled-recipe"
             : "upgrade-only-recipe"
+      if (!isKitGoal && recipes.length === 0) return
       itemRequirements.push({ ...base, status: "unresolved", reason })
       return
     }
 
     const recipe = craftRecipes[0]
     if (!recipe) {
+      if (!isKitGoal) return
       itemRequirements.push({ ...base, status: "unresolved", reason: "no-recipe" })
       return
     }
+    const nextAncestors = new Set(ancestors)
+    nextAncestors.add(prefab)
+    function resolveRecipeIngredients(): void {
+      if (recipe.requireOnlyOneIngredient) return
+
+      const ingredientPrefabs = new Set(
+        recipe.requirements
+          .filter(
+            (requirement) =>
+              requirement.amount > 0 ||
+              (targetQuality > 1 && requirement.amountPerLevel > 0),
+          )
+          .map((requirement) => requirement.prefab),
+      )
+      if (targetQuality > 1) {
+        for (const requirement of recipe.upgradeRequirements ?? []) {
+          if (requirement.amount > 0 || requirement.amountPerLevel > 0) {
+            ingredientPrefabs.add(requirement.prefab)
+          }
+        }
+      }
+      for (const ingredientPrefab of ingredientPrefabs) {
+        resolveItem(ingredientPrefab, 1, nextAncestors, false)
+      }
+    }
+
     if (!recipe.craftingStation) {
       itemRequirements.push({ ...base, status: "no-station-listed" })
+      resolveRecipeIngredients()
       return
     }
 
@@ -231,6 +260,7 @@ export function calculateKitStationRequirements(
         status: "unresolved",
         reason: "invalid-target-quality",
       })
+      resolveRecipeIngredients()
       return
     }
     if (targetQuality > 1 && recipe.disabledUpgrade) {
@@ -240,6 +270,7 @@ export function calculateKitStationRequirements(
         status: "unresolved",
         reason: "quality-upgrades-disabled",
       })
+      resolveRecipeIngredients()
       return
     }
 
@@ -263,6 +294,7 @@ export function calculateKitStationRequirements(
         status: "unresolved",
         reason: "unresolved-station",
       })
+      resolveRecipeIngredients()
       return
     }
     if (recipe.minStationLevel === undefined) {
@@ -271,6 +303,7 @@ export function calculateKitStationRequirements(
         status: "unresolved",
         reason: "missing-station-level",
       })
+      resolveRecipeIngredients()
       return
     }
 
@@ -280,10 +313,11 @@ export function calculateKitStationRequirements(
       stationLevel,
       status: "required",
     })
+    resolveRecipeIngredients()
   }
 
   for (const goal of kit.itemGoals) {
-    resolveItem(goal.prefab, goal.targetQuality ?? 1, new Set())
+    resolveItem(goal.prefab, goal.targetQuality ?? 1, new Set(), true)
   }
 
   return { kitId: kit.id, itemRequirements }

@@ -39,6 +39,8 @@ export const gameProcessingConversionSchema = z.object({
   resultPrefab: identifierSchema,
   outputAmount: positiveIntegerSchema,
   removeInput: z.boolean(),
+  fuelPrefab: identifierSchema.optional(),
+  fuelPerProduct: positiveIntegerSchema.optional(),
 })
 
 export const gameRecipeSchema = z.object({

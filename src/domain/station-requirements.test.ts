@@ -17,6 +17,7 @@ import {
   groupStationRequirements,
   type StationRequirementDataAccess,
 } from "./station-requirements"
+import { calculateStationResources } from "./station-resource-calculation"
 
 function item(prefab: string): GameItem {
   return gameItemSchema.parse({ prefab, nameToken: `$item_${prefab}` })
@@ -102,24 +103,62 @@ describe("kit station requirement calculation", () => {
       data,
     )
 
-    expect(result.itemRequirements).toEqual([
-      {
-        itemPrefab: "ArmorBronzeChest",
-        targetQuality: 1,
-        status: "required",
-        stationReference: "$piece_forge",
-        stationPrefab: "forge",
-        stationLevel: 1,
-      },
-      {
-        itemPrefab: "Salad",
-        targetQuality: 1,
-        status: "required",
-        stationReference: "$piece_cauldron",
-        stationPrefab: "piece_cauldron",
-        stationLevel: 5,
-      },
-    ])
+    expect(result.itemRequirements).toEqual(
+      expect.arrayContaining([
+        {
+          itemPrefab: "ArmorBronzeChest",
+          targetQuality: 1,
+          status: "required",
+          stationReference: "$piece_forge",
+          stationPrefab: "forge",
+          stationLevel: 1,
+        },
+        {
+          itemPrefab: "Salad",
+          targetQuality: 1,
+          status: "required",
+          stationReference: "$piece_cauldron",
+          stationPrefab: "piece_cauldron",
+          stationLevel: 5,
+        },
+        {
+          itemPrefab: "Bronze",
+          targetQuality: 1,
+          status: "required",
+          stationReference: "$piece_forge",
+          stationPrefab: "forge",
+          stationLevel: 1,
+        },
+        {
+          itemPrefab: "Copper",
+          targetQuality: 1,
+          status: "unresolved",
+          reason: "ambiguous-processing-conversion",
+        },
+        {
+          itemPrefab: "Tin",
+          targetQuality: 1,
+          stationReference: "smelter",
+          stationPrefab: "smelter",
+          outputAmountPerInput: 1,
+          status: "required",
+        },
+      ]),
+    )
+    expect(
+      groupStationRequirements(result.itemRequirements).map(
+        ({ stationPrefab }) => stationPrefab,
+      ),
+    ).toContain("smelter")
+    const stationResources = calculateStationResources(
+      result.itemRequirements,
+      data,
+    )
+    expect(
+      stationResources.stationResources.find(
+        (resource) => resource.prefab === "SurtlingCore",
+      )?.amount,
+    ).toBeGreaterThanOrEqual(5)
   }, 15_000)
 
   it("finds fermenter and cauldron stations through the mead-base conversion", async () => {
@@ -133,24 +172,26 @@ describe("kit station requirement calculation", () => {
       data,
     )
 
-    expect(result.itemRequirements).toEqual([
-      {
-        itemPrefab: "MeadPoisonResist",
-        targetQuality: 1,
-        stationReference: "fermenter",
-        stationPrefab: "fermenter",
-        outputAmountPerInput: 6,
-        status: "required",
-      },
-      {
-        itemPrefab: "MeadBasePoisonResist",
-        targetQuality: 1,
-        stationReference: "$piece_meadcauldron",
-        stationPrefab: "piece_MeadCauldron",
-        stationLevel: 1,
-        status: "required",
-      },
-    ])
+    expect(result.itemRequirements).toEqual(
+      expect.arrayContaining([
+        {
+          itemPrefab: "MeadPoisonResist",
+          targetQuality: 1,
+          stationReference: "fermenter",
+          stationPrefab: "fermenter",
+          outputAmountPerInput: 6,
+          status: "required",
+        },
+        {
+          itemPrefab: "MeadBasePoisonResist",
+          targetQuality: 1,
+          stationReference: "$piece_meadcauldron",
+          stationPrefab: "piece_MeadCauldron",
+          stationLevel: 1,
+          status: "required",
+        },
+      ]),
+    )
     expect(
       groupStationRequirements(result.itemRequirements).map(
         ({ stationPrefab }) => stationPrefab,

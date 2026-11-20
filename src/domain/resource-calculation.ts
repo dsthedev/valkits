@@ -62,6 +62,7 @@ export interface KitResourceCalculation {
 
 const calculationLimitations = [
   "Leaf requirements are not classified as gatherable or otherwise acquired.",
+  "Smelter conversion yield is assumed to be one output per input.",
   "Requirement recovery flags do not reduce crafting input totals.",
   "Processing conversion removal flags are not interpreted.",
 ]
@@ -141,24 +142,29 @@ export function calculateResourceRequirements(
       addUnresolved(prefab, amount, "ambiguous-recipe")
       return
     }
-    if (conversions.length > 1) {
+    if (craftRecipes.length === 0 && conversions.length > 1) {
       addUnresolved(prefab, amount, "ambiguous-processing-conversion")
       return
     }
-    if (craftRecipes.length > 0 && conversions.length > 0) {
-      addUnresolved(prefab, amount, "ambiguous-acquisition-source")
-      return
-    }
 
-    const conversion = conversions[0]
+    const conversion = craftRecipes.length === 0 ? conversions[0] : undefined
     if (conversion) {
+      const inputBatches = Math.ceil(amount / conversion.outputAmount)
+      const outputAmount = inputBatches * conversion.outputAmount
       const nextAncestors = new Set(ancestors)
       nextAncestors.add(prefab)
       resolvePrefab(
         conversion.inputPrefab,
-        Math.ceil(amount / conversion.outputAmount),
+        inputBatches,
         nextAncestors,
       )
+      if (conversion.fuelPrefab && conversion.fuelPerProduct) {
+        resolvePrefab(
+          conversion.fuelPrefab,
+          outputAmount * conversion.fuelPerProduct,
+          nextAncestors,
+        )
+      }
       return
     }
 
