@@ -69,6 +69,12 @@ function optionalSourceValue(value: unknown): unknown {
   return value === null || value === "" ? undefined : value
 }
 
+function sourceGroup(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined
+}
+
 function parseRequirements(
   value: unknown,
   fieldName: string,
@@ -115,6 +121,10 @@ export function parseItemYaml(yamlText: string): ImportResult<GameItem> {
   const source = parseSourceRecord(yamlText)
   if (!source.success) return source
 
+  const foodStats = sourceGroup(source.data.FoodStats)
+  const armorStats = sourceGroup(source.data.Armor)
+  const shieldStats = sourceGroup(source.data.ShieldStats)
+
   const item = gameItemSchema.safeParse({
     prefab: source.data.name,
     nameToken: source.data.m_name,
@@ -122,6 +132,32 @@ export function parseItemYaml(yamlText: string): ImportResult<GameItem> {
     itemType: optionalSourceValue(source.data.m_itemType),
     maxStackSize: optionalSourceValue(source.data.m_maxStackSize),
     maxQuality: optionalSourceValue(source.data.m_maxQuality),
+    foodStats: foodStats
+      ? {
+          health: optionalSourceValue(foodStats.m_foodHealth),
+          stamina: optionalSourceValue(foodStats.m_foodStamina),
+          eitr: optionalSourceValue(foodStats.m_FoodEitr),
+        }
+      : undefined,
+    armorStats: armorStats
+      ? {
+          armor: optionalSourceValue(armorStats.armor),
+          armorPerLevel: optionalSourceValue(armorStats.armorPerLevel),
+        }
+      : undefined,
+    shieldStats: shieldStats
+      ? {
+          blockPower: optionalSourceValue(shieldStats.m_blockPower),
+          blockPowerPerLevel: optionalSourceValue(
+            shieldStats.m_blockPowerPerLevel,
+          ),
+          deflectionForce: optionalSourceValue(shieldStats.m_deflectionForce),
+          deflectionForcePerLevel: optionalSourceValue(
+            shieldStats.m_deflectionForcePerLevel,
+          ),
+          timedBlockBonus: optionalSourceValue(shieldStats.m_timedBlockBonus),
+        }
+      : undefined,
   })
 
   if (!item.success) {

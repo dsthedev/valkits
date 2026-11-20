@@ -245,6 +245,25 @@ export function removeItemGoal(kit: Kit, prefab: string): Kit {
   })
 }
 
+export function moveItemGoal(
+  kit: Kit,
+  prefab: string,
+  direction: "up" | "down",
+): Kit {
+  const goalIndex = kit.itemGoals.findIndex((goal) => goal.prefab === prefab)
+  const nextIndex = goalIndex + (direction === "up" ? -1 : 1)
+  if (goalIndex < 0 || nextIndex < 0 || nextIndex >= kit.itemGoals.length) {
+    return kit
+  }
+
+  const itemGoals = [...kit.itemGoals]
+  ;[itemGoals[goalIndex], itemGoals[nextIndex]] = [
+    itemGoals[nextIndex]!,
+    itemGoals[goalIndex]!,
+  ]
+  return kitSchema.parse({ ...kit, itemGoals })
+}
+
 export function updateItemGoal(
   kit: Kit,
   prefab: string,

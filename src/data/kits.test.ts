@@ -11,6 +11,7 @@ import {
   createKitCollection,
   loadExampleKitOptions,
   loadKitCollection,
+  moveItemGoal,
   parseKitExport,
   removeItemGoal,
   removeKitFromCollection,
@@ -144,6 +145,20 @@ describe("kit collection", () => {
 
     expect(addItemGoal(withAcorn, "Acorn").itemGoals).toHaveLength(1)
     expect(removeItemGoal(withAcorn, "Acorn").itemGoals).toEqual([])
+  })
+
+  it("moves item goals one position and leaves boundary moves unchanged", () => {
+    const kit = createKit("kit-1", "Starter", "Meadows")
+    const withGoals = addItemGoal(addItemGoal(addItemGoal(kit, "Acorn"), "Wood"), "Stone")
+
+    expect(moveItemGoal(withGoals, "Wood", "up").itemGoals.map((goal) => goal.prefab)).toEqual([
+      "Wood",
+      "Acorn",
+      "Stone",
+    ])
+    expect(moveItemGoal(withGoals, "Acorn", "up")).toBe(withGoals)
+    expect(moveItemGoal(withGoals, "Stone", "down")).toBe(withGoals)
+    expect(moveItemGoal(withGoals, "Unknown", "up")).toBe(withGoals)
   })
 
   it("updates and clears optional quantity and quality goals", () => {

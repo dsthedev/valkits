@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import {
   RiAddLine,
+  RiArrowDownLine,
+  RiArrowUpLine,
   RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
@@ -33,6 +35,10 @@ import {
 } from "@/data/kits"
 import { getItemGoalCapabilities } from "@/domain/item-goal-capabilities"
 import { calculateImmediateItemRequirements } from "@/domain/immediate-calculation"
+import {
+  calculateKitStats,
+  type StatBreakdown,
+} from "@/domain/kit-stat-calculation"
 import { calculateKitResources } from "@/domain/resource-calculation"
 import { biomes, type Biome, type GameItem, type Kit } from "@/domain/schema"
 import {
@@ -64,6 +70,7 @@ interface KitWorkspaceProps {
   onUpdateKit(kit: Kit): void
   onDeleteKit(kitId: string): void
   onRemoveGoal(prefab: string): void
+  onMoveGoal(prefab: string, direction: "up" | "down"): void
   onUpdateGoal(prefab: string, updates: ItemGoalUpdates): void
 }
 
@@ -80,6 +87,59 @@ function parseGoalInput(
   if (!Number.isSafeInteger(parsed) || parsed < 1) return undefined
   if (maximum !== undefined && parsed > maximum) return undefined
   return parsed
+}
+
+function KitStatMetric({
+  label,
+  breakdown,
+  footnote,
+  ignoredFoodCount = 0,
+}: {
+  label: string
+  breakdown: StatBreakdown
+  footnote?: string
+  ignoredFoodCount?: number
+}) {
+  return (
+    <details className="group relative min-w-0 border-b border-border/70 px-3 py-2 first:pl-0 last:pr-0">
+      <summary
+        aria-label={`${label} breakdown`}
+        className="flex cursor-help list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden"
+      >
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <strong className="text-lg tabular-nums">{breakdown.total}</strong>
+      </summary>
+      <div className="absolute top-full left-0 z-30 hidden w-64 max-w-[calc(100vw-2rem)] border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg group-hover:block group-focus-within:block group-open:block">
+        <div className="flex justify-between gap-4">
+          <span>Base</span>
+          <span className="tabular-nums">{breakdown.base}</span>
+        </div>
+        {breakdown.contributions.map((contribution) => (
+          <div
+            className="mt-1 flex justify-between gap-4"
+            key={contribution.prefab}
+          >
+            <span className="min-w-0 truncate">
+              {humanizePrefab(contribution.prefab)}
+            </span>
+            <span className="shrink-0 tabular-nums">+{contribution.value}</span>
+          </div>
+        ))}
+        {ignoredFoodCount > 0 && (
+          <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">
+            {ignoredFoodCount} additional food goal
+            {ignoredFoodCount === 1 ? "" : "s"} not counted; only three food
+            slots are active.
+          </p>
+        )}
+      </div>
+      {footnote && (
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+          {footnote}
+        </p>
+      )}
+    </details>
+  )
 }
 
 function GoalStepper({
@@ -169,6 +229,7 @@ export function KitWorkspace({
   onUpdateKit,
   onDeleteKit,
   onRemoveGoal,
+  onMoveGoal,
   onUpdateGoal,
 }: KitWorkspaceProps) {
   const activeKit = collection.kits.find(
@@ -207,6 +268,7 @@ export function KitWorkspace({
           calculationData
         )
       : null
+  const liveStats = activeKit ? calculateKitStats(activeKit, getItem) : null
 
   function openForm(mode: "create" | "edit") {
     setFormMode(mode)
@@ -565,6 +627,38 @@ export function KitWorkspace({
         </div>
       )}
 
+      {activeKit && calculationData && liveStats && (
+        <div
+          aria-label="Kit stat estimate"
+          className="mt-5 grid grid-cols-2 border-y border-border/70 sm:grid-cols-4"
+        >
+          <KitStatMetric
+            breakdown={liveStats.health}
+            ignoredFoodCount={liveStats.ignoredFoodCount}
+            label="Health"
+          />
+          <KitStatMetric
+            breakdown={liveStats.stamina}
+            ignoredFoodCount={liveStats.ignoredFoodCount}
+            label="Stamina"
+          />
+          <KitStatMetric
+            breakdown={liveStats.eitr}
+            ignoredFoodCount={liveStats.ignoredFoodCount}
+            label="Eitr"
+          />
+          <KitStatMetric
+            breakdown={liveStats.armor}
+            footnote={
+              liveStats.shield
+                ? `Block ${liveStats.shield.blockPower} · Deflect ${liveStats.shield.deflectionForce}`
+                : undefined
+            }
+            label="Armor"
+          />
+        </div>
+      )}
+
       {activeKit && (
         <div className="mt-5 grid gap-6 border-t border-border/70 pt-4 md:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] md:items-start">
           <div className="min-w-0 md:sticky md:top-4 md:self-start">
@@ -578,6 +672,9 @@ export function KitWorkspace({
               <div className="grid gap-3">
                 {visibleGoals.map((goal) => {
                   const item = getItem(goal.prefab)
+                  const goalIndex = activeKit.itemGoals.findIndex(
+                    (itemGoal) => itemGoal.prefab === goal.prefab,
+                  )
                   const directRequirements = calculationData
                     ? calculateImmediateItemRequirements(
                         goal,
@@ -603,6 +700,36 @@ export function KitWorkspace({
                                   {item.itemType}
                                 </span>
                               )}
+                            </div>
+                            <div
+                              aria-label={`Move ${humanizePrefab(goal.prefab)}`}
+                              className="inline-flex shrink-0 items-center rounded-full border border-border p-0.5"
+                              role="group"
+                            >
+                              <Button
+                                aria-label={`Move ${humanizePrefab(goal.prefab)} up`}
+                                className="size-6 rounded-full"
+                                disabled={goalIndex <= 0}
+                                onClick={() => onMoveGoal(goal.prefab, "up")}
+                                size="icon-xs"
+                                title="Move up"
+                                type="button"
+                                variant="ghost"
+                              >
+                                <RiArrowUpLine aria-hidden="true" />
+                              </Button>
+                              <Button
+                                aria-label={`Move ${humanizePrefab(goal.prefab)} down`}
+                                className="size-6 rounded-full"
+                                disabled={goalIndex >= activeKit.itemGoals.length - 1}
+                                onClick={() => onMoveGoal(goal.prefab, "down")}
+                                size="icon-xs"
+                                title="Move down"
+                                type="button"
+                                variant="ghost"
+                              >
+                                <RiArrowDownLine aria-hidden="true" />
+                              </Button>
                             </div>
                             <Button
                               aria-label={`Remove ${goal.prefab} from ${activeKit.name}`}

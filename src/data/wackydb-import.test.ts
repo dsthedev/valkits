@@ -31,6 +31,29 @@ describe("WackyDatabase YAML import", () => {
       itemType: "Chest",
       maxStackSize: 1,
       maxQuality: 4,
+      armorStats: { armor: 8, armorPerLevel: 2 },
+    })
+  })
+
+  it("normalizes food and shield stat groups from exported records", () => {
+    const food = getData(
+      parseItemYaml(
+        readSourceFile("../../public/data/wackydb/items/Item_CookedMeat.yml"),
+      ),
+    )
+    const shield = getData(
+      parseItemYaml(
+        readSourceFile("../../public/data/wackydb/items/Item_ShieldWood.yml"),
+      ),
+    )
+
+    expect(food.foodStats).toEqual({ health: 30, stamina: 10, eitr: 0 })
+    expect(shield.shieldStats).toMatchObject({
+      blockPower: 6,
+      blockPowerPerLevel: 6,
+      deflectionForce: 20,
+      deflectionForcePerLevel: 5,
+      timedBlockBonus: 1.5,
     })
   })
 

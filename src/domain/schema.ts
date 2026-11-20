@@ -15,6 +15,7 @@ export const biomes = [
 const identifierSchema = z.string().trim().min(1)
 const positiveIntegerSchema = z.number().int().positive()
 const nonNegativeIntegerSchema = z.number().int().nonnegative()
+const statValueSchema = z.number().finite().nonnegative()
 
 export const biomeSchema = z.enum(biomes)
 
@@ -25,6 +26,28 @@ export const gameItemSchema = z.object({
   itemType: identifierSchema.optional(),
   maxStackSize: positiveIntegerSchema.optional(),
   maxQuality: positiveIntegerSchema.optional(),
+  foodStats: z
+    .object({
+      health: statValueSchema.optional(),
+      stamina: statValueSchema.optional(),
+      eitr: statValueSchema.optional(),
+    })
+    .optional(),
+  armorStats: z
+    .object({
+      armor: statValueSchema.optional(),
+      armorPerLevel: statValueSchema.optional(),
+    })
+    .optional(),
+  shieldStats: z
+    .object({
+      blockPower: statValueSchema.optional(),
+      blockPowerPerLevel: statValueSchema.optional(),
+      deflectionForce: statValueSchema.optional(),
+      deflectionForcePerLevel: statValueSchema.optional(),
+      timedBlockBonus: statValueSchema.optional(),
+    })
+    .optional(),
 })
 
 export const recipeRequirementSchema = z.object({
