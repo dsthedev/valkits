@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-ashlands-min-set",
+    "name": "Ashlands Min Set",
+    "biome": "Ashlands",
+    "itemGoals": [
+      { "prefab": "HelmetCarapace" },
+      { "prefab": "ArmorCarapaceChest" },
+      { "prefab": "ArmorCarapaceLegs" },
+      { "prefab": "CapeFeather" },
+      { "prefab": "SwordMistwalker" },
+      { "prefab": "SledgeDemolisher" },
+      { "prefab": "ShieldCarapaceBuckler" },
+      { "prefab": "BowSpineSnap" },
+      { "prefab": "ArrowCarapace" },
+      { "prefab": "CrossbowArbalest" },
+      { "prefab": "BoltCarapace" },
+      { "prefab": "MisthareSupreme" },
+      { "prefab": "Salad" },
+      { "prefab": "MushroomOmelette" },
+      { "prefab": "BarleyWine" },
+      { "prefab": "MeadHealthMajor" },
+      { "prefab": "MeadStaminaLingering" }
+    ]
+  }
+}

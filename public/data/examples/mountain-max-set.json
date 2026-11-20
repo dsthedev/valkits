@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-mountain-max-set",
+    "name": "Mountain Max Set",
+    "biome": "Mountain",
+    "itemGoals": [
+      { "prefab": "HelmetDrake", "targetQuality": 3 },
+      { "prefab": "ArmorWolfChest", "targetQuality": 3 },
+      { "prefab": "ArmorWolfLegs", "targetQuality": 3 },
+      { "prefab": "CapeWolf", "targetQuality": 3 },
+      { "prefab": "MaceSilver", "targetQuality": 3 },
+      { "prefab": "SwordSilver", "targetQuality": 3 },
+      { "prefab": "BattleaxeCrystal", "targetQuality": 3 },
+      { "prefab": "ShieldSilver", "targetQuality": 3 },
+      { "prefab": "BowDraugrFang", "targetQuality": 3 },
+      { "prefab": "ArrowObsidian" },
+      { "prefab": "WolfMeatSkewer" },
+      { "prefab": "Eyescream" },
+      { "prefab": "OnionSoup" },
+      { "prefab": "MeadHealthMedium" },
+      { "prefab": "MeadStaminaMedium" },
+      { "prefab": "MeadFrostResist" }
+    ]
+  }
+}

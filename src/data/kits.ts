@@ -198,6 +198,26 @@ export function addKitToCollection(
   )
 }
 
+export function addExampleKitsToCollection(
+  collection: KitCollection,
+  exampleKits: readonly Kit[],
+): KitCollection {
+  const contentKey = (kit: Kit) =>
+    `${kit.name}\0${kit.biome}\0${JSON.stringify(kit.itemGoals)}`
+  const existingKeys = new Set(collection.kits.map(contentKey))
+  const additions = exampleKits.filter((kit) => {
+    const key = contentKey(kit)
+    if (existingKeys.has(key)) return false
+    existingKeys.add(key)
+    return true
+  })
+
+  return createKitCollection(
+    [...collection.kits, ...additions],
+    collection.activeKitId ?? additions[0]?.id ?? null,
+  )
+}
+
 export function selectKit(
   collection: KitCollection,
   kitId: string | null,

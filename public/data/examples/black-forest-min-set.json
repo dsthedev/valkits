@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-black-forest-min-set",
+    "name": "Black Forest Min Set",
+    "biome": "Black Forest",
+    "itemGoals": [
+      { "prefab": "HelmetTrollLeather" },
+      { "prefab": "ArmorTrollLeatherChest" },
+      { "prefab": "ArmorTrollLeatherLegs" },
+      { "prefab": "SpearFlint" },
+      { "prefab": "MaceBronze" },
+      { "prefab": "ShieldBoneTower" },
+      { "prefab": "BowFineWood" },
+      { "prefab": "ArrowFire" },
+      { "prefab": "Honey" },
+      { "prefab": "BoarJerky" },
+      { "prefab": "QueensJam" }
+    ]
+  }
+}

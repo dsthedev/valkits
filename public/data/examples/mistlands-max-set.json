@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-mistlands-max-set",
+    "name": "Mistlands Max Set",
+    "biome": "Mistlands",
+    "itemGoals": [
+      { "prefab": "HelmetCarapace", "targetQuality": 3 },
+      { "prefab": "ArmorCarapaceChest", "targetQuality": 3 },
+      { "prefab": "ArmorCarapaceLegs", "targetQuality": 3 },
+      { "prefab": "CapeFeather" },
+      { "prefab": "SwordMistwalker", "targetQuality": 3 },
+      { "prefab": "THSwordKrom", "targetQuality": 3 },
+      { "prefab": "SledgeDemolisher", "targetQuality": 3 },
+      { "prefab": "ShieldCarapaceBuckler", "targetQuality": 3 },
+      { "prefab": "BowSpineSnap", "targetQuality": 3 },
+      { "prefab": "ArrowCarapace" },
+      { "prefab": "CrossbowArbalest", "targetQuality": 3 },
+      { "prefab": "BoltCarapace" },
+      { "prefab": "Demister" },
+      { "prefab": "MisthareSupreme" },
+      { "prefab": "Salad" },
+      { "prefab": "MushroomOmelette" },
+      { "prefab": "MeadHealthMajor" },
+      { "prefab": "MeadStaminaMedium" },
+      { "prefab": "BarleyWine" }
+    ]
+  }
+}

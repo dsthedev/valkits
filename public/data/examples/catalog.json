@@ -1,7 +1,19 @@
 {
   "version": 1,
   "examples": [
-    { "id": "meadows-starter", "name": "Meadows Starter", "biome": "Meadows" },
-    { "id": "troll-stuff", "name": "troll stuff", "biome": "Meadows" }
+    { "id": "meadows-min-set", "name": "Meadows Min Set", "biome": "Meadows" },
+    { "id": "meadows-max-set", "name": "Meadows Max Set", "biome": "Meadows" },
+    { "id": "black-forest-min-set", "name": "Black Forest Min Set", "biome": "Black Forest" },
+    { "id": "black-forest-max-set", "name": "Black Forest Max Set", "biome": "Black Forest" },
+    { "id": "swamp-min-set", "name": "Swamp Min Set", "biome": "Swamp" },
+    { "id": "swamp-max-set", "name": "Swamp Max Set", "biome": "Swamp" },
+    { "id": "mountain-min-set", "name": "Mountain Min Set", "biome": "Mountain" },
+    { "id": "mountain-max-set", "name": "Mountain Max Set", "biome": "Mountain" },
+    { "id": "plains-min-set", "name": "Plains Min Set", "biome": "Plains" },
+    { "id": "plains-max-set", "name": "Plains Max Set", "biome": "Plains" },
+    { "id": "mistlands-min-set", "name": "Mistlands Min Set", "biome": "Mistlands" },
+    { "id": "mistlands-max-set", "name": "Mistlands Max Set", "biome": "Mistlands" },
+    { "id": "ashlands-min-set", "name": "Ashlands Min Set", "biome": "Ashlands" },
+    { "id": "ashlands-max-set", "name": "Ashlands Max Set", "biome": "Ashlands" }
   ]
 }

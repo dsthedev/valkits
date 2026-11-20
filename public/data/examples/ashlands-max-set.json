@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-ashlands-max-set",
+    "name": "Ashlands Max Set",
+    "biome": "Ashlands",
+    "itemGoals": [
+      { "prefab": "HelmetFlametal", "targetQuality": 3 },
+      { "prefab": "ArmorFlametalChest", "targetQuality": 3 },
+      { "prefab": "ArmorFlametalLegs", "targetQuality": 3 },
+      { "prefab": "CapeFeather" },
+      { "prefab": "SwordNiedhogg", "targetQuality": 3 },
+      { "prefab": "MaceEldner", "targetQuality": 3 },
+      { "prefab": "THSwordSlayer", "targetQuality": 3 },
+      { "prefab": "ShieldFlametal", "targetQuality": 3 },
+      { "prefab": "BowAshlands", "targetQuality": 3 },
+      { "prefab": "ArrowCharred" },
+      { "prefab": "CrossbowRipper", "targetQuality": 3 },
+      { "prefab": "BoltCharred" },
+      { "prefab": "BombLava" },
+      { "prefab": "MashedMeat" },
+      { "prefab": "PiquantPie" },
+      { "prefab": "ScorchingMedley" },
+      { "prefab": "MeadHealthMajor" },
+      { "prefab": "MeadStaminaLingering" },
+      { "prefab": "BarleyWine" }
+    ]
+  }
+}

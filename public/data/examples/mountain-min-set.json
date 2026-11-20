@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-mountain-min-set",
+    "name": "Mountain Min Set",
+    "biome": "Mountain",
+    "itemGoals": [
+      { "prefab": "HelmetIron" },
+      { "prefab": "ArmorRootChest" },
+      { "prefab": "ArmorIronLegs" },
+      { "prefab": "CapeWolf" },
+      { "prefab": "MaceIron" },
+      { "prefab": "AxeIron" },
+      { "prefab": "ShieldIronBuckler" },
+      { "prefab": "BowHuntsman" },
+      { "prefab": "ArrowFire" },
+      { "prefab": "Sausages" },
+      { "prefab": "TurnipStew" },
+      { "prefab": "CarrotSoup" },
+      { "prefab": "MeadFrostResist" }
+    ]
+  }
+}

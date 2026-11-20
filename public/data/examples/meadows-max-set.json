@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-meadows-max-set",
+    "name": "Meadows Max Set",
+    "biome": "Meadows",
+    "itemGoals": [
+      { "prefab": "HelmetLeather", "targetQuality": 2 },
+      { "prefab": "ArmorLeatherChest", "targetQuality": 2 },
+      { "prefab": "ArmorLeatherLegs", "targetQuality": 2 },
+      { "prefab": "CapeDeerHide" },
+      { "prefab": "SpearFlint", "targetQuality": 3 },
+      { "prefab": "AxeFlint", "targetQuality": 3 },
+      { "prefab": "Club", "targetQuality": 3 },
+      { "prefab": "ShieldWood", "targetQuality": 3 },
+      { "prefab": "Bow", "targetQuality": 3 },
+      { "prefab": "ArrowFire" },
+      { "prefab": "CookedDeerMeat" },
+      { "prefab": "NeckTailGrilled" },
+      { "prefab": "Honey" }
+    ]
+  }
+}

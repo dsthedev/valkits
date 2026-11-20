@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-plains-min-set",
+    "name": "Plains Min Set",
+    "biome": "Plains",
+    "itemGoals": [
+      { "prefab": "HelmetDrake" },
+      { "prefab": "ArmorWolfChest" },
+      { "prefab": "ArmorWolfLegs" },
+      { "prefab": "CapeWolf" },
+      { "prefab": "MaceSilver" },
+      { "prefab": "SwordSilver" },
+      { "prefab": "ShieldSilver" },
+      { "prefab": "BowDraugrFang" },
+      { "prefab": "ArrowObsidian" },
+      { "prefab": "WolfMeatSkewer" },
+      { "prefab": "OnionSoup" },
+      { "prefab": "Eyescream" },
+      { "prefab": "MeadHealthMedium" },
+      { "prefab": "MeadStaminaMedium" }
+    ]
+  }
+}

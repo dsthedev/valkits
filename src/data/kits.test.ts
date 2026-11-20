@@ -4,6 +4,7 @@ import {
   KIT_STORAGE_KEY,
   MAX_KIT_IMPORT_LENGTH,
   addItemGoal,
+  addExampleKitsToCollection,
   addKitToCollection,
   createKit,
   createKitId,
@@ -96,32 +97,37 @@ describe("kit collection", () => {
     const fetcher: typeof fetch = async () =>
       jsonResponse(readPublicExample("catalog.json"))
 
-    await expect(loadExampleKitOptions(fetcher)).resolves.toEqual([
-      { id: "meadows-starter", name: "Meadows Starter", biome: "Meadows" },
-      { id: "troll-stuff", name: "troll stuff", biome: "Meadows" },
-    ])
+    const options = await loadExampleKitOptions(fetcher)
+
+    expect(options).toHaveLength(14)
+    expect(options).toContainEqual({
+      id: "meadows-min-set",
+      name: "Meadows Min Set",
+      biome: "Meadows",
+    })
+    expect(options).toContainEqual({
+      id: "ashlands-max-set",
+      name: "Ashlands Max Set",
+      biome: "Ashlands",
+    })
   })
 
   it("fetches example exports and creates fresh kits", async () => {
-    const fetcher: typeof fetch = async (input) =>
-      jsonResponse(
-        readPublicExample(
-          String(input).endsWith("troll-stuff.json")
-            ? "troll-stuff.json"
-            : "meadows-starter.json",
-        ),
-      )
-    const first = await createExampleKit("meadows-starter", fetcher)
-    const second = await createExampleKit("meadows-starter", fetcher)
-    const trollKit = await createExampleKit("troll-stuff", fetcher)
+    const fetcher: typeof fetch = async (input) => {
+      const fileName = String(input).split("/").at(-1) ?? ""
+      return jsonResponse(readPublicExample(fileName))
+    }
+    const first = await createExampleKit("meadows-min-set", fetcher)
+    const second = await createExampleKit("meadows-min-set", fetcher)
+    const ashlandsKit = await createExampleKit("ashlands-max-set", fetcher)
 
     expect(first).toMatchObject({
-      name: "Meadows Starter",
+      name: "Meadows Min Set",
       biome: "Meadows",
     })
     expect(first.itemGoals.length).toBeGreaterThan(0)
     expect(first.id).not.toBe(second.id)
-    expect(trollKit.name).toBe("troll stuff")
+    expect(ashlandsKit.name).toBe("Ashlands Max Set")
     await expect(
       createExampleKit("not-an-example", async () => jsonResponse({}, false)),
     ).rejects.toThrow(
@@ -194,6 +200,30 @@ describe("kit collection", () => {
 
     expect(updatedCollection.activeKitId).toBe("kit-1")
     expect(updatedCollection.kits[0]?.name).toBe("Meadows Start")
+  })
+
+  it("adds only example kits that do not already match existing content", () => {
+    const existing = addItemGoal(
+      createKit("existing-id", "Meadows Min Set", "Meadows"),
+      "ArmorRagsChest",
+    )
+    const collection = addKitToCollection(createKitCollection(), existing)
+    const repeatedExample = {
+      ...existing,
+      id: "new-id",
+    }
+    const anotherExample = createKit("another-id", "Swamp Min Set", "Swamp")
+
+    const updated = addExampleKitsToCollection(collection, [
+      repeatedExample,
+      anotherExample,
+    ])
+
+    expect(updated.kits.map((kit) => kit.name)).toEqual([
+      "Meadows Min Set",
+      "Swamp Min Set",
+    ])
+    expect(updated.activeKitId).toBe("existing-id")
   })
 
   it("selects a remaining kit when the active kit is removed", () => {

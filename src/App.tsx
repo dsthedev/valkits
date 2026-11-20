@@ -54,6 +54,7 @@ import {
 } from "@/data/favorites"
 import {
   addItemGoal,
+  addExampleKitsToCollection,
   addKitToCollection,
   createExampleKit,
   loadExampleKitOptions,
@@ -151,6 +152,7 @@ export function App() {
   const [quickStartExampleId, setQuickStartExampleId] = useState("")
   const [addingExampleKit, setAddingExampleKit] = useState(false)
   const [exampleKitError, setExampleKitError] = useState<string | null>(null)
+  const [exampleKitMessage, setExampleKitMessage] = useState<string | null>(null)
   const [resultPage, setResultPage] = useState(0)
   const [favoritesFirst, setFavoritesFirst] = useState(false)
   const [upgraderItemPreference, setUpgraderItemPreference] = useState(
@@ -363,12 +365,43 @@ export function App() {
 
     setAddingExampleKit(true)
     setExampleKitError(null)
+    setExampleKitMessage(null)
     try {
       const kit = await createExampleKit(quickStartExampleId)
       addNewKit(kit)
       button.closest("details")?.removeAttribute("open")
     } catch {
       setExampleKitError("This example kit could not be loaded.")
+    } finally {
+      setAddingExampleKit(false)
+    }
+  }
+
+  async function addAllExampleKits(button: HTMLButtonElement) {
+    if (exampleKitState.status !== "ready" || addingExampleKit) return
+
+    setAddingExampleKit(true)
+    setExampleKitError(null)
+    setExampleKitMessage(null)
+    try {
+      const importedKits = await Promise.all(
+        exampleKitState.options.map((example) => createExampleKit(example.id)),
+      )
+      const updatedCollection = addExampleKitsToCollection(
+        kitState.collection,
+        importedKits,
+      )
+      const addedCount =
+        updatedCollection.kits.length - kitState.collection.kits.length
+      if (addedCount > 0) persistKits(updatedCollection)
+      setExampleKitMessage(
+        addedCount > 0
+          ? `Imported ${addedCount} example kit${addedCount === 1 ? "" : "s"}.`
+          : "All example kits are already in your collection.",
+      )
+      button.closest("details")?.removeAttribute("open")
+    } catch {
+      setExampleKitError("Example kits could not be loaded.")
     } finally {
       setAddingExampleKit(false)
     }
@@ -537,7 +570,11 @@ export function App() {
                   <Select
                     disabled={exampleKitState.status !== "ready"}
                     onValueChange={(value) => {
-                      if (value) setQuickStartExampleId(value)
+                      if (value) {
+                        setQuickStartExampleId(value)
+                        setExampleKitError(null)
+                        setExampleKitMessage(null)
+                      }
                     }}
                     value={quickStartExampleId}
                   >
@@ -574,6 +611,14 @@ export function App() {
                       {exampleKitError}
                     </p>
                   )}
+                  {exampleKitMessage && (
+                    <p
+                      className="mt-2 text-xs text-muted-foreground"
+                      role="status"
+                    >
+                      {exampleKitMessage}
+                    </p>
+                  )}
                   <Button
                     className="mt-2 w-full"
                     disabled={
@@ -586,6 +631,22 @@ export function App() {
                     variant="secondary"
                   >
                     {addingExampleKit ? "Loading kit…" : "Add example kit"}
+                  </Button>
+                  <Button
+                    className="mt-2 w-full border-purple-300 text-purple-800 hover:bg-purple-50 dark:border-purple-300/30 dark:text-purple-200 dark:hover:bg-purple-300/10"
+                    disabled={
+                      exampleKitState.status !== "ready" || addingExampleKit
+                    }
+                    onClick={(event) =>
+                      void addAllExampleKits(event.currentTarget)
+                    }
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {addingExampleKit
+                      ? "Importing examples…"
+                      : "Import all examples"}
                   </Button>
                 </div>
               </details>

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "example-mistlands-min-set",
+    "name": "Mistlands Min Set",
+    "biome": "Mistlands",
+    "itemGoals": [
+      { "prefab": "HelmetPadded" },
+      { "prefab": "ArmorRootChest" },
+      { "prefab": "ArmorPaddedGreaves" },
+      { "prefab": "CapeLox" },
+      { "prefab": "MaceSilver" },
+      { "prefab": "SwordBlackmetal" },
+      { "prefab": "ShieldBlackmetal" },
+      { "prefab": "BowDraugrFang" },
+      { "prefab": "ArrowNeedle" },
+      { "prefab": "Demister" },
+      { "prefab": "LoxPie" },
+      { "prefab": "BloodPudding" },
+      { "prefab": "Bread" },
+      { "prefab": "MeadHealthMedium" },
+      { "prefab": "MeadStaminaMedium" },
+      { "prefab": "BarleyWine" }
+    ]
+  }
+}
