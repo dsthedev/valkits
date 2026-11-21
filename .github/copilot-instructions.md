@@ -326,9 +326,10 @@ appropriate.
     hardcoded list.
 -   Search results should use prefab identity and available display
     metadata.
--   The full-screen kit visualizer shows the first three food goals, their
-    immediate costs, and their shared station requirements and base build
-    costs; other relationship sections are placeholders until implemented.
+-   The full-screen kit visualizer shows the first three food goals and
+    equipment goals, their immediate costs, and their shared station
+    requirements and base build costs. Station upgrades and other items
+    remain placeholders until implemented.
 -   Adding an item to a kit should prevent accidental duplicate goals or
     define a clear duplicate behavior.
 -   Update kit resources, station requirements, and station resources

@@ -19,6 +19,7 @@ import {
 } from "./station-requirements"
 import { calculateStationResources } from "./station-resource-calculation"
 import { selectVisualizerFoods } from "./food-category"
+import { selectVisualizerEquipment } from "./visualizer-equipment"
 
 function item(prefab: string): GameItem {
   return gameItemSchema.parse({ prefab, nameToken: `$item_${prefab}` })
@@ -93,6 +94,37 @@ function dataAccess(
 }
 
 describe("kit station requirement calculation", () => {
+  it("groups equipment stations at the highest required quality level", () => {
+    const data = dataAccess(
+      [
+        { ...item("Helmet"), itemType: "Helmet", maxQuality: 4 },
+        { ...item("Sword"), itemType: "OneHandedWeapon", maxQuality: 4 },
+        { ...item("Food"), foodStats: { health: 10 } },
+      ],
+      [
+        recipe("Helmet", { craftingStation: "$forge", minStationLevel: 1 }),
+        recipe("Sword", { craftingStation: "$forge", minStationLevel: 2 }),
+        recipe("Food", { craftingStation: "$cauldron", minStationLevel: 1 }),
+      ],
+      [station("forge", "$forge"), station("cauldron", "$cauldron")],
+    )
+    const originalKit = kit([
+      { prefab: "Food" },
+      { prefab: "Helmet", targetQuality: 3 },
+      { prefab: "Sword", targetQuality: 3 },
+    ])
+    const { armorAndUtility, weapons } = selectVisualizerEquipment(originalKit, data.getItem)
+    const requirements = calculateKitStationRequirements(
+      { ...originalKit, itemGoals: [...armorAndUtility, ...weapons].map(({ goal }) => goal) },
+      data,
+    )
+    const groups = groupStationRequirements(requirements.itemRequirements)
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]).toMatchObject({ stationPrefab: "forge", stationLevel: 4 })
+    expect(groups[0]?.itemRequirements.map(({ itemPrefab }) => itemPrefab)).toEqual(["Helmet", "Sword"])
+  })
+
   it("groups stations for the visualized food goals, including processing inputs", () => {
     const food = (prefab: string) => ({ ...item(prefab), foodStats: { health: 10 } })
     const data = dataAccess(
