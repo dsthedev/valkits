@@ -239,6 +239,28 @@ describe("kit resource calculation", () => {
     )
   }, 15_000)
 
+  it("expands an Iron Mace and buckler into the required Iron Ore", async () => {
+    const sourcePath = fileURLToPath(
+      new URL("../../public/data/wackydb/", import.meta.url),
+    )
+    const { catalog } = await buildWackyDbCatalog(sourcePath)
+    const result = calculateKitResources(
+      kit([{ prefab: "MaceIron" }, { prefab: "ShieldIronBuckler" }]),
+      createWackyDbDataAccess(catalog),
+    )
+
+    expect(result.leafRequirements).toContainEqual({
+      prefab: "IronOre",
+      amount: 30,
+    })
+    expect(result.leafRequirements).not.toContainEqual(
+      expect.objectContaining({ prefab: "Iron" }),
+    )
+    expect(result.unresolved).not.toContainEqual(
+      expect.objectContaining({ prefab: "Iron" }),
+    )
+  }, 15_000)
+
   it("reports a known item without a recipe and an unknown prefab separately", () => {
     const result = calculateKitResources(
       kit([{ prefab: "KnownLeaf" }, { prefab: "MissingPrefab", quantity: 2 }]),

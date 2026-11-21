@@ -13,6 +13,17 @@ describe("processing source selection", () => {
     })
   })
 
+  it("prefers Iron Ore over Iron Scrap", () => {
+    const conversions = [
+      { inputPrefab: "IronScrap" },
+      { inputPrefab: "IronOre" },
+    ]
+
+    expect(selectProcessingConversion("Iron", conversions)).toEqual({
+      inputPrefab: "IronOre",
+    })
+  })
+
   it("selects a sole conversion and leaves other alternatives unresolved", () => {
     expect(
       selectProcessingConversion("Tin", [{ inputPrefab: "TinOre" }]),

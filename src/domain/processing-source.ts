@@ -2,6 +2,7 @@ import type { GameProcessingConversion } from "./schema"
 
 const preferredInputByResult: Readonly<Record<string, string>> = {
   Copper: "CopperOre",
+  Iron: "IronOre",
 }
 
 export function selectProcessingConversion<

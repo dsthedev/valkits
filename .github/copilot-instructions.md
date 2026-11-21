@@ -144,10 +144,13 @@ with `FromName`, `ToName`, and `Remove`, plus a shared `fuelItem.name` and
 specify output yield; the current importer assumes one output per input as
 a provisional rule. Verify that game behavior before treating the yield as
 authoritative. Preserve but do not apply `Remove` until its semantics are
-verified. Copper explicitly prefers `CopperOre` over `CopperScrap`; other
-multiple processing inputs remain unresolved until a source-selection
-workflow is added. Smelter fuel is counted as a direct resource requirement
-and is not expanded through alternate fuel-production paths.
+verified. Copper explicitly prefers `CopperOre` over `CopperScrap`. Per user
+request, Iron explicitly prefers `IronOre` over `IronScrap` so kit costs
+report ore requirements; this is a planner source preference, not a verified
+game rule. Other multiple processing inputs remain unresolved until a
+source-selection workflow is added. Smelter fuel is counted as a direct
+resource requirement and is not expanded through alternate fuel-production
+paths.
 
 Cooking-station piece YAML can include `cookingStationData.cookConversion`
 records with `FromName`, `ToName`, `CookTime`, and `Remove`. The regular
