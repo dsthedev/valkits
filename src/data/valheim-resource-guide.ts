@@ -19,6 +19,26 @@ const guideSchema = z.object({
 })
 
 export type ResourceGuide = z.infer<typeof guideSchema>
+export type ResourceCategory = ResourceGuide["categories"][number]
+
+export function filterResourceCategories(
+  categories: readonly ResourceCategory[],
+  query: string
+): ResourceCategory[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  if (!normalizedQuery) return categories.map((category) => category)
+
+  return categories
+    .map((category) => ({
+      ...category,
+      resources: category.resources.filter((resource) =>
+        [resource.name, resource.source, resource.tip].some((value) =>
+          value.toLocaleLowerCase().includes(normalizedQuery)
+        )
+      ),
+    }))
+    .filter((category) => category.resources.length > 0)
+}
 
 export function parseResourceGuide(value: unknown): ResourceGuide {
   const guide = guideSchema.parse(value)
