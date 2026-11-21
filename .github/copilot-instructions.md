@@ -324,6 +324,10 @@ appropriate.
 ## UI and interaction principles
 
 -   Keep navigation kit-centered and simple.
+-   The Resource Reference provides independent keyword, biome and acquisition
+    filters, resource sorting, and per-section storage and expedition notes.
+    Keep its curated guide separate from planner calculations; resources may
+    have multiple acquisition types or remain unclassified.
 -   Build the smallest useful interface before adding secondary views.
 -   Search should operate against the imported item index, not a
     hardcoded list.

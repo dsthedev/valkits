@@ -23,786 +23,1189 @@
     {
       "id": "general",
       "label": "Found in many places",
+      "storageNote": "Keep wood, stone and metals near building and crafting stations; reserve separate chests by cooking and mead stations for food and ingredients.",
+      "expeditionNote": "Stock a departure chest with food, repaired gear, tools and portal supplies before longer trips; keep valuables and boss offerings together.",
       "resources": [
         {
           "name": "Wood",
           "source": "Trees, branches, Greydwarves",
           "tip": "Clear a stand of beech trees, collect fallen logs, and replant seeds near your base for future logging runs.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wood"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wood",
+          "acquisitionTypes": [
+            "plants",
+            "creatures"
+          ]
         },
         {
           "name": "Stone",
           "source": "Rocks, mining",
           "tip": "Keep the stone from ore-mining trips; mine large surface boulders when you need extra building stacks.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Stone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Stone",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Finewood",
           "source": "Birch and oak",
           "tip": "Use a bronze axe or better on birch and oak; plant spare seeds near your base for repeat logging.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Finewood"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Finewood",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Mushroom",
           "source": "Meadows, Black Forest, Swamp",
           "tip": "Mark clusters in Meadows or Black Forest and revisit them on a gathering circuit after they regrow.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Mushroom"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Mushroom",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Thistle",
           "source": "Black Forest, Swamp",
           "tip": "Mark glowing plants in Black Forest and Swamp; their blue light makes repeat runs easier at night.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Thistle"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Thistle",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Resin",
           "source": "Greylings and Greydwarves",
           "tip": "Fight Greydwarves around an intact Black Forest spawner and collect resin alongside eyes and stone.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Resin"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Resin",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Greydwarf Eye",
           "source": "Greydwarves",
           "tip": "Keep a Greydwarf nest intact and collect eyes from repeated waves; bring food and repair gear.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Greydwarf_Eye"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Greydwarf_Eye",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bone Fragments",
           "source": "Skeletons, bone piles",
           "tip": "Clear skeleton-filled Burial Chambers and break bone piles; visit several chambers for larger hauls.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bone_Fragments"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bone_Fragments",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Feathers",
           "source": "Birds, chests",
           "tip": "Shoot birds resting on shorelines during a coastal loop; check nearby chests for extra feathers.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Feathers"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Feathers",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Coal",
           "source": "Kilns, Surtlings",
           "tip": "Run several charcoal kilns with spare wood, or collect coal from Surtlings around Swamp fire geysers.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Coal"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Coal",
+          "acquisitionTypes": [
+            "creatures",
+            "processed"
+          ]
         },
         {
           "name": "Surtling Core",
           "source": "Dungeons, Surtlings",
           "tip": "Mark Swamp fire geysers and return for Surtling drops; early on, search multiple Burial Chambers.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Surtling_Core"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Surtling_Core",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Leather Scraps",
           "source": "Boars, loot",
           "tip": "Tame and feed a pair of boars in a pen, then harvest offspring for repeat supplies of scraps and meat.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Leather_Scraps"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Leather_Scraps",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Deer Hide",
           "source": "Deer",
           "tip": "Hunt deer through open Meadows with a bow; combine hide runs with collecting deer meat.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Deer_Hide"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Deer_Hide",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Deer Meat",
           "source": "Deer",
           "tip": "Sweep open Meadows with a bow and collect hides too; use a cart or nearby chest on long hunts.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Deer_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Deer_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Coins",
           "source": "Dungeons, treasure",
           "tip": "Clear several dungeons and loot every chest; bring valuables to a trader to turn them into more coins.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Coins"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Coins",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Amber",
           "source": "Dungeons, treasure",
           "tip": "Loot chests while clearing Burial Chambers and other dungeons; save stacks to sell to a trader.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Amber"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Amber",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Amber Pearl",
           "source": "Dungeons, treasure",
           "tip": "Check dungeon and treasure chests during exploration, then collect several pearls for a trader trip.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Amber_Pearl"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Amber_Pearl",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Ruby",
           "source": "Dungeons, treasure",
           "tip": "Search dungeon and treasure chests as you explore; save rubies for a combined trip to the trader.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ruby"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ruby",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Bukeperries",
           "source": "Greydwarf Shamans, other enemies",
           "tip": "Fight Greydwarf groups around an intact nest to encounter shamans; collect their drops with eyes and resin.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bukeperries"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bukeperries",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Yellow Mushroom",
           "source": "Burial Chambers, Sunken Crypts",
           "tip": "Mark mushroom-rich Burial Chambers or crypts and revisit them after the mushrooms regrow.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Yellow_Mushroom"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Yellow_Mushroom",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Iron",
           "source": "Swamp scrap, Mistlands salvage",
           "tip": "Mine muddy scrap piles in several Sunken Crypts, then smelt the scrap; plan boat transport under default portal rules.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Iron"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Iron",
+          "acquisitionTypes": [
+            "mining",
+            "loot",
+            "processed"
+          ]
         },
         {
           "name": "Copper",
           "source": "Black Forest deposits, Mistlands salvage",
           "tip": "Mine several Black Forest copper deposits, including the buried portions, and smelt the ore near storage.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Copper"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Copper",
+          "acquisitionTypes": [
+            "mining",
+            "loot",
+            "processed"
+          ]
         },
         {
           "name": "Honey",
           "source": "Wild and built beehives",
           "tip": "Collect queen bees from wild hives and build several happy hives outdoors; empty them regularly.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Honey"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Honey",
+          "acquisitionTypes": [
+            "processed"
+          ]
         }
       ]
     },
     {
       "id": "meadows",
       "label": "Meadows",
+      "storageNote": "Keep wood, stone and hides near the workbench, and berries, meat and honey near cooking stations.",
+      "expeditionNote": "Prepare food, a shield and repaired gear; save two deer trophies for Eikthyr's altar.",
       "resources": [
         {
           "name": "Raspberries",
           "source": "Raspberry bushes",
           "tip": "Mark clusters of bushes in Meadows and revisit them after berries regrow; avoid destroying the bushes.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Raspberries"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Raspberries",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Dandelion",
           "source": "Wild flowers; some enemies",
           "tip": "Gather yellow flowers while crossing open Meadows; combine runs with hunting and shoreline foraging.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dandelion"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dandelion",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Flint",
           "source": "Shorelines",
           "tip": "Walk Meadows shorelines and shallow water, collecting flint along a long stretch before returning.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flint"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flint",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Neck Tail",
           "source": "Necks",
           "tip": "Follow Meadows shores and hunt groups of Necks while collecting flint along the same route.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Neck_Tail"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Neck_Tail",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Boar Meat",
           "source": "Boars",
           "tip": "Tame and feed two boars in a pen; harvest offspring periodically for meat and leather scraps.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Boar_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Boar_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Queen Bee",
           "source": "Wild beehives",
           "tip": "Search abandoned Meadows houses for buzzing hives; shoot them from a distance and gather queens for multiple hives.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Queen_Bee"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Queen_Bee",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Hard Antler",
           "source": "Eikthyr",
           "tip": "Collect deer trophies for offerings and summon Eikthyr again at an altar when you need more antlers.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Hard_Antler"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Hard_Antler",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Beech Seeds",
           "source": "Beech trees",
           "tip": "Pick up seeds while cutting beech trees and replant a portion with a cultivator to maintain a wood lot.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Beech_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Beech_Seeds",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Birch Seeds",
           "source": "Birch trees",
           "tip": "Cut birch for fine wood and gather its seeds; replant some with a cultivator for later harvests.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Birch_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Birch_Seeds",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Acorns",
           "source": "Oak trees",
           "tip": "Gather acorns while felling oaks for fine wood; replant some with a cultivator for a future grove.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Acorns"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Acorns",
+          "acquisitionTypes": [
+            "plants"
+          ]
         }
       ]
     },
     {
       "id": "black-forest",
       "label": "Black Forest",
+      "storageNote": "Group copper, tin and coal near smelters and the forge; store seeds and berries by the kitchen and garden.",
+      "expeditionNote": "Bring a pickaxe and food for mining trips; save three ancient seeds and prepare upgraded gear for the Elder.",
       "resources": [
         {
           "name": "Blueberries",
           "source": "Blueberry bushes",
           "tip": "Mark dense Black Forest berry patches and revisit them after regrowth; leave the bushes intact.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blueberries"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blueberries",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Carrot Seeds",
           "source": "Wild seed flowers",
           "tip": "Gather wild flowers for starter seeds, then plant some harvested carrots as seed-carrots to multiply your supply.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carrot_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carrot_Seeds",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Carrot",
           "source": "Cultivated carrot seeds",
           "tip": "Plant rows with a cultivator and reserve some carrots for seed-carrots so each harvest can support the next.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carrot"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carrot",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Copper Ore",
           "source": "Copper deposits",
           "tip": "Dig around and beneath each deposit to reach buried ore; stage a cart or boat nearby for heavy loads.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Copper_Ore"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Copper_Ore",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Tin Ore",
           "source": "Shoreline deposits",
           "tip": "Walk Black Forest shorelines and riverbanks, mining the small deposits along a route back to storage.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Tin_Ore"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Tin_Ore",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Corewood",
           "source": "Pine trees",
           "tip": "Cut Black Forest pines for core wood and plant pine cones with a cultivator for another harvest.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Corewood"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Corewood",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Troll Hide",
           "source": "Trolls",
           "tip": "Clear trolls outside and inside caves as you explore; use a bow and room to dodge, then seek new caves.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Troll_Hide"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Troll_Hide",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bear Hide",
           "source": "Bears",
           "tip": "Hunt rare Black Forest bears and search bear caves; collect paws and meat alongside hides.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Hide"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Hide",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bear Paw",
           "source": "Bears",
           "tip": "Hunt Black Forest bears and search bear caves; collect paws alongside their hides and meat.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Paw"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Paw",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bear Meat",
           "source": "Bears",
           "tip": "Hunt Black Forest bears and search bear caves; gather meat alongside hides and paws.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bear_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Ectoplasm",
           "source": "Ghosts",
           "tip": "Search multiple Burial Chambers for ghosts; chamber spawns are finite, so raids can provide additional opportunities.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ectoplasm"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ectoplasm",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Pine Cone",
           "source": "Pine trees",
           "tip": "Pick up pine cones while logging pines and reserve some for a planted core-wood grove.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Pine_Cone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Pine_Cone",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Fir Cone",
           "source": "Fir trees",
           "tip": "Collect fir cones when cutting firs, then replant a portion to keep a renewable source of wood.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fir_Cone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fir_Cone",
+          "acquisitionTypes": [
+            "plants"
+          ]
         }
       ]
     },
     {
       "id": "swamp",
       "label": "Swamp",
+      "storageNote": "Keep scrap iron and coal near smelters, and bloodbags, entrails and turnips near food and mead stations.",
+      "expeditionNote": "Bring poison resistance, food and a Swamp Key for crypts; save ten withered bones for Bonemass.",
       "resources": [
         {
           "name": "Scrap Iron",
           "source": "Muddy Scrap Piles",
           "tip": "Bring a Swamp Key and mine muddy piles throughout several Sunken Crypts; use a boat to move large loads under default rules.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Scrap_Iron"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Scrap_Iron",
+          "acquisitionTypes": [
+            "mining",
+            "loot"
+          ]
         },
         {
           "name": "Ancient Bark",
           "source": "Ancient Trees",
           "tip": "Use a bronze axe or better to clear ancient trees; bring a cart or build storage nearby for larger hauls.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ancient_Bark"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ancient_Bark",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Turnip Seeds",
           "source": "Wild seed flowers",
           "tip": "Find yellow seed flowers in the Swamp; grow turnips and replant some as seed-turnips to expand your crop.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Turnip_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Turnip_Seeds",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Turnip",
           "source": "Cultivated turnip seeds",
           "tip": "Plant rows with a cultivator and reserve part of each harvest for seed-turnips.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Turnip"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Turnip",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Bloodbag",
           "source": "Leeches",
           "tip": "Patrol shallow Swamp waterways and shoot leeches from the bank; pick up bloodbags when the water is safe.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bloodbag"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bloodbag",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Entrails",
           "source": "Draugr",
           "tip": "Fight Draugr around an intact body pile for repeated drops; use poison protection and keep an escape route.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Entrails"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Entrails",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Ooze",
           "source": "Blobs, Oozers",
           "tip": "Collect drops from blobs and oozers while clearing Swamp routes; poison resistance helps on longer runs.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ooze"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ooze",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Guck",
           "source": "Tree-mounted gucksacks",
           "tip": "Build stairs or platforms beside gucksacks high on trees, then break the sacks and collect the drops.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Guck"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Guck",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Chain",
           "source": "Wraiths, crypt chests",
           "tip": "Hunt Wraiths in the Swamp at night and check Sunken Crypt chests while mining scrap.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Chain"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Chain",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Root",
           "source": "Abominations",
           "tip": "Hunt Abominations across several Swamp areas; fight on solid ground and bring an axe and fire damage.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Root"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Root",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Withered Bone",
           "source": "Sunken Crypts",
           "tip": "Mine muddy scrap piles and search chests in multiple Sunken Crypts; store bones together for boss summons.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Withered_Bone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Withered_Bone",
+          "acquisitionTypes": [
+            "loot"
+          ]
         }
       ]
     },
     {
       "id": "mountain",
       "label": "Mountain",
+      "storageNote": "Store silver near the smelter and forge; keep wolf drops, obsidian and cave materials near equipment crafting.",
+      "expeditionNote": "Pack frost protection and a Wishbone for silver; plan transport for three heavy dragon eggs to Moder's altar.",
       "resources": [
         {
           "name": "Silver Ore",
           "source": "Buried silver veins",
           "tip": "Use a Wishbone to locate buried veins, then mine them fully; plan a downhill cart route or boat pickup.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Silver_Ore"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Silver_Ore",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Obsidian",
           "source": "Surface deposits",
           "tip": "Bring an iron pickaxe or better and sweep Mountain slopes for dark surface deposits; mark a return route.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Obsidian"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Obsidian",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Crystal",
           "source": "Stone Golems",
           "tip": "Hunt Stone Golems while exploring Mountains; use a pickaxe and solid footing, then collect crystals with other mountain resources.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Crystal"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Crystal",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Wolf Pelt",
           "source": "Wolves",
           "tip": "Hunt Mountain wolves, or tame and feed a pair to breed a renewable supply of pelts and meat.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Pelt"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Pelt",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Wolf Fang",
           "source": "Wolves",
           "tip": "Collect fangs alongside pelts on Mountain wolf hunts; breeding tamed wolves can provide repeat drops.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Fang"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Fang",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Wolf Meat",
           "source": "Wolves",
           "tip": "Tame and feed two wolves in a secure pen, then harvest offspring for repeat meat and pelt supplies.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Wolf_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Freeze Gland",
           "source": "Drakes",
           "tip": "Shoot Drakes on Mountain expeditions; check nests and peaks while collecting silver and obsidian.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Freeze_Gland"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Freeze_Gland",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Onion Seeds",
           "source": "Mountain structure chests",
           "tip": "Search chests in Mountain ruins for starter seeds; grow onions and replant some as seed-onions to multiply them.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Onion_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Onion_Seeds",
+          "acquisitionTypes": [
+            "plants",
+            "loot"
+          ]
         },
         {
           "name": "Onion",
           "source": "Cultivated onion seeds",
           "tip": "Plant onions in rows and reserve part of each harvest for seed-onions to keep the farm going.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Onion"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Onion",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Fenris Hair",
           "source": "Frost Caves",
           "tip": "Search walls and rooms throughout several Frost Caves; gather other cave materials in the same trip.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fenris_Hair"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fenris_Hair",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Fenris Claw",
           "source": "Frost Caves",
           "tip": "Search Frost Cave rooms and altars thoroughly; visit more caves when you need additional claws.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fenris_Claw"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fenris_Claw",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Red Jute",
           "source": "Frost Cave decorations",
           "tip": "Break red curtains and other red fabric in Frost Caves; clear several caves for a larger supply.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Red_Jute"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Red_Jute",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Dragon Egg",
           "source": "Drake nests",
           "tip": "Mark Mountain nests and revisit them after eggs respawn; eggs are very heavy, so plan transport.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dragon_Egg"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dragon_Egg",
+          "acquisitionTypes": [
+            "loot"
+          ]
         }
       ]
     },
     {
       "id": "plains",
       "label": "Plains",
+      "storageNote": "Keep barley, flax and their processed products near farming and crafting stations; store black metal scrap near the blast furnace.",
+      "expeditionNote": "Bring strong food and repaired gear; collect five Fuling totems and prepare fire resistance for Yagluth.",
       "resources": [
         {
           "name": "Cloudberries",
           "source": "Cloudberry bushes",
           "tip": "Mark clusters across open Plains and return after the berries regrow; avoid destroying the bushes.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Cloudberries"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Cloudberries",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Barley",
           "source": "Fuling Villages",
           "tip": "Take starter barley from Fuling villages and plant it in a protected Plains field; save some of each harvest for replanting.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Barley"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Barley",
+          "acquisitionTypes": [
+            "plants",
+            "loot"
+          ]
         },
         {
           "name": "Flax",
           "source": "Fuling Villages",
           "tip": "Collect starter flax from Fuling villages and grow it in a protected Plains field; reserve part of each crop for replanting.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flax"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flax",
+          "acquisitionTypes": [
+            "plants",
+            "loot"
+          ]
         },
         {
           "name": "Black Metal Scrap",
           "source": "Fulings",
           "tip": "Clear Fuling villages and patrols, then haul scrap to a blast furnace; use a boat under default portal rules.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Metal_Scrap"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Metal_Scrap",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Lox Pelt",
           "source": "Lox",
           "tip": "Hunt Plains herds or tame and feed two Lox in a strong enclosure for renewable pelts and meat.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Lox_Pelt"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Lox_Pelt",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Lox Meat",
           "source": "Lox",
           "tip": "Tame and feed a pair of Lox in a secure enclosure; harvest offspring for repeat meat and pelt supplies.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Lox_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Lox_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Needle",
           "source": "Deathsquitos",
           "tip": "Watch for Deathsquitos while crossing the Plains; block or shoot them and collect needles along your route.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Needle"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Needle",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Tar",
           "source": "Tar Pits, Growths",
           "tip": "Clear Growths first, then dig a trench to drain the pit and retrieve tar deposits from the exposed bottom.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Tar"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Tar",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Vile Ribcage",
           "source": "Vile enemies",
           "tip": "Hunt Viles in the Plains at night; they are very rare, so expect a long search for multiple ribcages.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vile_Ribcage"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vile_Ribcage",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Fuling Totem",
           "source": "Fuling Villages",
           "tip": "Search Fuling village structures and clear defenders; mark villages and visit several for more totems.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fuling_Totem"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fuling_Totem",
+          "acquisitionTypes": [
+            "loot"
+          ]
         }
       ]
     },
     {
       "id": "mistlands",
       "label": "Mistlands",
+      "storageNote": "Group sap and soft tissue near the eitr refinery, and mushrooms and meat near food stations; keep cores and carapace with equipment materials.",
+      "expeditionNote": "Bring a wisplight, food and poison protection; gather Sealbreaker fragments from Infested Mines to enter the Queen's citadel.",
       "resources": [
         {
           "name": "Jotun Puffs",
           "source": "Wild mushrooms",
           "tip": "Collect wild Jotun Puffs, then replant some in a protected Mistlands plot for repeated harvests.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Jotun_Puffs"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Jotun_Puffs",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Magecap",
           "source": "Wild mushrooms",
           "tip": "Collect wild Magecaps and replant some in a protected Mistlands plot to expand your harvests.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Magecap"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Magecap",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Yggdrasil Wood",
           "source": "Yggdrasil Shoots",
           "tip": "Use a black metal axe or better on Yggdrasil shoots; clear a cluster and carry wood back to nearby storage.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Yggdrasil_Wood"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Yggdrasil_Wood",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Black Marble",
           "source": "Petrified bones, ruins",
           "tip": "Mine giant remains with a black metal pickaxe; dismantling Dvergr structures also yields marble but can provoke them.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Marble"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Marble",
+          "acquisitionTypes": [
+            "mining",
+            "loot"
+          ]
         },
         {
           "name": "Soft Tissue",
           "source": "Giant skulls, Dvergr crates",
           "tip": "Break into giant skulls and mine the soft tissue inside; mark skulls while exploring for a dedicated collection trip.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Soft_Tissue"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Soft_Tissue",
+          "acquisitionTypes": [
+            "mining",
+            "loot"
+          ]
         },
         {
           "name": "Sap",
           "source": "Ancient Roots",
           "tip": "Place extractors on Ancient Roots and collect them regularly; use multiple roots and allow depleted roots time to replenish.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Sap"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Sap",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Carapace",
           "source": "Seekers",
           "tip": "Clear Seekers in Infested Mines and patrol Mistlands terrain; gather meat and other drops on the same runs.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carapace"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Carapace",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Mandible",
           "source": "Seeker Soldiers",
           "tip": "Hunt Seeker Soldiers in Mistlands and Infested Mines; aim for the less-armored rear when it is safe.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Mandible"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Mandible",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Seeker Meat",
           "source": "Seekers",
           "tip": "Gather meat from Seekers while clearing Infested Mines or exploring Mistlands; collect carapace on the same trip.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Seeker_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Seeker_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Hare Meat",
           "source": "Hares",
           "tip": "Use a bow against hares in Mistlands and pick up scale hide too; listen and watch for movement in the mist.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Hare_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Hare_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Scale Hide",
           "source": "Hares",
           "tip": "Hunt hares with a bow while traveling between Mistlands objectives; collect their meat as well.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Scale_Hide"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Scale_Hide",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Blood Clot",
           "source": "Ticks",
           "tip": "Clear ticks in Infested Mines and during Gjall encounters; collect clots while gathering other Mistlands drops.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blood_Clot"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blood_Clot",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bilebag",
           "source": "Gjall",
           "tip": "Shoot a Gjall's underside from a safe position and collect bilebags after it falls; watch for ticks and fire.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bilebag"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bilebag",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Royal Jelly",
           "source": "Infested Mines",
           "tip": "Collect jelly piles in Infested Mines and mark rich rooms for later visits; Seeker Brood also drop jelly.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Royal_Jelly"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Royal_Jelly",
+          "acquisitionTypes": [
+            "creatures",
+            "loot"
+          ]
         },
         {
           "name": "Black Core",
           "source": "Infested Mines",
           "tip": "Search Infested Mines thoroughly, including hidden rooms; visit additional mines rather than expecting cores to respawn.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Core"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Black_Core",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Blue Jute",
           "source": "Dvergr structures",
           "tip": "Search Dvergr structures for blue fabric and salvage it carefully; damaging their property can provoke nearby Dvergr.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blue_Jute"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Blue_Jute",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Dvergr Extractor",
           "source": "Dvergr component crates",
           "tip": "Look for component crates in Dvergr outposts; breaking their property can provoke them, so plan an escape.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dvergr_Extractor"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Dvergr_Extractor",
+          "acquisitionTypes": [
+            "loot"
+          ]
         }
       ]
     },
     {
       "id": "ashlands",
       "label": "Ashlands",
+      "storageNote": "Store flametal ore and coal by the blast furnace; keep gems and creature drops near equipment stations and food plants by the kitchen.",
+      "expeditionNote": "Pack strong food, repaired gear and fire protection; search fortresses for bell fragments to prepare for Fader.",
       "resources": [
         {
           "name": "Ashwood",
           "source": "Scorched Trees",
           "tip": "Clear enemies around a stand of scorched trees, then log several and store the ashwood nearby.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ashwood"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Ashwood",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Grausten",
           "source": "Rock formations",
           "tip": "Mine rock formations or salvage ruins after clearing nearby enemies; use nearby storage for heavy building loads.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Grausten"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Grausten",
+          "acquisitionTypes": [
+            "mining",
+            "loot"
+          ]
         },
         {
           "name": "Flametal Ore",
           "source": "Flametal deposits, fortress loot",
           "tip": "Bring a black metal pickaxe and a safe escape plan for lava deposits; search fortress chests for extra ore.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flametal_Ore"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Flametal_Ore",
+          "acquisitionTypes": [
+            "mining",
+            "loot"
+          ]
         },
         {
           "name": "Charred Bone",
           "source": "Charred enemies",
           "tip": "Collect bones while clearing Charred patrols and structures; gather their other drops during the same run.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Charred_Bone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Charred_Bone",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Fiddlehead",
           "source": "Wild plants",
           "tip": "Search Ashlands ruins for ferns and mark good patches; revisit them after the fiddleheads regrow.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fiddlehead"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Fiddlehead",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Smoke Puff",
           "source": "Wild mushrooms",
           "tip": "Mark mushrooms around rocks and ruins in the Ashlands; revisit safe patches after they regrow.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Smoke_Puff"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Smoke_Puff",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Vineberry Cluster",
           "source": "Vines",
           "tip": "Harvest vines on Ashlands ruins and plant seeds against a wall; revisit mature vines as berries regrow.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vineberry_Cluster"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vineberry_Cluster",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Vineberry Seeds",
           "source": "Vineberry plants",
           "tip": "Harvest vineberries for a chance at seeds; plant the seeds against a wall to grow more vines.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vineberry_Seeds"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Vineberry_Seeds",
+          "acquisitionTypes": [
+            "plants"
+          ]
         },
         {
           "name": "Asksvin Hide",
           "source": "Asksvin",
           "tip": "Hunt Asksvin or tame and feed a pair in a secure pen; collect hides and tails together.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Asksvin_Hide"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Asksvin_Hide",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Asksvin Tail",
           "source": "Asksvin",
           "tip": "Collect tails alongside hides from Asksvin; breeding tamed animals can provide a repeat supply.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Asksvin_Tail"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Asksvin_Tail",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Morgen Sinew",
           "source": "Morgen",
           "tip": "Hunt Morgen while exploring Ashlands and check their holes; bring strong gear and space to dodge.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Morgen_Sinew"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Morgen_Sinew",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Morgen Heart",
           "source": "Morgen",
           "tip": "Hunt Morgen in Ashlands and search Putrid Holes; hearts are not guaranteed from every unstarred kill.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Morgen_Heart"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Morgen_Heart",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Volture Meat",
           "source": "Voltures",
           "tip": "Shoot Voltures from range or fight them when they land; collect meat while traveling through Ashlands.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Volture_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Volture_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bonemaw Meat",
           "source": "Bonemaws",
           "tip": "Hunt Bonemaws from a sturdy ship in Ashlands waters; their meat floats, so collect it before sailing away.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bonemaw_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bonemaw_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Bonemaw Scale",
           "source": "Bonemaws",
           "tip": "Normal Bonemaws do not appear to drop scales; the wiki describes the scale as an unobtainable asset. Verify before planning a farm.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bonemaw_Scale"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bonemaw_Scale",
+          "acquisitionTypes": []
         },
         {
           "name": "Celestial Feather",
           "source": "Fallen Valkyries",
           "tip": "Hunt Fallen Valkyries while exploring Ashlands; keep room to dodge and collect feathers after each fight.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Celestial_Feather"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Celestial_Feather",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Sulfur",
           "source": "Sulfur formations",
           "tip": "Mine sulfur nodes beneath Sulfur Arches and collect drops from Lava Blobs while exploring Ashlands.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Sulfur"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Sulfur",
+          "acquisitionTypes": [
+            "creatures",
+            "mining"
+          ]
         },
         {
           "name": "Bloodstone",
           "source": "Charred Fortresses",
           "tip": "Clear Charred Fortresses and search their chests; raid additional fortresses for more gemstones.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bloodstone"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Bloodstone",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Jade",
           "source": "Charred Fortresses",
           "tip": "Search Charred Fortress chests and combine gemstone runs with other fortress loot.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Jade"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Jade",
+          "acquisitionTypes": [
+            "loot"
+          ]
         },
         {
           "name": "Iolite",
           "source": "Charred Fortresses",
           "tip": "Search Charred Fortress chests thoroughly; visit more fortresses when you need additional gems.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Iolite"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Iolite",
+          "acquisitionTypes": [
+            "loot"
+          ]
         }
       ]
     },
     {
       "id": "ocean",
       "label": "Ocean",
+      "storageNote": "Keep chitin and scales near equipment materials, serpent meat near cooking, and ship supplies beside the dock.",
+      "expeditionNote": "Carry food, a bow, repair materials and a harpoon if collecting sinking serpent drops; watch the weather and your ship's condition.",
       "resources": [
         {
           "name": "Chitin",
           "source": "Abyssal Barnacles on Leviathans",
           "tip": "Mine barnacles on Leviathans, keeping your ship close; return aboard quickly when the creature begins to submerge.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Chitin"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Chitin",
+          "acquisitionTypes": [
+            "mining"
+          ]
         },
         {
           "name": "Serpent Meat",
           "source": "Sea Serpents",
           "tip": "Hunt sea serpents by boat and retrieve the floating meat; search ocean routes at night or in storms.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Meat"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Meat",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Serpent Scale",
           "source": "Sea Serpents",
           "tip": "Harpoon a serpent and tow it into shallow water before killing it, since scales sink.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Scale"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Scale",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         },
         {
           "name": "Serpent Trophy",
           "source": "Sea Serpents",
           "tip": "Tow serpents into shallow water with a harpoon before killing them; trophies sink and are not guaranteed.",
-          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Trophy"
+          "wikiUrl": "https://valheim.weirdgloop.org/wiki/Serpent_Trophy",
+          "acquisitionTypes": [
+            "creatures"
+          ]
         }
       ]
     },
     {
       "id": "deep-north",
       "label": "Deep North",
+      "storageNote": "Reserve separate storage for food, expedition supplies and new crafting materials until their uses are confirmed.",
+      "expeditionNote": "Bring frost protection, strong food and repaired gear; boss preparation and resource details in this guide need further verification.",
       "note": "Newer 1.0 resource acquisition details not verified; consult the wiki.",
       "resources": [],
       "wikiUrl": "https://valheim.weirdgloop.org/wiki/Deep_North"

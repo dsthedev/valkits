@@ -10,6 +10,13 @@ import { RiCloseLine, RiSearchLine } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -19,8 +26,27 @@ import {
 import {
   filterResourceCategories,
   loadResourceGuide,
+  type AcquisitionFilter,
   type ResourceGuide,
+  type ResourceSort,
 } from "@/data/valheim-resource-guide"
+
+const acquisitionOptions: { value: AcquisitionFilter; label: string }[] = [
+  { value: "all", label: "All sources" },
+  { value: "plants", label: "Plants and crops" },
+  { value: "creatures", label: "Creature drops" },
+  { value: "mining", label: "Mining and gathering" },
+  { value: "loot", label: "Structures and loot" },
+  { value: "processed", label: "Crafted or processed" },
+  { value: "unclassified", label: "Unclassified" },
+]
+
+const sortOptions: { value: ResourceSort; label: string }[] = [
+  { value: "guide", label: "Guide order" },
+  { value: "name-asc", label: "Name A–Z" },
+  { value: "name-desc", label: "Name Z–A" },
+  { value: "source", label: "Source A–Z" },
+]
 
 interface ResourceReferenceContextValue {
   openReference(): void
@@ -38,12 +64,22 @@ export function ResourceReferenceProvider({
   const [guide, setGuide] = useState<ResourceGuide | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
+  const [categoryId, setCategoryId] = useState("all")
+  const [acquisition, setAcquisition] = useState<AcquisitionFilter>("all")
+  const [sort, setSort] = useState<ResourceSort>("guide")
   const [openCategories, setOpenCategories] = useState<ReadonlySet<string>>(
     () => new Set()
   )
   const filteredCategories = useMemo(
-    () => (guide ? filterResourceCategories(guide.categories, query) : []),
-    [guide, query]
+    () =>
+      guide
+        ? filterResourceCategories(guide.categories, query, {
+            categoryId,
+            acquisition,
+            sort,
+          })
+        : [],
+    [guide, query, categoryId, acquisition, sort]
   )
 
   useEffect(() => {
@@ -63,15 +99,38 @@ export function ResourceReferenceProvider({
     return () => controller.abort()
   }, [])
 
-  useEffect(() => {
-    if (!query.trim() || filteredCategories.length === 0) return
+  function changeQuery(value: string) {
+    setQuery(value)
+    openSearchMatches(value, categoryId, acquisition)
+  }
 
+  function openSearchMatches(
+    value: string,
+    selectedCategory: string,
+    selectedAcquisition: AcquisitionFilter
+  ) {
+    if (!value.trim() || !guide) return
+    const matches = filterResourceCategories(guide.categories, value, {
+      categoryId: selectedCategory,
+      acquisition: selectedAcquisition,
+    })
     setOpenCategories((current) => {
       const next = new Set(current)
-      filteredCategories.forEach((category) => next.add(category.id))
+      matches.forEach((category) => next.add(category.id))
       return next.size === current.size ? current : next
     })
-  }, [filteredCategories, query])
+  }
+
+  function setVisibleCategoriesOpen(shouldOpen: boolean) {
+    setOpenCategories((current) => {
+      const next = new Set(current)
+      filteredCategories.forEach((category) => {
+        if (shouldOpen) next.add(category.id)
+        else next.delete(category.id)
+      })
+      return next
+    })
+  }
 
   function highlight(text: string) {
     const keyword = query.trim()
@@ -101,7 +160,7 @@ export function ResourceReferenceProvider({
       {children}
       <Sheet onOpenChange={setOpen} open={open}>
         <SheetContent
-          className="max-h-[85vh] max-h-[85dvh] overflow-hidden rounded-t-2xl border-x border-b"
+          className="max-h-[85dvh] max-h-[85vh] overflow-hidden rounded-t-2xl border-x border-b"
           side="bottom"
         >
           <SheetHeader className="shrink-0 border-b border-border p-4 pr-14">
@@ -123,13 +182,16 @@ export function ResourceReferenceProvider({
                       aria-hidden="true"
                       className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
                     />
-                    <label className="sr-only" htmlFor="resource-reference-search">
+                    <label
+                      className="sr-only"
+                      htmlFor="resource-reference-search"
+                    >
                       Search resources
                     </label>
                     <Input
                       className="h-8 rounded-md pr-8 pl-8 text-sm"
                       id="resource-reference-search"
-                      onChange={(event) => setQuery(event.target.value)}
+                      onChange={(event) => changeQuery(event.target.value)}
                       placeholder="Filter resources…"
                       type="search"
                       value={query}
@@ -138,7 +200,7 @@ export function ResourceReferenceProvider({
                       <Button
                         aria-label="Clear resource search"
                         className="absolute top-1/2 right-1 size-6 -translate-y-1/2"
-                        onClick={() => setQuery("")}
+                        onClick={() => changeQuery("")}
                         size="icon-xs"
                         type="button"
                         variant="ghost"
@@ -146,6 +208,130 @@ export function ResourceReferenceProvider({
                         <RiCloseLine aria-hidden="true" />
                       </Button>
                     )}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <Select
+                      onValueChange={(value) => {
+                        if (
+                          value !== null &&
+                          (value === "all" ||
+                            guide.categories.some(
+                              (category) => category.id === value
+                            ))
+                        ) {
+                          setCategoryId(value)
+                          openSearchMatches(query, value, acquisition)
+                        }
+                      }}
+                      value={categoryId}
+                    >
+                      <SelectTrigger
+                        aria-label="Filter by biome"
+                        className="w-full min-w-0"
+                        size="sm"
+                      >
+                        <SelectValue>
+                          {categoryId === "all"
+                            ? "All sections"
+                            : guide.categories.find(
+                                (category) => category.id === categoryId
+                              )?.label}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All sections</SelectItem>
+                        {guide.categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(value) => {
+                        const option = acquisitionOptions.find(
+                          (item) => item.value === value
+                        )
+                        if (option) {
+                          setAcquisition(option.value)
+                          openSearchMatches(query, categoryId, option.value)
+                        }
+                      }}
+                      value={acquisition}
+                    >
+                      <SelectTrigger
+                        aria-label="Filter by acquisition"
+                        className="w-full min-w-0"
+                        size="sm"
+                      >
+                        <SelectValue>
+                          {
+                            acquisitionOptions.find(
+                              (option) => option.value === acquisition
+                            )?.label
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {acquisitionOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(value) => {
+                        const option = sortOptions.find(
+                          (item) => item.value === value
+                        )
+                        if (option) setSort(option.value)
+                      }}
+                      value={sort}
+                    >
+                      <SelectTrigger
+                        aria-label="Sort resources"
+                        className="w-full min-w-0"
+                        size="sm"
+                      >
+                        <SelectValue>
+                          {
+                            sortOptions.find((option) => option.value === sort)
+                              ?.label
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3">
+                    <Button
+                      className="h-7 px-0 text-xs"
+                      disabled={filteredCategories.length === 0}
+                      onClick={() => setVisibleCategoriesOpen(true)}
+                      type="button"
+                      variant="link"
+                    >
+                      Expand visible
+                    </Button>
+                    <Button
+                      className="h-7 px-0 text-xs"
+                      disabled={filteredCategories.length === 0}
+                      onClick={() => setVisibleCategoriesOpen(false)}
+                      type="button"
+                      variant="link"
+                    >
+                      Collapse visible
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      Resources can have multiple sources.
+                    </span>
                   </div>
                 </div>
                 {filteredCategories.length > 0 ? (
@@ -175,6 +361,25 @@ export function ResourceReferenceProvider({
                           </span>
                         </summary>
                         <div className="grid gap-x-6 pb-3 sm:grid-cols-2">
+                          {(category.storageNote ||
+                            category.expeditionNote) && (
+                            <div className="mb-3 space-y-1 rounded-md bg-muted/50 p-3 text-xs leading-relaxed sm:col-span-2">
+                              {category.storageNote && (
+                                <p>
+                                  <span className="font-medium">Storage:</span>{" "}
+                                  {category.storageNote}
+                                </p>
+                              )}
+                              {category.expeditionNote && (
+                                <p>
+                                  <span className="font-medium">
+                                    Preparation:
+                                  </span>{" "}
+                                  {category.expeditionNote}
+                                </p>
+                              )}
+                            </div>
+                          )}
                           {category.note && (
                             <p className="mb-3 text-xs text-muted-foreground sm:col-span-2">
                               {category.note}
@@ -199,6 +404,11 @@ export function ResourceReferenceProvider({
                                 <span className="font-medium">Source:</span>{" "}
                                 {highlight(resource.source)}
                               </p>
+                              {resource.acquisitionTypes.length === 0 && (
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  Acquisition unclassified.
+                                </p>
+                              )}
                               <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                                 <span className="font-medium text-foreground">
                                   Tip:
@@ -222,7 +432,7 @@ export function ResourceReferenceProvider({
                     className="py-5 text-sm text-muted-foreground"
                     role="status"
                   >
-                    No resources match “{query}”.
+                    No resources match the current filters.
                   </p>
                 )}
               </>
