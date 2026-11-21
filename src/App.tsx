@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/table"
 import { KitWorkspace } from "@/components/kit-workspace"
 import { KitVisualizer } from "@/components/kit-visualizer"
+import { ResourceReferenceTrigger } from "@/components/resource-reference"
 import {
   loadFavoritePrefabs,
   prioritizeFavorites,
@@ -596,6 +597,7 @@ export function App() {
           {catalogState.status === "ready" && (
             <div className="flex flex-wrap items-center justify-end gap-3">
               {dataAccess && <KitVisualizer data={dataAccess} kit={activeKit} />}
+              <ResourceReferenceTrigger className="text-white/85 hover:text-white" />
               <details className="relative">
                 <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-teal-700 bg-teal-700 px-3 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950 dark:hover:bg-teal-200 [&::-webkit-details-marker]:hidden">
                   <RiAddLine aria-hidden="true" />
@@ -1193,6 +1195,9 @@ export function App() {
             <span aria-hidden="true">=</span>
             <span>Valkits</span>
           </a>
+          <div className="mt-3">
+            <ResourceReferenceTrigger className="text-white/75 hover:text-white" />
+          </div>
         </div>
         <div className="absolute right-0 bottom-0 flex max-w-full items-center justify-end gap-2 p-1">
           {developerPreferenceWarning && (
