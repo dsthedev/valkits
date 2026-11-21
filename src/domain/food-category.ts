@@ -1,6 +1,21 @@
-import type { GameItem } from "./schema"
+import type { GameItem, Kit, KitItemGoal } from "./schema"
 
 export type FoodCategory = "health" | "stamina" | "eitr" | "mixed"
+
+export function selectVisualizerFoods(
+  kit: Kit | undefined,
+  getItem: (prefab: string) => GameItem | undefined
+): { foods: { goal: KitItemGoal; item: GameItem }[]; extraFoodCount: number } {
+  const foods = (kit?.itemGoals ?? []).flatMap((goal) => {
+    const item = getItem(goal.prefab)
+    return item?.foodStats ? [{ goal, item }] : []
+  })
+
+  return {
+    foods: foods.slice(0, 3),
+    extraFoodCount: Math.max(foods.length - 3, 0),
+  }
+}
 
 export function getFoodCategory(item: GameItem): FoodCategory | undefined {
   const stats = item.foodStats

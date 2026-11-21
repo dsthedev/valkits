@@ -54,6 +54,7 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { KitWorkspace } from "@/components/kit-workspace"
+import { KitVisualizer } from "@/components/kit-visualizer"
 import {
   loadFavoritePrefabs,
   prioritizeFavorites,
@@ -594,6 +595,7 @@ export function App() {
           </a>
           {catalogState.status === "ready" && (
             <div className="flex flex-wrap items-center justify-end gap-3">
+              {dataAccess && <KitVisualizer data={dataAccess} kit={activeKit} />}
               <details className="relative">
                 <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-teal-700 bg-teal-700 px-3 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950 dark:hover:bg-teal-200 [&::-webkit-details-marker]:hidden">
                   <RiAddLine aria-hidden="true" />

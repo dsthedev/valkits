@@ -18,6 +18,7 @@ import {
   type StationRequirementDataAccess,
 } from "./station-requirements"
 import { calculateStationResources } from "./station-resource-calculation"
+import { selectVisualizerFoods } from "./food-category"
 
 function item(prefab: string): GameItem {
   return gameItemSchema.parse({ prefab, nameToken: `$item_${prefab}` })
@@ -92,6 +93,37 @@ function dataAccess(
 }
 
 describe("kit station requirement calculation", () => {
+  it("groups stations for the visualized food goals, including processing inputs", () => {
+    const food = (prefab: string) => ({ ...item(prefab), foodStats: { health: 10 } })
+    const data = dataAccess(
+      [food("Soup"), food("Mead"), food("Stew"), food("Extra"), item("MeadBase"), item("Sword")],
+      [
+        recipe("Soup", { craftingStation: "$cauldron", minStationLevel: 1 }),
+        recipe("Stew", { craftingStation: "$cauldron", minStationLevel: 3 }),
+        recipe("MeadBase", { craftingStation: "$cauldron", minStationLevel: 2 }),
+        recipe("Extra", { craftingStation: "$other", minStationLevel: 1 }),
+        recipe("Sword", { craftingStation: "$other", minStationLevel: 1 }),
+      ],
+      [station("cauldron", "$cauldron"), station("fermenter", "$fermenter"), station("other", "$other")],
+      [{ inputPrefab: "MeadBase", resultPrefab: "Mead", outputAmount: 6, removeInput: false, stationPrefab: "fermenter" }],
+    )
+    const originalKit = kit([
+      { prefab: "Sword" }, { prefab: "Soup" }, { prefab: "Mead" },
+      { prefab: "Stew" }, { prefab: "Extra" },
+    ])
+    const { foods } = selectVisualizerFoods(originalKit, data.getItem)
+    const requirements = calculateKitStationRequirements(
+      { ...originalKit, itemGoals: foods.map(({ goal }) => goal) },
+      data,
+    )
+    const groups = groupStationRequirements(requirements.itemRequirements)
+
+    expect(groups.map(({ stationPrefab, stationLevel }) => ({ stationPrefab, stationLevel }))).toEqual([
+      { stationPrefab: "cauldron", stationLevel: 3 },
+      { stationPrefab: "fermenter", stationLevel: undefined },
+    ])
+  })
+
   it("includes the Black Soup cauldron level and Spice Rack construction cost", async () => {
     const sourcePath = fileURLToPath(
       new URL("../../public/data/wackydb/", import.meta.url),
